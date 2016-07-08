@@ -2,3 +2,5 @@
 *.so
 *~
 *.gch
+.tags
+*/bin

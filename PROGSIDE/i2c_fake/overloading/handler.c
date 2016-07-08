@@ -112,7 +112,13 @@ void hndclose()
     if (handlers->sem != NULL)
         sem_close(handlers->sem);
 
-    hndinit();
+    handlers->shm = NULL;
+    handlers->shmfd = -1;
+    handlers->shdata = NULL;
+    handlers->sem = NULL;
+    readingProccess = 0;
+    stepInReadingProcess = 0; //for reading with more than one step;
+    initialized = 0;
 }
 
 //-----------------------------------------------------------------------------
@@ -153,12 +159,12 @@ int readOneCompassByte(){
    if (stepInReadingProcess>5)
        stepInReadingProcess=0;
 
-   sem_wait(handlers->sem);
+   sem_post(handlers->sem);
    return return_value;
 }
 
 //-----------------------------------------------------------------------------
 void writeCommand(uint8_t data){
    readingProccess = data;
-   //TODO check if changing 
+   //TODO check if changing
 }
