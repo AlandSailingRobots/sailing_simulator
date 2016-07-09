@@ -43,8 +43,8 @@ struct SHDATA_COMP
 };
 
 struct SHDATA{
-    struct SHDATA_ARDU *shdata_arduino;
-    struct SHDATA_COMP *shdata_compass;
+    struct SHDATA_ARDU shdata_arduino;
+    struct SHDATA_COMP shdata_compass;
 };
 
 #endif // SHDATA_H

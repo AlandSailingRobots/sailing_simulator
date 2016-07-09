@@ -26,15 +26,16 @@ int write_handlers(struct HANDLERS *handlers)
 {
 
     sem_wait(handlers->sem);
-    handlers->shdata->shdata_arduino->battery_msb = 0;
-    handlers->shdata->shdata_arduino->battery_lsb = 0;
-    handlers->shdata->shdata_arduino->pressure_msb = 0;
-    handlers->shdata->shdata_arduino->pressure_lsb += 1;
-    handlers->shdata->shdata_arduino->rudder_msb = 0;
-    handlers->shdata->shdata_arduino->rudder_lsb = 0;
-    handlers->shdata->shdata_arduino->sheet_msb = 0;
-    handlers->shdata->shdata_arduino->sheet_lsb = 0;
-    handlers->shdata->shdata_arduino->flag = 0;
+    handlers->shdata->shdata_arduino.battery_msb = 0;
+    handlers->shdata->shdata_arduino.battery_lsb = 0;
+    handlers->shdata->shdata_arduino.pressure_msb = 0;
+    handlers->shdata->shdata_arduino.pressure_lsb += 1;
+    handlers->shdata->shdata_arduino.rudder_msb = 0;
+    handlers->shdata->shdata_arduino.rudder_lsb = 0;
+    handlers->shdata->shdata_arduino.sheet_msb = 0;
+    handlers->shdata->shdata_arduino.sheet_lsb = 0;
+    handlers->shdata->shdata_arduino.flag = 0;
+    handlers->shdata->shdata_compass.headingVector[1]+=1;
     sem_post(handlers->sem);
     return 1;
 }
@@ -57,30 +58,32 @@ int main(int argv,char **argc)
     action.sa_flags = 0;
     sigaction(SIGINT, & action, NULL);
 
+    printf("Waiting semaphore %s...\n",handlers.shm);
+    fflush(stdout);
     sem_wait(handlers.sem);
-    handlers.shdata->shdata_arduino->address_arduino = 0x07;
-    handlers.shdata->shdata_arduino->battery_msb = 0;
-    handlers.shdata->shdata_arduino->battery_lsb = 0;
-    handlers.shdata->shdata_arduino->pressure_msb = 0;
-    handlers.shdata->shdata_arduino->pressure_lsb = 0;
-    handlers.shdata->shdata_arduino->rudder_msb = 0;
-    handlers.shdata->shdata_arduino->rudder_lsb = 0;
-    handlers.shdata->shdata_arduino->sheet_msb = 0;
-    handlers.shdata->shdata_arduino->sheet_lsb = 0;
-    handlers.shdata->shdata_arduino->flag = 0;
-    memset(handlers.shdata->shdata_compass,0,sizeof(struct SHDATA_COMP));
-    handlers.shdata->shdata_compass->address_compass = 0x19;
+    handlers.shdata->shdata_arduino.address_arduino = 0x07;
+    handlers.shdata->shdata_arduino.battery_msb = 0;
+    handlers.shdata->shdata_arduino.battery_lsb = 0;
+    handlers.shdata->shdata_arduino.pressure_msb = 0;
+    handlers.shdata->shdata_arduino.pressure_lsb = 0;
+    handlers.shdata->shdata_arduino.rudder_msb = 0;
+    handlers.shdata->shdata_arduino.rudder_lsb = 0;
+    handlers.shdata->shdata_arduino.sheet_msb = 0;
+    handlers.shdata->shdata_arduino.sheet_lsb = 0;
+    handlers.shdata->shdata_arduino.flag = 0;
+    memset(&handlers.shdata->shdata_compass,0,sizeof(struct SHDATA_COMP));
+    handlers.shdata->shdata_compass.address_compass = 0x19;
     sem_post(handlers.sem);
     // print
     printf("SHM: %s\n", handlers.shm);
-
+    fflush(stdout);
     // work
     while(1)
     {
         //sleep(2);
         write_handlers(&handlers);
-
-
+        printf("loop\n");
+        fflush(stdout);
         sleep(2);
     }
 

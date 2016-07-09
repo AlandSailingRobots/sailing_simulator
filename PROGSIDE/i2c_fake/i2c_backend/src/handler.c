@@ -9,7 +9,7 @@
 #include "handler.h"
 
 static char *SHM_NAME = (char*)"i2c_shm_simu";
-static char *SEM_NAME = (char*)"i2c_sem_simu";
+static char *SEM_NAME = (char*)"/i2c_sem_simu";
 
 
 //-----------------------------------------------------------------------------
@@ -30,7 +30,8 @@ int hndopen(struct HANDLERS *handlers)
     hndinit(handlers);
 
     // open semaphore
-    handlers->sem = sem_open(SEM_NAME, O_RDWR|O_CREAT);
+    sem_unlink(SEM_NAME);
+    handlers->sem = sem_open(SEM_NAME, O_RDWR|O_CREAT,S_IRUSR|S_IWUSR,1);
     if (handlers->sem == SEM_FAILED)
     {
         perror ("sem_open");

@@ -4,3 +4,4 @@
 *.gch
 .tags
 */bin
+*.a
