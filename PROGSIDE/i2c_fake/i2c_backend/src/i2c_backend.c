@@ -6,111 +6,47 @@
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
+#include <sys/timerfd.h>
 
-#include <ptmx.h>
-#include <nmea.h>
+#include "handler.h"
 
 //-----------------------------------------------------------------------------
-struct PTMX ptmx;
-
-float lat = 48.608958;
-float lon = 7.682288;
-float course_real = 54.7;
-float course_magn = 34.4;
-float speed_knot = 5.5;
+struct HANDLERS handlers;
 
 //-----------------------------------------------------------------------------
 void signals_handler(int signal_number)
 {
     printf("Signal catched.\n");
-    ptmxclose(&ptmx);
+    hndclose(&handlers);
     exit(EXIT_SUCCESS);
 }
 
 //-----------------------------------------------------------------------------
-int write_vtg(int fd)
+int write_handlers(struct HANDLERS *handlers)
 {
-    size_t bytes = 0;
 
-    struct NMEA_VTG vtg;
-    vtg.course_real = course_real;
-    vtg.course_magn = course_magn;
-    vtg.speed_knot = speed_knot;
-
-    if ( nmea_vtg(&vtg) == -1)
-    {
-        perror("nmea_vtg");
-        exit(EXIT_FAILURE);
-    }
-    else
-    /*{
-        bytes = write(fd, vtg.frame, sizeof(vtg.frame));
-    }*/
-
-    course_real += 0.01;
-    course_magn += 0.01;
-    speed_knot += 0.01;
-
-    return bytes;
+    sem_wait(handlers->sem);
+    handlers->shdata->shdata_arduino->battery_msb = 0;
+    handlers->shdata->shdata_arduino->battery_lsb = 0;
+    handlers->shdata->shdata_arduino->pressure_msb = 0;
+    handlers->shdata->shdata_arduino->pressure_lsb += 1;
+    handlers->shdata->shdata_arduino->rudder_msb = 0;
+    handlers->shdata->shdata_arduino->rudder_lsb = 0;
+    handlers->shdata->shdata_arduino->sheet_msb = 0;
+    handlers->shdata->shdata_arduino->sheet_lsb = 0;
+    handlers->shdata->shdata_arduino->flag = 0;
+    sem_post(handlers->sem);
+    return 1;
 }
+
 
 //-----------------------------------------------------------------------------
-int write_gll(int fd)
-{
-    size_t bytes = 0;
-
-    struct NMEA_GLL gll;
-    gll.latitude = lat;
-    gll.longitude = lon;
-
-    if ( nmea_gll(&gll) == -1)
-    {
-        perror("nmea_gll");
-        exit(EXIT_FAILURE);
-    }
-    /*else
-    {
-        bytes = write(fd, gll.frame, sizeof(gll.frame));
-    }*/
-
-    lat += 0.001;
-    lon += 0.001;
-
-    return bytes;
-}
-
-
-int write_rmc(int fd)
-{
-    size_t bytes = 0;
-
-    struct NMEA_RMC rmc;
-    rmc.latitude = lat;
-    rmc.longitude = lon;
-    rmc.course_real = course_real;
-    rmc.course_magn = course_magn;
-    rmc.speed_knot = speed_knot;
-
-    if ( nmea_rmc(&rmc) == -1)
-    {
-        perror("nmea_rmc");
-        exit(EXIT_FAILURE);
-    }
-    else
-    {
-        bytes = write(fd, rmc.frame, sizeof(rmc.frame));
-    }
-
-    return bytes;
-}
-
-//-----------------------------------------------------------------------------
-int main()
+int main(int argv,char **argc)
 {
     // open virtual serial port
-    if ( ptmxopen(&ptmx) == -1)
+    if ( hndopen(&handlers) == -1)
     {
-        fprintf(stderr, "Error on ptmxopen(): %s\n", strerror(errno));
+        fprintf(stderr, "Error on hndopen(): %s\n", strerror(errno));
         exit(EXIT_FAILURE);
     }
 
@@ -121,23 +57,34 @@ int main()
     action.sa_flags = 0;
     sigaction(SIGINT, & action, NULL);
 
+    sem_wait(handlers.sem);
+    handlers.shdata->shdata_arduino->address_arduino = 0x07;
+    handlers.shdata->shdata_arduino->battery_msb = 0;
+    handlers.shdata->shdata_arduino->battery_lsb = 0;
+    handlers.shdata->shdata_arduino->pressure_msb = 0;
+    handlers.shdata->shdata_arduino->pressure_lsb = 0;
+    handlers.shdata->shdata_arduino->rudder_msb = 0;
+    handlers.shdata->shdata_arduino->rudder_lsb = 0;
+    handlers.shdata->shdata_arduino->sheet_msb = 0;
+    handlers.shdata->shdata_arduino->sheet_lsb = 0;
+    handlers.shdata->shdata_arduino->flag = 0;
+    memset(handlers.shdata->shdata_compass,0,sizeof(struct SHDATA_COMP));
+    handlers.shdata->shdata_compass->address_compass = 0x19;
+    sem_post(handlers.sem);
     // print
-    printf("PTTY: %s\n", ptmx.port);
+    printf("SHM: %s\n", handlers.shm);
 
     // work
     while(1)
     {
         //sleep(2);
-        write_gll(ptmx.fd);
+        write_handlers(&handlers);
 
-        //sleep(2);
-        write_vtg(ptmx.fd);
 
         sleep(2);
-        write_rmc(ptmx.fd);
     }
 
-    ptmxclose(&ptmx);
+    hndclose(&handlers);
 
     return EXIT_SUCCESS;
 }

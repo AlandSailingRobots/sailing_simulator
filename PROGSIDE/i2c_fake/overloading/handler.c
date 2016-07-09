@@ -8,8 +8,8 @@
 
 #include "handler.h"
 
-char *SHM_NAME = (char*)"i2c_shm_simu";
-char *SEM_NAME = (char*)"i2c_sem_simu";
+static char *SHM_NAME = (char*)"i2c_shm_simu";
+static char *SEM_NAME = (char*)"i2c_sem_simu";
 
 static struct HANDLERS *handlers;
 static uint8_t readingProccess;
@@ -35,7 +35,6 @@ void signals_handler(int signal_number)
 //-----------------------------------------------------------------------------
 void hndinit()
 {
-    if (!initialized){
       handlers->shm = NULL;
       handlers->shmfd = -1;
       handlers->shdata = NULL;
@@ -47,8 +46,11 @@ void hndinit()
       sigemptyset(& (action.sa_mask));
       action.sa_flags = 0;
       sigaction(SIGINT, & action, NULL);
-      initialized = 1;
-    }
+      int i = atexit(stopFunction);
+      if (i != 0) {
+                fprintf(stderr, "cannot set exit function\n");
+                exit(EXIT_FAILURE);
+      }
 }
 
 
@@ -56,14 +58,10 @@ void hndinit()
 //-----------------------------------------------------------------------------
 int hndopen(int device)
 {
+    if (initialized)
+        return 0;
     // init
     hndinit();
-
-    int i = atexit(stopFunction);
-    if (i != 0) {
-              fprintf(stderr, "cannot set exit function\n");
-              exit(EXIT_FAILURE);
-    }
 
     // open semaphore
     handlers->sem = sem_open(SEM_NAME, O_RDWR);
@@ -95,7 +93,7 @@ int hndopen(int device)
         perror("mmap");
         goto err;
     }
-
+    initialized = 1;
     return 0;
 
 err:
