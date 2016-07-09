@@ -14,6 +14,15 @@ struct HANDLERS
 };
 
 //-----------------------------------------------------------------------------
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 int hndopen(struct HANDLERS *handlers);
 void hndclose(struct HANDLERS *handlers);
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif // HANDLER_H

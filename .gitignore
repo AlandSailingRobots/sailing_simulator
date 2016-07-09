@@ -5,3 +5,4 @@
 .tags
 */bin
 *.a
+*socket_to_sr

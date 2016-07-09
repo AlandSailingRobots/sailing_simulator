@@ -1,8 +1,9 @@
-SONAME = libptmx.so
+SRC = ptmx
 GCC = gcc
 
-all:
-	$(GCC) -c -fPIC ptmx.c -o ptmx.o
-	$(GCC) -shared -Wl,-soname,$(SONAME) -o $(SONAME) ptmx.o
-	cp ptmx.h ../../include
-	mv $(SONAME) ../../lib
+all:$(SRC).c
+	$(GCC) -c -fPIC $(SRC).c -o $(SRC).o
+	@mkdir -p ../../include
+	@mkdir -p ../../lib
+	@cp $(SRC).h ../../include
+	@mv $(SRC).o ../../lib

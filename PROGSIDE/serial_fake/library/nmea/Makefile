@@ -1,8 +1,9 @@
-SONAME = libnmea.so
+SRC = nmea
 GCC = gcc
 
-all:
-	$(GCC) -c -fPIC nmea.c -o nmea.o
-	$(GCC) -shared -Wl,-soname,$(SONAME) -o $(SONAME) nmea.o -lm
-	cp nmea.h ../../include
-	mv $(SONAME) ../../lib
+all:$(SRC).c
+	$(GCC) -c -fPIC $(SRC).c -o $(SRC).o
+	@mkdir -p ../../include
+	@mkdir -p ../../lib
+	@cp $(SRC).h ../../include
+	@mv $(SRC).o ../../lib

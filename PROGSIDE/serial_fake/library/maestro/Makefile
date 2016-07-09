@@ -1,8 +1,9 @@
-SONAME = libmaestro.so
-GCC = g++
+SRC = maestro
+GCC = gcc
 
-all:
-	$(GCC) -c -fPIC maestro.cpp -o maestro.o
-	$(GCC) -shared -Wl,-soname,$(SONAME) -o $(SONAME) maestro.o
-	cp maestro.h ../../include
-	mv $(SONAME) ../../lib
+all:$(SRC).cpp
+	$(GCC) -c -fPIC $(SRC).cpp -o $(SRC).o
+	@mkdir -p ../../include
+	@mkdir -p ../../lib
+	@cp $(SRC).h ../../include
+	@mv $(SRC).o ../../lib

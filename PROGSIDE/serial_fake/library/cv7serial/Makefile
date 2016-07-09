@@ -1,8 +1,9 @@
-SONAME = libcv7serial.so
+SRC = cv7serial
 GCC = gcc
 
-all:
-	$(GCC) -c -fPIC cv7serial.c -o cv7serial.o
-	$(GCC) -shared -Wl,-soname,$(SONAME) -o $(SONAME) cv7serial.o -lm
-	cp cv7serial.h ../../include
-	mv $(SONAME) ../../lib
+all:$(SRC).c
+	$(GCC) -c -fPIC $(SRC).c -o $(SRC).o
+	@mkdir -p ../../include
+	@mkdir -p ../../lib
+	@cp $(SRC).h ../../include
+	@mv $(SRC).o ../../lib
