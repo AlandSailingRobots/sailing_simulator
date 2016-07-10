@@ -3,6 +3,8 @@
 
 #include <pthread.h>
 #include <stdint.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
 
 //-----------------------------------------------------------------------------
 struct DATA_SOCKET_RECEIVE{
@@ -47,6 +49,12 @@ struct THREAD_HANDLER {
   int *run_threads;
   struct DATA_SOCKET_SEND *data_socket_send;
   struct DATA_SOCKET_RECEIVE *data_socket_receive;
+};
+
+struct HANDLERS_SOCKET
+{
+    int sockfd;
+    struct sockaddr_in info_me;
 };
 
 #endif

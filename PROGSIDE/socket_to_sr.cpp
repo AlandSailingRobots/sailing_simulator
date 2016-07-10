@@ -5,6 +5,10 @@
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <netdb.h>
+#include <arpa/inet.h>
 
 #include "handler.h"
 #include "cv7serial.h"
@@ -71,6 +75,37 @@ void signals_handler(int signal_number)
 {
     exit_function();
     _Exit(EXIT_SUCCESS);
+}
+
+int init_socket(int port, struct HANDLERS_SOCKET * handlers)
+{
+    // init socket
+    handlers->sockfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if (handlers->sockfd == -1)
+    {
+        perror("socket");
+        return -1;
+    }
+
+    // configure
+    bzero((char *)&handlers->info_me, sizeof(handlers->info_me));
+    handlers->info_me.sin_family = AF_INET;
+    handlers->info_me.sin_port = htons(port);
+    handlers->info_me.sin_addr.s_addr = htonl(INADDR_ANY);
+
+    if( bind(handlers->sockfd, (struct sockaddr*) &handlers->info_me,
+             sizeof(handlers->info_me)) == -1)
+    {
+        perror("bind");
+        return -1;
+    }
+
+    if (listen(handlers->sockfd,1) < 0)
+    {
+        perror("listen");
+        return -1;
+    }
+    return 0;
 }
 
 int write_cv7(int fd,struct THREAD_HANDLER *th_handler)
@@ -292,6 +327,14 @@ int main(int argc,char **argv){
   // print
   printf("PTTY maestro: %s\n", ptmx_maestro.port);
 
+  // init socket
+  struct HANDLERS_SOCKET handler_socket_server;
+  if (init_socket(6400, &handler_socket_server) == -1)
+     exit(EXIT_FAILURE);
+
+  struct HANDLERS_SOCKET handler_socket_client;
+
+  printf("Address: %s Port: %d\n", inet_ntoa(handler_socket_server.info_me.sin_addr),6400);
   // signals handler
   struct sigaction action;
   action.sa_handler = signals_handler;
@@ -313,6 +356,9 @@ int main(int argc,char **argv){
   data_socket_send = (struct DATA_SOCKET_SEND*) malloc(sizeof(struct DATA_SOCKET_SEND));
   data_socket_receive = (struct DATA_SOCKET_RECEIVE*) malloc(sizeof(struct DATA_SOCKET_RECEIVE));
 
+  struct DATA_SOCKET_SEND temp_data_sock_send;
+  struct DATA_SOCKET_RECEIVE temp_data_sock_receive;
+
   handler_thread_maestro.mutex = &mutex;
   handler_thread_gps.mutex = &mutex;
   handler_thread_cv7.mutex = &mutex;
@@ -327,21 +373,11 @@ int main(int argc,char **argv){
   handler_thread_cv7.data_socket_send = data_socket_send;
 
   sem_wait(handler_shm.sem);
+  memset(&handler_shm.shdata->shdata_arduino,0,sizeof(struct SHDATA_ARDU));
   handler_shm.shdata->shdata_arduino.address_arduino = 0x07;
-  handler_shm.shdata->shdata_arduino.battery_msb = 0;
-  handler_shm.shdata->shdata_arduino.battery_lsb = 0;
-  handler_shm.shdata->shdata_arduino.pressure_msb = 0;
-  handler_shm.shdata->shdata_arduino.pressure_lsb = 0;
-  handler_shm.shdata->shdata_arduino.rudder_msb = 0;
-  handler_shm.shdata->shdata_arduino.rudder_lsb = 0;
-  handler_shm.shdata->shdata_arduino.sheet_msb = 0;
-  handler_shm.shdata->shdata_arduino.sheet_lsb = 0;
-  handler_shm.shdata->shdata_arduino.flag = 0;
   memset(&handler_shm.shdata->shdata_compass,0,sizeof(struct SHDATA_COMP));
   handler_shm.shdata->shdata_compass.address_compass = 0x19;
   sem_post(handler_shm.sem);
-
-
 
   printf("Creating gps_thread\n");
   if (pthread_create(&thread_gps, NULL, gps_thread, (void*) &handler_thread_gps) != 0)
@@ -356,9 +392,86 @@ int main(int argc,char **argv){
   if (pthread_create(&thread_maestro, NULL, maestro_thread, (void*) &handler_thread_maestro) != 0)
       exit(EXIT_FAILURE);
 
-  /*while(true){
+  //================
+  unsigned int clntLen;            /* Length of client address data structure */
+  /* Set the size of the in-out parameter */
+  clntLen = sizeof(handler_socket_client.info_me);
+  /* Wait for a client to connect */
 
-  }*/
+  printf("Waiting for simulation client...\n");
+  fflush(stdout);
+  if ((handler_socket_client.sockfd = accept(handler_socket_server.sockfd, (struct sockaddr *) &(handler_socket_client.info_me),
+           &clntLen)) < 0)
+        perror("accept() failed");
+
+  // Transform socjet to on-blockig
+  fcntl(handler_socket_client.sockfd, F_SETFL, O_NONBLOCK);
+  fcntl(handler_socket_server.sockfd, F_SETFL, O_NONBLOCK);
+  printf("Handling Simulation client %s\n", inet_ntoa(handler_socket_client.info_me.sin_addr));
+
+  int bytes_received=0;
+  while(true){
+    //receive socket from simulation
+    bytes_received += read(handler_socket_client.sockfd,&temp_data_sock_receive+bytes_received,sizeof(struct DATA_SOCKET_RECEIVE)-bytes_received);
+    if (bytes_received==sizeof(struct DATA_SOCKET_RECEIVE)){
+       pthread_mutex_lock(&mutex);
+       memcpy(data_socket_receive, &temp_data_sock_receive, sizeof(struct DATA_SOCKET_RECEIVE));
+       pthread_mutex_unlock(&mutex);
+       bytes_received=0;
+    }
+    if (bytes_received==-1)
+      bytes_received=0;
+
+    pthread_mutex_lock(&mutex);
+    memcpy(&temp_data_sock_send,data_socket_send, sizeof(struct DATA_SOCKET_SEND));
+    pthread_mutex_unlock(&mutex);
+    write(handler_socket_client.sockfd,&temp_data_sock_send, sizeof(struct DATA_SOCKET_SEND));
+
+    sem_wait(handler_shm.sem);// writing to shared memory
+    handler_shm.shdata->shdata_arduino.address_arduino = 0x07;
+    handler_shm.shdata->shdata_arduino.battery_msb = ((temp_data_sock_receive.battery >> 8) & 0xff);
+    handler_shm.shdata->shdata_arduino.battery_lsb = ((temp_data_sock_receive.battery >> 0) & 0xff);
+    handler_shm.shdata->shdata_arduino.pressure_msb = ((temp_data_sock_receive.pressure >> 8) & 0xff);
+    handler_shm.shdata->shdata_arduino.pressure_lsb = ((temp_data_sock_receive.pressure >> 0) & 0xff);
+    handler_shm.shdata->shdata_arduino.rudder_msb = ((temp_data_sock_receive.rudder >> 8) & 0xff);
+    handler_shm.shdata->shdata_arduino.rudder_lsb = ((temp_data_sock_receive.rudder >> 0) & 0xff);
+    handler_shm.shdata->shdata_arduino.sheet_msb = ((temp_data_sock_receive.sheet >> 8) & 0xff);
+    handler_shm.shdata->shdata_arduino.sheet_lsb = ((temp_data_sock_receive.sheet >> 0) & 0xff);
+
+
+    handler_shm.shdata->shdata_compass.address_compass = 0x19;
+    handler_shm.shdata->shdata_compass.flag = 0;
+    handler_shm.shdata->shdata_compass.headingVector[0] = ((temp_data_sock_receive.headingVector[0] >> 8) & 0xff);
+    handler_shm.shdata->shdata_compass.headingVector[1] = ((temp_data_sock_receive.headingVector[0] >> 0) & 0xff);
+    handler_shm.shdata->shdata_compass.headingVector[2] = ((temp_data_sock_receive.headingVector[1] >> 8) & 0xff);
+    handler_shm.shdata->shdata_compass.headingVector[3] = ((temp_data_sock_receive.headingVector[1] >> 0) & 0xff);
+    handler_shm.shdata->shdata_compass.headingVector[4] = ((temp_data_sock_receive.headingVector[2] >> 8) & 0xff);
+    handler_shm.shdata->shdata_compass.headingVector[5] = ((temp_data_sock_receive.headingVector[2] >> 0) & 0xff);
+
+    handler_shm.shdata->shdata_compass.magVector[0] = ((temp_data_sock_receive.magVector[0] >> 8) & 0xff);
+    handler_shm.shdata->shdata_compass.magVector[1] = ((temp_data_sock_receive.magVector[0] >> 0) & 0xff);
+    handler_shm.shdata->shdata_compass.magVector[2] = ((temp_data_sock_receive.magVector[1] >> 8) & 0xff);
+    handler_shm.shdata->shdata_compass.magVector[3] = ((temp_data_sock_receive.magVector[1] >> 0) & 0xff);
+    handler_shm.shdata->shdata_compass.magVector[4] = ((temp_data_sock_receive.magVector[2] >> 8) & 0xff);
+    handler_shm.shdata->shdata_compass.magVector[5] = ((temp_data_sock_receive.magVector[2] >> 0) & 0xff);
+
+    handler_shm.shdata->shdata_compass.tiltVector[0] = ((temp_data_sock_receive.tiltVector[0] >> 8) & 0xff);
+    handler_shm.shdata->shdata_compass.tiltVector[1] = ((temp_data_sock_receive.tiltVector[0] >> 0) & 0xff);
+    handler_shm.shdata->shdata_compass.tiltVector[2] = ((temp_data_sock_receive.tiltVector[1] >> 8) & 0xff);
+    handler_shm.shdata->shdata_compass.tiltVector[3] = ((temp_data_sock_receive.tiltVector[1] >> 0) & 0xff);
+    handler_shm.shdata->shdata_compass.tiltVector[4] = ((temp_data_sock_receive.tiltVector[2] >> 8) & 0xff);
+    handler_shm.shdata->shdata_compass.tiltVector[5] = ((temp_data_sock_receive.tiltVector[2] >> 0) & 0xff);
+
+    handler_shm.shdata->shdata_compass.accelVector[0] = ((temp_data_sock_receive.accelVector[0] >> 8) & 0xff);
+    handler_shm.shdata->shdata_compass.accelVector[1] = ((temp_data_sock_receive.accelVector[0] >> 0) & 0xff);
+    handler_shm.shdata->shdata_compass.accelVector[2] = ((temp_data_sock_receive.accelVector[1] >> 8) & 0xff);
+    handler_shm.shdata->shdata_compass.accelVector[3] = ((temp_data_sock_receive.accelVector[1] >> 0) & 0xff);
+    handler_shm.shdata->shdata_compass.accelVector[4] = ((temp_data_sock_receive.accelVector[2] >> 8) & 0xff);
+    handler_shm.shdata->shdata_compass.accelVector[5] = ((temp_data_sock_receive.accelVector[2] >> 0) & 0xff);
+    sem_post(handler_shm.sem);
+
+    usleep(500000);
+  }
 
   pthread_join(thread_gps, NULL);
   pthread_join(thread_maestro, NULL);
