@@ -2,6 +2,8 @@
 #define MAESTRO_H
 
 #include <iostream>
+#include <stdint.h>
+
 //-----------------------------------------------------------------------------
 #define SET_SPEED            0x87
 #define SET_ACCELERATION     0x89
@@ -25,6 +27,8 @@ public:
   void read_buffer();
   void add_buffer(char *new_buffer);
   void execute_command(void);
+  int get_rudder_command();
+  int get_sheet_command();
 
 private:
   int position;
@@ -34,8 +38,10 @@ private:
   int state; //state=0 no order, =1 waiting second byte, =2 waiting third byte, =3 waiting forth byte, =4 execute command
   int channel;
   int command;
-  int value1;
-  int value2;
+  uint8_t value1;
+  uint8_t value2;
+  int rudder_command;
+  int sheet_command;
 };
 //-----------------------------------------------------------------------------
 

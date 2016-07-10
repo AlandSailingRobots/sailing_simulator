@@ -8,7 +8,9 @@
 
 
 //-----------------------------------------------------------------------------
-MaestroExchange::MaestroExchange(): state(0){}
+MaestroExchange::MaestroExchange(): state(0),
+  rudder_command(0),
+  sheet_command(0){}
 
 void MaestroExchange::read_buffer(void)
 {
@@ -36,28 +38,26 @@ void MaestroExchange::read_buffer(void)
 
     }
   }
-  else if(state=1){
+  else if(state==1){// Ruder=4, Sheet=3
     channel = buffer_stream[0];
     buffer_stream.erase(buffer_stream.begin());
     state=2;
   }
-  else if(state=2){
+  else if(state==2){
     value1 = buffer_stream[0];
     buffer_stream.erase(buffer_stream.begin());
     state=3;
   }
-  else if(state=3){
-    value1 = buffer_stream[0];
+  else if(state==3){
+    value2 = buffer_stream[0];
     buffer_stream.erase(buffer_stream.begin());
     state=4;
   }
-  else if(state=3){
+  else if(state==3){
     execute_command();
     state=0;
   }
-  if(state>0)
-      read_buffer();
-  else if (buffer_stream.size()){
+  if (buffer_stream.size()){
     read_buffer();
   }
 }
@@ -74,6 +74,10 @@ void MaestroExchange::execute_command(void){
     case SET_ACCELERATION:
       break;
     case SET_POSITION:
+      if (channel==4)
+       {rudder_command=((int) value1 <<8) + (int) value2;}
+      else if(channel ==3)
+       {sheet_command=((int) value1 <<8) + (int) value2;}// Ruder=4, Sheet=3
       break;
     case SET_POSITION_HOME:
       break;
@@ -86,4 +90,11 @@ void MaestroExchange::execute_command(void){
   default:
     std::cout<<"Error in Parsing"<<std::endl;
  }
+}
+
+int MaestroExchange::get_rudder_command(){
+  return rudder_command;
+}
+int MaestroExchange::get_sheet_command(){
+  return sheet_command;
 }
