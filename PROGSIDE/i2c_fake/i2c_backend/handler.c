@@ -8,7 +8,7 @@
 
 #include "handler.h"
 
-static char *SHM_NAME = (char*)"i2c_shm_simu";
+static char *SHM_NAME = (char*)"/i2c_shm_simu";
 static char *SEM_NAME = (char*)"/i2c_sem_simu";
 
 

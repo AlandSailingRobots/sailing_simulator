@@ -25,8 +25,8 @@ static void readBlocks(uint8_t  *block);
 static int readOneCompassByte();
 static void writeCommand(uint8_t data);
 
-static char *SHM_NAME = (char*)"i2c_shm_simu";
-static char *SEM_NAME = (char*)"i2c_sem_simu";
+static char *SHM_NAME = (char*)"/i2c_shm_simu";
+static char *SEM_NAME = (char*)"/i2c_sem_simu";
 
 static struct HANDLERS handlers;
 static uint8_t readingProccess;

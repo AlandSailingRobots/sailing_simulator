@@ -334,6 +334,8 @@ int main(int argc,char **argv){
 
   struct HANDLERS_SOCKET handler_socket_client;
 
+  printf("Size of float on this platform %d\n",(int)sizeof(float)*8 );
+
   printf("Address: %s Port: %d\n", inet_ntoa(handler_socket_server.info_me.sin_addr),6400);
   // signals handler
   struct sigaction action;
@@ -359,6 +361,7 @@ int main(int argc,char **argv){
   struct DATA_SOCKET_SEND temp_data_sock_send;
   struct DATA_SOCKET_RECEIVE temp_data_sock_receive;
 
+
   handler_thread_maestro.mutex = &mutex;
   handler_thread_gps.mutex = &mutex;
   handler_thread_cv7.mutex = &mutex;
@@ -372,6 +375,7 @@ int main(int argc,char **argv){
   handler_thread_gps.data_socket_send = data_socket_send;
   handler_thread_cv7.data_socket_send = data_socket_send;
 
+  // init shared_memory
   sem_wait(handler_shm.sem);
   memset(&handler_shm.shdata->shdata_arduino,0,sizeof(struct SHDATA_ARDU));
   handler_shm.shdata->shdata_arduino.address_arduino = 0x07;
@@ -400,9 +404,12 @@ int main(int argc,char **argv){
 
   printf("Waiting for simulation client...\n");
   fflush(stdout);
+
   if ((handler_socket_client.sockfd = accept(handler_socket_server.sockfd, (struct sockaddr *) &(handler_socket_client.info_me),
            &clntLen)) < 0)
+  {
         perror("accept() failed");
+  }
 
   // Transform socjet to on-blockig
   fcntl(handler_socket_client.sockfd, F_SETFL, O_NONBLOCK);
@@ -417,10 +424,14 @@ int main(int argc,char **argv){
        pthread_mutex_lock(&mutex);
        memcpy(data_socket_receive, &temp_data_sock_receive, sizeof(struct DATA_SOCKET_RECEIVE));
        pthread_mutex_unlock(&mutex);
+       //printf("sure received %d\n",bytes_received);
        bytes_received=0;
     }
     if (bytes_received==-1)
       bytes_received=0;
+
+    //printf("received %d expecting %d address_ar: %d\n",bytes_received,(int)sizeof(struct DATA_SOCKET_RECEIVE),temp_data_sock_receive.address_compass);
+    //fflush(stdout);
 
     pthread_mutex_lock(&mutex);
     memcpy(&temp_data_sock_send,data_socket_send, sizeof(struct DATA_SOCKET_SEND));
