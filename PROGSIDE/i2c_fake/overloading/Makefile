@@ -20,6 +20,7 @@ all: $(TARGET_WIRO) handler.o
 $(TARGET_WIRO): handler.o
 			ar rcu myhook.a handler.o
 			$(CC) -shared -Wall -Wl,-soname,$(TARGET_WIRO) -o $(TARGET_WIRO) -ldl -Wl,--whole-archive myhook.a -Wl,--no-whole-archive
+			mv $(TARGET_WIRO) ../lib
 
 handler.o: handler.c
 			$(CC) -c $(FLAGS) handler.c -o handler.o

@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <stdint.h>
+#include <vector>
 
 //-----------------------------------------------------------------------------
 #define SET_SPEED            0x87
@@ -24,9 +25,9 @@ public:
   MaestroExchange();
   ~MaestroExchange(){};
 
-  void read_buffer();
-  void add_buffer(char *new_buffer);
-  void execute_command(void);
+  int read_buffer();
+  int add_buffer(unsigned char *new_buffer);
+  int execute_command(void);
   int get_rudder_command();
   int get_sheet_command();
 
@@ -34,10 +35,10 @@ private:
   int position;
   int position_command;
   int speed;
-  std::string buffer_stream;
+  std::vector<unsigned char> buffer_stream;
   int state; //state=0 no order, =1 waiting second byte, =2 waiting third byte, =3 waiting forth byte, =4 execute command
-  int channel;
-  int command;
+  unsigned char channel;
+  unsigned char command;
   uint8_t value1;
   uint8_t value2;
   int rudder_command;

@@ -4,9 +4,9 @@
 
 from math import pi, sin, cos, tan, sqrt
 
-#LatLong- UTM conversion..h
-#definitions for lat/long to UTM and UTM to lat/lng conversions
-#include <string.h>
+# LatLong- UTM conversion..h
+# definitions for lat/long to UTM and UTM to lat/lng conversions
+# include <string.h>
 
 _deg2rad = pi / 180.0
 _rad2deg = 180.0 / pi
@@ -15,66 +15,69 @@ _EquatorialRadius = 2
 _eccentricitySquared = 3
 
 _ellipsoid = [
-#  id, Ellipsoid name, Equatorial Radius, square of eccentricity	
-# first once is a placeholder only, To allow array indices to match id numbers
-    [ -1, "Placeholder", 0, 0],
-    [ 1, "Airy", 6377563, 0.00667054],
-    [ 2, "Australian National", 6378160, 0.006694542],
-    [ 3, "Bessel 1841", 6377397, 0.006674372],
-    [ 4, "Bessel 1841 (Nambia] ", 6377484, 0.006674372],
-    [ 5, "Clarke 1866", 6378206, 0.006768658],
-    [ 6, "Clarke 1880", 6378249, 0.006803511],
-    [ 7, "Everest", 6377276, 0.006637847],
-    [ 8, "Fischer 1960 (Mercury] ", 6378166, 0.006693422],
-    [ 9, "Fischer 1968", 6378150, 0.006693422],
-    [ 10, "GRS 1967", 6378160, 0.006694605],
-    [ 11, "GRS 1980", 6378137, 0.00669438],
-    [ 12, "Helmert 1906", 6378200, 0.006693422],
-    [ 13, "Hough", 6378270, 0.00672267],
-    [ 14, "International", 6378388, 0.00672267],
-    [ 15, "Krassovsky", 6378245, 0.006693422],
-    [ 16, "Modified Airy", 6377340, 0.00667054],
-    [ 17, "Modified Everest", 6377304, 0.006637847],
-    [ 18, "Modified Fischer 1960", 6378155, 0.006693422],
-    [ 19, "South American 1969", 6378160, 0.006694542],
-    [ 20, "WGS 60", 6378165, 0.006693422],
-    [ 21, "WGS 66", 6378145, 0.006694542],
-    [ 22, "WGS-72", 6378135, 0.006694318],
-    [ 23, "WGS-84", 6378137, 0.00669438] #a checker
+    #  id, Ellipsoid name, Equatorial Radius, square of eccentricity
+    # first once is a placeholder only, To allow array indices
+    # to match id numbers
+    [-1, "Placeholder", 0, 0],
+    [1, "Airy", 6377563, 0.00667054],
+    [2, "Australian National", 6378160, 0.006694542],
+    [3, "Bessel 1841", 6377397, 0.006674372],
+    [4, "Bessel 1841 (Nambia] ", 6377484, 0.006674372],
+    [5, "Clarke 1866", 6378206, 0.006768658],
+    [6, "Clarke 1880", 6378249, 0.006803511],
+    [7, "Everest", 6377276, 0.006637847],
+    [8, "Fischer 1960 (Mercury] ", 6378166, 0.006693422],
+    [9, "Fischer 1968", 6378150, 0.006693422],
+    [10, "GRS 1967", 6378160, 0.006694605],
+    [11, "GRS 1980", 6378137, 0.00669438],
+    [12, "Helmert 1906", 6378200, 0.006693422],
+    [13, "Hough", 6378270, 0.00672267],
+    [14, "International", 6378388, 0.00672267],
+    [15, "Krassovsky", 6378245, 0.006693422],
+    [16, "Modified Airy", 6377340, 0.00667054],
+    [17, "Modified Everest", 6377304, 0.006637847],
+    [18, "Modified Fischer 1960", 6378155, 0.006693422],
+    [19, "South American 1969", 6378160, 0.006694542],
+    [20, "WGS 60", 6378165, 0.006693422],
+    [21, "WGS 66", 6378145, 0.006694542],
+    [22, "WGS-72", 6378135, 0.006694318],
+    [23, "WGS-84", 6378137, 0.00669438]  # a checker
 ]
 
-#Reference ellipsoids derived from Peter H. Dana's website- 
-#http://www.utexas.edu/depts/grg/gcraft/notes/datum/elist.html
-#Department of Geography, University of Texas at Austin
-#Internet: pdana@mail.utexas.edu
-#3/22/95
+# Reference ellipsoids derived from Peter H. Dana's website-
+# http://www.utexas.edu/depts/grg/gcraft/notes/datum/elist.html
+# Department of Geography, University of Texas at Austin
+# Internet: pdana@mail.utexas.edu
+# 3/22/95
 
-#Source
-#Defense Mapping Agency. 1987b. DMA Technical Report: Supplement to Department of Defense World Geodetic System
-#1984 Technical Report. Part I and II. Washington, DC: Defense Mapping Agency
+# Source
+# Defense Mapping Agency. 1987b. DMA Technical Report: Supplement to Department
+# of Defense World Geodetic System
+# 1984 Technical Report. Part I and II. Washington, DC: Defense Mapping Agency
 
-#def LLtoUTM(int ReferenceEllipsoid, const double Lat, const double Long, 
-#			 double &UTMNorthing, double &UTMEasting, char* UTMZone)
+# def LLtoUTM(int ReferenceEllipsoid, const double Lat, const double Long,
+# 			 double &UTMNorthing, double &UTMEasting, char* UTMZone)
+
 
 def LLtoUTM(ReferenceEllipsoid, Lat, Long):
-#converts lat/long to UTM coords.  Equations from USGS Bulletin 1532 
-#East Longitudes are positive, West longitudes are negative. 
-#North latitudes are positive, South latitudes are negative
-#Lat and Long are in decimal degrees
-#Written by Chuck Gantz- chuck.gantz@globalstar.com
+    # converts lat/long to UTM coords.  Equations from USGS Bulletin 1532
+    # East Longitudes are positive, West longitudes are negative.
+    # North latitudes are positive, South latitudes are negative
+    # Lat and Long are in decimal degrees
+    # Written by Chuck Gantz- chuck.gantz@globalstar.com
 
     a = _ellipsoid[ReferenceEllipsoid][_EquatorialRadius]
     eccSquared = _ellipsoid[ReferenceEllipsoid][_eccentricitySquared]
     k0 = 0.9996
 
-#Make sure the longitude is between -180.00 .. 179.9
-    LongTemp = (Long+180)-int((Long+180)/360)*360-180 # -180.00 .. 179.9
+    # Make sure the longitude is between -180.00 .. 179.9
+    LongTemp = (Long+180)-int((Long+180)/360)*360-180  # -180.00 .. 179.9
 
     LatRad = Lat*_deg2rad
     LongRad = LongTemp*_deg2rad
 
     ZoneNumber = int((LongTemp + 180)/6) + 1
-  
+
     if Lat >= 56.0 and Lat < 64.0 and LongTemp >= 3.0 and LongTemp < 12.0:
         ZoneNumber = 32
 
@@ -100,13 +103,13 @@ def LLtoUTM(ReferenceEllipsoid, Lat, Long):
     M = a*((1
             - eccSquared/4
             - 3*eccSquared*eccSquared/64
-            - 5*eccSquared*eccSquared*eccSquared/256)*LatRad 
+            - 5*eccSquared*eccSquared*eccSquared/256)*LatRad
            - (3*eccSquared/8
               + 3*eccSquared*eccSquared/32
               + 45*eccSquared*eccSquared*eccSquared/1024)*sin(2*LatRad)
-           + (15*eccSquared*eccSquared/256 + 45*eccSquared*eccSquared*eccSquared/1024)*sin(4*LatRad) 
+           + (15*eccSquared*eccSquared/256 + 45*eccSquared*eccSquared*eccSquared/1024)*sin(4*LatRad)
            - (35*eccSquared*eccSquared*eccSquared/3072)*sin(6*LatRad))
-    
+
     UTMEasting = (k0*N*(A+(1-T+C)*A*A*A/6
                         + (5-18*T+T*T+72*C-58*eccPrimeSquared)*A*A*A*A*A/120)
                   + 500000.0)
@@ -150,25 +153,27 @@ def _UTMLetterDesignator(Lat):
     elif -72 > Lat >= -80: return 'C'
     else: return 'Z'	# if the Latitude is outside the UTM limits
 
-#void UTMtoLL(int ReferenceEllipsoid, const double UTMNorthing, const double UTMEasting, const char* UTMZone,
-#			  double& Lat,  double& Long )
+# void UTMtoLL(int ReferenceEllipsoid, const double UTMNorthing,
+# const double UTMEasting, const char* UTMZone,
+# 			  double& Lat,  double& Long )
+
 
 def UTMtoLL(ReferenceEllipsoid, northing, easting, zone):
 
-#converts UTM coords to lat/long.  Equations from USGS Bulletin 1532 
-#East Longitudes are positive, West longitudes are negative. 
-#North latitudes are positive, South latitudes are negative
-#Lat and Long are in decimal degrees. 
-#Written by Chuck Gantz- chuck.gantz@globalstar.com
-#Converted to Python by Russ Nelson <nelson@crynwr.com>
+    # converts UTM coords to lat/long.  Equations from USGS Bulletin 1532
+    # East Longitudes are positive, West longitudes are negative.
+    # North latitudes are positive, South latitudes are negative
+    # Lat and Long are in decimal degrees.
+    # Written by Chuck Gantz- chuck.gantz@globalstar.com
+    # Converted to Python by Russ Nelson <nelson@crynwr.com>
 
     k0 = 0.9996
     a = _ellipsoid[ReferenceEllipsoid][_EquatorialRadius]
     eccSquared = _ellipsoid[ReferenceEllipsoid][_eccentricitySquared]
     e1 = (1-sqrt(1-eccSquared))/(1+sqrt(1-eccSquared))
-    #NorthernHemisphere; //1 for northern hemispher, 0 for southern
+    # NorthernHemisphere; //1 for northern hemispher, 0 for southern
 
-    x = easting - 500000.0 #remove 500,000 meter offset for longitude
+    x = easting - 500000.0  # remove 500,000 meter offset for longitude
     y = northing
 
     ZoneLetter = zone[-1]
@@ -186,7 +191,7 @@ def UTMtoLL(ReferenceEllipsoid, northing, easting, zone):
     M = y / k0
     mu = M/(a*(1-eccSquared/4-3*eccSquared*eccSquared/64-5*eccSquared*eccSquared*eccSquared/256))
 
-    phi1Rad = (mu + (3*e1/2-27*e1*e1*e1/32)*sin(2*mu) 
+    phi1Rad = (mu + (3*e1/2-27*e1*e1*e1/32)*sin(2*mu)
                + (21*e1*e1/16-55*e1*e1*e1*e1/32)*sin(4*mu)
                +(151*e1*e1*e1/96)*sin(6*mu))
     phi1 = phi1Rad*_rad2deg;
@@ -205,4 +210,3 @@ def UTMtoLL(ReferenceEllipsoid, northing, easting, zone):
             *D*D*D*D*D/120)/cos(phi1Rad)
     Long = LongOrigin + Long * _rad2deg
     return (Lat, Long)
-

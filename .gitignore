@@ -6,3 +6,6 @@
 */bin
 *.a
 *socket_to_sr
+*__pycache__
+*.pyc
+*port_path.sh

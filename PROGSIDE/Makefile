@@ -23,6 +23,7 @@ $(EXECUTABLE):$(SRC) $(OBJECT)
 
 libs:
 	cd i2c_fake/i2c_backend && make
+	cd i2c_fake/overloading && make
 	cd serial_fake/library && make
 
 

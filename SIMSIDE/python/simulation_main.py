@@ -2,6 +2,12 @@ import socket
 import sys
 import numpy as np
 from struct import *
+import core_model_sim as cms
+import core_draw_sim as cds
+import time
+import matplotlib.pylab as plt
+import matplotlib.lines as lines
+import select
 
 
 class Socket_handler(object):
@@ -12,25 +18,30 @@ class Socket_handler(object):
         self.send_format = '=8f4H12HBB'
         self.receive_format = '=HH'
 
-        self.compass = ((0, 0, 0), (0, 0, 0), (0, 0, 0), (0, 0, 0, 0), 0x19)
-        self.arduino = (0, 0, 0, 0, 0x07)
+        self.compass = [[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0, 0],
+                        int(0x19)]
+        self.arduino = (0, 0, 0, 0, int(0x07))
         self.gps = (60.20, 19.14, 0, 0, 0)
         self.windsensor = (0, 0, 0)
 
     def set_compass_heading(self, heading):
-        self.compass[0][0] = heading
+        self.compass[0][0] = int(heading*10)
 
     def set_gps(self, latitude, longitude, course_real, course_magn,
                 speed_knot):
         self.gps = (latitude, longitude, course_real, course_magn, speed_knot)
 
     def set_arduino(self, pressure, rudder, sheet, battery, address=0x07):
-        self.arduino = (pressure, rudder, sheet, battery, address)
+        if rudder < 0:
+            rudder = 0
+        self.arduino = (int(pressure), int(rudder), int(sheet), int(battery),
+                        int(address))
 
     def set_windsensor(self, wind_direction, wind_speed, temperature=24):
-        self.windsensor = (wind_direction, wind_speed, temperature)
+        self.windsensor = (wind_direction, wind_speed, int(temperature))
 
     def socket_pack(self):
+        print(self.arduino, self.gps, self.windsensor, self.compass)
         self.data_socket_send = pack(self.send_format, self.gps[0],
                                      self.gps[1], self.gps[2], self.gps[3],
                                      self.gps[4],
@@ -45,27 +56,87 @@ class Socket_handler(object):
                                      self.compass[2][1], self.compass[2][2],
                                      self.compass[3][0], self.compass[3][1],
                                      self.compass[3][2], self.compass[4],
-                                     self.arduino[4])
+                                     int(self.arduino[4]))
+
+    def socket_unpack(self, data):
+        return unpack(self.receive_format, data)
 
     def get_data_pack_send(self):
         return self.data_socket_send
 
-# Create a TCP/IP socket
-sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-sock.setblocking(0)
 
-# Connect the socket to the port where the server is listening
-server_address = ('localhost', 6400)
-print('connecting to %s port %s' % server_address)
-try:
-    sock.connect(server_address)
-except socket.error as e:
-    print('Socket error:', e)
+if __name__ == '__main__':
 
+    # Create a TCP/IP socket
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-s_hand = Socket_handler()
-s_hand.socket_pack()
+    # Connect the socket to the port where the server is listening
+    server_address = ('localhost', 6400)
+    print('connecting to %s port %s' % server_address)
+    try:
+        sock.connect(server_address)
+    except socket.error as e:
+        print('Socket error:', e)
 
+    s_hand = Socket_handler()
+    s_hand.socket_pack()
 
-sock.sendall(s_hand.get_data_pack_send())
-print(s_hand.get_data_pack_send())
+    dt = 0.1
+
+    bytes_received = 0
+    data = bytearray()
+    simulation = cms.simulation()
+
+    fig = plt.figure()
+    fig.subplots_adjust(top=0.8)
+    ax2 = fig.add_axes([0.1, 0.1, 0.8, 0.8])
+    ax2.set_xlabel('Simulation of boat')
+    (ax_min_x, ax_min_y, axis_len) = (-20, -20, 40)
+
+    time.sleep(0.1)
+    sock.setblocking(0)
+
+    while(True):
+        # Handle socket receive first
+        ready_to_read, ready_to_write, in_error = select.select([sock], [sock],
+                                                                [sock], 0.1)
+
+        if len(ready_to_read):
+            data += sock.recv(2*2-bytes_received)
+            bytes_received = len(data)
+            if bytes_received is 4:
+                (command_rudder, command_sheet) = s_hand.socket_unpack(data)
+                simulation.set_actuators(command_rudder, command_sheet)
+                print("received %s", repr(data), "rudder : ",
+                      command_rudder, "sheet : ", command_sheet)
+                bytes_received = 0
+                data = bytearray()
+
+        simulation.one_loop(dt)
+        (head, gps, ardu, wind) = simulation.get_to_socket_value()
+        (x, y, theta) = simulation.get_boat().get_graph_values()
+        (delta_r, delta_s, phi_ap, phi) = simulation.get_graph_values()
+
+        plt.cla()   # Clear axis
+        plt.clf()   # Clear figure
+        fig.subplots_adjust(top=0.8)
+        ax2 = fig.add_axes([0.1, 0.1, 0.8, 0.8])
+        ax2.set_xlabel('Simulation of boat')
+        cds.draw_boat(ax2, 1, x, y, theta, delta_s, delta_r)
+        cds.draw_wind_direction(ax2, (ax_min_x, ax_min_y), axis_len, 1, phi)
+        plt.axis([ax_min_x, ax_min_x+axis_len, ax_min_y, ax_min_y+axis_len])
+        plt.draw()
+        plt.pause(0.001)
+
+        s_hand.set_gps(gps[0], gps[1], gps[2], gps[3], gps[4])
+        s_hand.set_windsensor(wind[1], wind[0])
+        s_hand.set_compass_heading(head[0][0])
+        s_hand.set_arduino(ardu[0], ardu[1], ardu[2], ardu[3])
+        s_hand.socket_pack()
+        ready_to_read, ready_to_write, in_error = select.select([sock], [sock],
+                                                                [sock], 0.1)
+
+        if len(ready_to_write):
+            sock.sendall(s_hand.get_data_pack_send())
+        print("loop")
+        time.sleep(dt)

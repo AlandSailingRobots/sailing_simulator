@@ -9,6 +9,8 @@
 #include <sys/types.h>
 #include <netdb.h>
 #include <arpa/inet.h>
+#include <iostream>
+#include <fstream>
 
 #include "handler.h"
 #include "cv7serial.h"
@@ -271,13 +273,21 @@ void *maestro_thread(void *thread_handler){
     {
      break;
     }
-    char buffer[200];
+    unsigned char buffer[200];
     memset(buffer, '\0',200);
     int n = read(ptmx_maestro.fd, buffer, sizeof(buffer));
+    int res = 1;
     if (n < 0)
-      fputs("read failed!\n", stderr);
-    else
-      maestro_handler.add_buffer(buffer);
+      fputs("Maestro progside read failed!\n", stderr);
+    else{
+      res = maestro_handler.add_buffer(buffer);
+    }
+
+    if (!res){ //received get error command
+       unsigned short dataHandle = 0;
+       printf("send dataHandle\n");
+       write(ptmx_maestro.fd, &dataHandle, sizeof(dataHandle));
+    }
 
     pthread_mutex_lock(th_handler->mutex);
     run_thread = *(th_handler->run_threads);
@@ -293,6 +303,19 @@ void *maestro_thread(void *thread_handler){
 
 int main(int argc,char **argv){
 
+  char *pathname;
+
+  if (argc==2){
+    pathname = argv[1];
+  }
+  else{
+    pathname=(char*)"port_path.sh";
+  }
+
+  std::ofstream myfile;
+  printf("Writing Port in %s\n",pathname);
+  myfile.open(pathname);
+
   // open virtual serial port
   if ( hndopen(&handler_shm) == -1)
   {
@@ -306,6 +329,8 @@ int main(int argc,char **argv){
       fprintf(stderr, "Error on ptmxopen() for cv7: %s\n", strerror(errno));
       exit(EXIT_FAILURE);
   }
+
+  myfile << "export CV7_PORT_SIMU="<<ptmx_cv7.port<<"\n";
   // print
   printf("PTTY cv7: %s\n", ptmx_cv7.port);
 
@@ -318,6 +343,8 @@ int main(int argc,char **argv){
   // print
   printf("PTTY gps: %s\n", ptmx_gps.port);
 
+  myfile << "export GPS_PORT_SIMU="<<ptmx_gps.port<<"\n";
+
   // open virtual serial port
   if ( ptmxopen(&ptmx_maestro) == -1)
   {
@@ -326,6 +353,11 @@ int main(int argc,char **argv){
   }
   // print
   printf("PTTY maestro: %s\n", ptmx_maestro.port);
+
+
+
+  myfile << "export MAESTRO_PORT_SIMU="<<ptmx_maestro.port<<"\n";
+  myfile.close();
 
   // init socket
   struct HANDLERS_SOCKET handler_socket_server;
@@ -360,7 +392,6 @@ int main(int argc,char **argv){
 
   struct DATA_SOCKET_SEND temp_data_sock_send;
   struct DATA_SOCKET_RECEIVE temp_data_sock_receive;
-
 
   handler_thread_maestro.mutex = &mutex;
   handler_thread_gps.mutex = &mutex;
