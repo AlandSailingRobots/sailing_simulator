@@ -44,12 +44,12 @@ int MaestroExchange::read_buffer(void)
     state=2;
   }
   else if(state==2){
-    value1 = buffer_stream[0];
+    value2 = buffer_stream[0];
     buffer_stream.erase(buffer_stream.begin());
     state=3;
   }
   else if(state==3){
-    value2 = buffer_stream[0];
+    value1 = buffer_stream[0];
     buffer_stream.erase(buffer_stream.begin());
     retValue = execute_command();
     state=0;
@@ -78,9 +78,9 @@ int MaestroExchange::execute_command(void){
       break;
     case SET_POSITION:
       if (channel==4)
-       {rudder_command=((int) value1 <<8) + (int) value2;}
+       {rudder_command=((int) value1 <<7) + (int) value2;}
       else if(channel ==3)
-       {sheet_command=((int) value1 <<8) + (int) value2;}// Ruder=4, Sheet=3
+       {sheet_command=((int) value1 <<7) + (int) value2;}// Ruder=4, Sheet=3
       break;
     case SET_POSITION_HOME:
       break;

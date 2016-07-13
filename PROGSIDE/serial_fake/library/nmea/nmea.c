@@ -22,9 +22,9 @@ int checksum(const char *s) {
 }
 
 //-----------------------------------------------------------------------------
-int knot_to_kmh_str(float not, size_t size, char * format, char * kmh_str)
+int knot_to_kmh_str(float knot, size_t size, char * format, char * kmh_str)
 {
-    float kmh = KNOT_TO_KMH * not;
+    float kmh = KNOT_TO_KMH * knot;
     snprintf(kmh_str, size, format, kmh);
 
     return kmh;
@@ -41,6 +41,7 @@ int current_date_str(char * str)
 
     sprintf(str, "%02d%02d%02d", timeinfo->tm_hour, timeinfo->tm_min,
             timeinfo->tm_sec);
+    return 0;
 }
 
 int current_date_str_rmc(char * str)
@@ -53,6 +54,7 @@ int current_date_str_rmc(char * str)
 
     sprintf(str, "%02d%02d%02d.00", timeinfo->tm_hour, timeinfo->tm_min,
             timeinfo->tm_sec);
+    return 0;
 }
 
 int current_date_day(char * str)
@@ -65,6 +67,7 @@ int current_date_day(char * str)
 
     sprintf(str, "%02d%02d%02d", timeinfo->tm_mday, timeinfo->tm_mon+1,
             timeinfo->tm_year-100);
+    return 0;
 }
 
 
@@ -290,6 +293,7 @@ int nmea_gsa(struct NMEA_GSA *gsa)
 
 int nmea_rmc(struct NMEA_RMC *rmc)
 {
+
     // set to zero
     memset(&rmc->frame[0], 0, NMEA_RMC_SIZE);
 
@@ -318,89 +322,88 @@ int nmea_rmc(struct NMEA_RMC *rmc)
 
     // latitude
     char lat_str[NMEA_LAT_SIZE];
-    float lat = decimal_to_str(rmc->latitude, NMEA_LAT_SIZE, "%07.2f", lat_str);
+    float lat = decimal_to_str(rmc->latitude, NMEA_LAT_SIZE, "%09.4f", lat_str);
     memcpy(&rmc->frame[19], lat_str, NMEA_LAT_SIZE);
-
-    // separator
-    rmc->frame[26] = NMEA_SEPARATOR;
-
-    // latitude orientation
-    if (lat < 0)
-        rmc->frame[27] = 'S';
-    else
-        rmc->frame[27] = 'N';
 
     // separator
     rmc->frame[28] = NMEA_SEPARATOR;
 
-    // longitude
-    char long_str[NMEA_LONG_SIZE];
-    float lon = decimal_to_str(rmc->longitude, NMEA_LONG_SIZE, "%08.2f",
-                                long_str);
-    memcpy(&rmc->frame[29], long_str, NMEA_LONG_SIZE);
+    // latitude orientation
+    if (lat < 0)
+        rmc->frame[29] = 'S';
+    else
+        rmc->frame[29] = 'N';
 
     // separator
-    rmc->frame[37] = NMEA_SEPARATOR;
+    rmc->frame[30] = NMEA_SEPARATOR;
+
+    // longitude
+    char long_str[NMEA_LONG_SIZE];
+    float lon = decimal_to_str(rmc->longitude, NMEA_LONG_SIZE, "%010.4f",
+                                long_str);
+    memcpy(&rmc->frame[31], long_str, NMEA_LONG_SIZE);
+
+    // separator
+    rmc->frame[41] = NMEA_SEPARATOR;
 
     // longitude orientation
     if (lon < 0)
-        rmc->frame[38] = 'W';
+        rmc->frame[42] = 'W';
     else
-        rmc->frame[38] = 'E';
+        rmc->frame[42] = 'E';
 
     // separator
-    rmc->frame[39] = NMEA_SEPARATOR;
+    rmc->frame[43] = NMEA_SEPARATOR;
 
     // knot speed
     char speed_knot_str[NMEA_SPEED_SIZE];
     snprintf(speed_knot_str, NMEA_SPEED_SIZE, "%05.1f", rmc->speed_knot);
-    memcpy(&rmc->frame[40], speed_knot_str, NMEA_SPEED_SIZE);
+    memcpy(&rmc->frame[44], speed_knot_str, NMEA_SPEED_SIZE);
 
     // separator
-    rmc->frame[45] = NMEA_SEPARATOR;
+    rmc->frame[49] = NMEA_SEPARATOR;
 
 
 
     // course gps
     char course_gps_str[NMEA_COURSE_DEG_SIZE];
-    snprintf(course_gps_str, NMEA_COURSE_DEG_SIZE, "%03.1f", rmc->course_real);
-    memcpy(&rmc->frame[46], course_gps_str, NMEA_COURSE_DEG_SIZE);
-
+    snprintf(course_gps_str, NMEA_COURSE_DEG_SIZE, "%05.1f", rmc->course_real);
+    memcpy(&rmc->frame[50], course_gps_str, NMEA_COURSE_DEG_SIZE);
     // separator
-    rmc->frame[50] = NMEA_SEPARATOR;
+    rmc->frame[55] = NMEA_SEPARATOR;
 
     // true track
     char date_day_str[NMEA_DATE_SIZE];
     current_date_day(date_day_str);
-    memcpy(&rmc->frame[51], date_day_str, 6);
+    memcpy(&rmc->frame[56], date_day_str, 6);
 
     // separator
-    rmc->frame[57] = NMEA_SEPARATOR;
+    rmc->frame[62] = NMEA_SEPARATOR;
 
 
     // magnetic variation
-    memcpy(&rmc->frame[58], "0.0", 3);
+    memcpy(&rmc->frame[63], "0.0", 3);
 
     // separator
-    rmc->frame[61] = NMEA_SEPARATOR;
+    rmc->frame[66] = NMEA_SEPARATOR;
 
     //magnetic variation direction
-    rmc->frame[62] = 'E';
+    rmc->frame[67] = 'E';
 
     // separator
-    rmc->frame[63] = NMEA_SEPARATOR;
+    rmc->frame[68] = NMEA_SEPARATOR;
 
-    rmc->frame[64] = 'A';
+    rmc->frame[69] = 'A';
 
 
     int check = checksum(rmc->frame);
     //checksum
 //    rmc->frame[65] = '*';
-    char checkcar[3] ="\0\0\0" ;
+    char checkcar[3] ={'\0','\0','\0'} ;
     sprintf(checkcar,"%02X",check);
 //    memcpy(&rmc->frame[66], checkcar, 2);
 
-    rmc->frame[65] = '\n';
+    rmc->frame[70] = '\n';
 
     return 0;
 }

@@ -189,7 +189,6 @@ int write_rmc(int fd,struct THREAD_HANDLER *th_handler)
     size_t bytes = 0;
 
     struct NMEA_RMC rmc;
-
     pthread_mutex_lock(th_handler->mutex);
     rmc.latitude = th_handler->data_socket_receive->latitude;
     rmc.longitude = th_handler->data_socket_receive->longitude;
@@ -207,7 +206,6 @@ int write_rmc(int fd,struct THREAD_HANDLER *th_handler)
     {
         bytes = write(fd, rmc.frame, sizeof(rmc.frame));
     }
-
     return bytes;
 }
 
@@ -223,7 +221,7 @@ void *gps_thread(void *thread_handler){
     run_thread = *(th_handler->run_threads);
     pthread_mutex_unlock(th_handler->mutex);
     write_rmc(ptmx_gps.fd, th_handler);
-    usleep(500000);
+    sleep(1);
   }
 
   printf("GPS exiting\n");
@@ -243,7 +241,7 @@ void *cv7_thread(void *thread_handler){
     run_thread = *(th_handler->run_threads);
     pthread_mutex_unlock(th_handler->mutex);
     write_cv7(ptmx_cv7.fd, th_handler);
-    usleep(500000);
+    sleep(1);
   }
 
   printf("CV7 exiting\n");
@@ -277,8 +275,11 @@ void *maestro_thread(void *thread_handler){
     memset(buffer, '\0',200);
     int n = read(ptmx_maestro.fd, buffer, sizeof(buffer));
     int res = 1;
-    if (n < 0)
+    if (n < 0){
       fputs("Maestro progside read failed!\n", stderr);
+      printf("buffer maestro %s",buffer);
+      usleep(500000);
+    }
     else{
       res = maestro_handler.add_buffer(buffer);
     }
@@ -392,6 +393,7 @@ int main(int argc,char **argv){
 
   struct DATA_SOCKET_SEND temp_data_sock_send;
   struct DATA_SOCKET_RECEIVE temp_data_sock_receive;
+  struct DATA_SOCKET_RECEIVE dump_data_sock_receive;
 
   handler_thread_maestro.mutex = &mutex;
   handler_thread_gps.mutex = &mutex;
@@ -457,6 +459,7 @@ int main(int argc,char **argv){
        pthread_mutex_unlock(&mutex);
        //printf("sure received %d\n",bytes_received);
        bytes_received=0;
+       while(read(handler_socket_client.sockfd,&dump_data_sock_receive,sizeof(struct DATA_SOCKET_RECEIVE))>0){};
     }
     if (bytes_received==-1)
       bytes_received=0;

@@ -26,6 +26,7 @@ class Socket_handler(object):
 
     def set_compass_heading(self, heading):
         self.compass[0][0] = int(heading*10)
+        print("heading cmp", heading)
 
     def set_gps(self, latitude, longitude, course_real, course_magn,
                 speed_knot):
@@ -41,7 +42,7 @@ class Socket_handler(object):
         self.windsensor = (wind_direction, wind_speed, int(temperature))
 
     def socket_pack(self):
-        print(self.arduino, self.gps, self.windsensor, self.compass)
+        # print(self.arduino, self.gps, self.windsensor, self.compass)
         self.data_socket_send = pack(self.send_format, self.gps[0],
                                      self.gps[1], self.gps[2], self.gps[3],
                                      self.gps[4],
@@ -86,6 +87,8 @@ if __name__ == '__main__':
     bytes_received = 0
     data = bytearray()
     simulation = cms.simulation()
+    # Set up windspeed,direction (where the wind is going in radian)
+    simulation.set_wind(3, np.pi/2)
 
     fig = plt.figure()
     fig.subplots_adjust(top=0.8)
@@ -95,11 +98,14 @@ if __name__ == '__main__':
 
     time.sleep(0.1)
     sock.setblocking(0)
+    delta_t = 0.05
 
     while(True):
+
+        deb = time.time()
         # Handle socket receive first
         ready_to_read, ready_to_write, in_error = select.select([sock], [sock],
-                                                                [sock], 0.1)
+                                                                [sock], 0.01)
 
         if len(ready_to_read):
             data += sock.recv(2*2-bytes_received)
@@ -107,26 +113,33 @@ if __name__ == '__main__':
             if bytes_received is 4:
                 (command_rudder, command_sheet) = s_hand.socket_unpack(data)
                 simulation.set_actuators(command_rudder, command_sheet)
-                print("received %s", repr(data), "rudder : ",
-                      command_rudder, "sheet : ", command_sheet)
                 bytes_received = 0
                 data = bytearray()
 
-        simulation.one_loop(dt)
+        simulation.one_loop(delta_t)
         (head, gps, ardu, wind) = simulation.get_to_socket_value()
         (x, y, theta) = simulation.get_boat().get_graph_values()
-        (delta_r, delta_s, phi_ap, phi) = simulation.get_graph_values()
+        (delta_r, delta_s,
+         phi_ap, phi, latitude, longitude) = simulation.get_graph_values()
 
-        plt.cla()   # Clear axis
-        plt.clf()   # Clear figure
-        fig.subplots_adjust(top=0.8)
-        ax2 = fig.add_axes([0.1, 0.1, 0.8, 0.8])
-        ax2.set_xlabel('Simulation of boat')
-        cds.draw_boat(ax2, 1, x, y, theta, delta_s, delta_r)
-        cds.draw_wind_direction(ax2, (ax_min_x, ax_min_y), axis_len, 1, phi)
-        plt.axis([ax_min_x, ax_min_x+axis_len, ax_min_y, ax_min_y+axis_len])
-        plt.draw()
-        plt.pause(0.001)
+        # plt.cla()   # Clear axis
+        # plt.clf()   # Clear figure
+        # fig.subplots_adjust(top=0.8)
+        # ax2 = fig.add_axes([0.1, 0.1, 0.8, 0.8])
+        # ax2.set_xlabel('Simulation of boat %0.1f %0.1f rudder  : %0.3f\
+        #                lat %.5f long %.5f' %
+        #               (cms.wrapTo2Pi(-theta+np.pi/2)*180/np.pi,
+        #                cms.wrapTo2Pi(-phi+np.pi/2)*180/np.pi,
+        #                delta_r,
+        #                latitude, longitude))
+        # cds.draw_boat(ax2, 1, x, y, theta, delta_s, delta_r)
+        # ax_min_x = x-axis_len/2.0
+        # ax_min_y = y-axis_len/2.0
+        # cds.draw_wind_direction(ax2, (ax_min_x+1,
+        #                              ax_min_y+1), axis_len, 1, phi)
+        # plt.axis([ax_min_x, ax_min_x+axis_len, ax_min_y, ax_min_y+axis_len])
+        # plt.draw()
+        # plt.pause(0.001)
 
         s_hand.set_gps(gps[0], gps[1], gps[2], gps[3], gps[4])
         s_hand.set_windsensor(wind[1], wind[0])
@@ -134,9 +147,9 @@ if __name__ == '__main__':
         s_hand.set_arduino(ardu[0], ardu[1], ardu[2], ardu[3])
         s_hand.socket_pack()
         ready_to_read, ready_to_write, in_error = select.select([sock], [sock],
-                                                                [sock], 0.1)
+                                                                [sock], 0.01)
 
         if len(ready_to_write):
             sock.sendall(s_hand.get_data_pack_send())
-        print("loop")
-        time.sleep(dt)
+        print("Time :", time.time()-deb)
+        time.sleep(0.05)

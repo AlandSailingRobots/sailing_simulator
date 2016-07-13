@@ -47,28 +47,26 @@ def f(y, a, phi, delta_s, delta_r):
                  )/p10
 
     return (np.array([x_dot, y_dot, theta_dot, v_dot, omega_dot]),
-            phi_ap,
             a_ap,
+            phi_ap,
             [x_dot, y_dot])
 
 
 def wrapTo2Pi(theta):
-    theta = theta % (2*np.pi)
     if theta < 0:
         theta += 2*np.pi
+    theta = theta % (2*np.pi)
     return theta
 
 
 def rudder_deg_to_arduino(delta):
-    print(delta, int(1500*delta*(6/np.pi)*(235/1500.0)+285))
     return int(1500*delta*(6/np.pi)*(235/1500.0)+285)
 
 
 def order_to_deg(command_rudder, command_sheet):
     if command_rudder > 8000 or command_rudder < 3000:
         command_sheet = 4215
-        command_rudder = 5120
-    print("Received corrected: ", command_rudder, command_sheet)
+        command_rudder = 5520
     return ((command_rudder-5520)*(np.pi/6.0)/1500.0,
             (command_sheet-4215)*(np.pi/-6.165)/900.0)
 
@@ -89,9 +87,9 @@ class Boat():
 
 class simulation(object):
     def __init__(self, ref_ellipse=23,
-                 lat_origin=60.081902,
-                 long_origin=19.899044,
-                 x_init=[0, 0, 0, 0, 0],
+                 lat_origin=60.073090,
+                 long_origin=19.8985,
+                 x_init=[0, 0, np.pi/2+0.3, 0, 0],
                  dt=0.1,
                  a=2,
                  phi=1):
@@ -144,13 +142,13 @@ class simulation(object):
                         self.utm_y_origin+x[1],
                         self.utm_x_origin+x[0],
                         self.UTMZone)
-        self.course_real = wrapTo2Pi(atan2(speed[1],
-                                     speed[0])-np.pi/2)*180/np.pi
-        self.course_magn = wrapTo2Pi(x[3]-np.pi/2)*180/np.pi
+        self.course_real = wrapTo2Pi(-atan2(speed[1],
+                                     speed[0])+np.pi/2)*180/np.pi
+        self.course_magn = wrapTo2Pi(-x[2]+np.pi/2)*180/np.pi
         self.rudder = int(rudder_deg_to_arduino(self.delta_r))
         self.speed_knot = hypot(speed[0], speed[1])*1.94384  # m/s to knot
         self.a_ap = self.a_ap_                      # kept in m/s
-        self.phi_ap = wrapTo2Pi(-self.phi_ap_)*180/np.pi
+        self.phi_ap = wrapTo2Pi(self.phi_ap_+np.pi)*180/np.pi
         self.heading = self.course_magn
 
     def get_to_socket_value(self):
@@ -172,7 +170,8 @@ class simulation(object):
         else:
             if sin(self.phi_ap_)is not 0:
                 delta_s_g = -np.sign(sin(self.phi_ap_))*abs(self.delta_s)
-        return (self.delta_r, delta_s_g, self.phi_ap_, self.phi)
+        return (self.delta_r, delta_s_g,
+                self.phi_ap_, self.phi, self.latitude, self.longitude)
 
 if __name__ == '__main__':
 

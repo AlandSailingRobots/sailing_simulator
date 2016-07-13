@@ -2,8 +2,8 @@
 #define NMEA_H
 
 //-----------------------------------------------------------------------------
-#define NMEA_LAT_SIZE 8
-#define NMEA_LONG_SIZE 9
+#define NMEA_LAT_SIZE 10
+#define NMEA_LONG_SIZE 11
 #define NMEA_DATE_SIZE 7
 #define NMEA_DATE_RMC_SIZE 10
 #define NMEA_COURSE_SIZE 6
@@ -20,7 +20,7 @@
 #define NMEA_VTG_SIZE 39
 
 #define NMEA_FRAME_RMC "RMC"
-#define NMEA_RMC_SIZE 70
+#define NMEA_RMC_SIZE 80
 
 #define NMEA_FRAME_GSA "GSA"
 #define NMEA_GSA_SIZE 39
