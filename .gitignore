@@ -9,3 +9,5 @@
 *__pycache__
 *.pyc
 *port_path.sh
+simu_asr.db
+simu_asr.db-journal
