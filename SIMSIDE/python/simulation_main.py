@@ -1,13 +1,53 @@
 import socket
 import sys
-import numpy as np
+import select
+import threading
+import time
+import copy
+import atexit
 from struct import *
+import numpy as np
 import core_model_sim as cms
 import core_draw_sim as cds
-import time
-import matplotlib.pylab as plt
-import matplotlib.lines as lines
-import select
+
+from matplotlib import pylab as plt
+from matplotlib import lines
+
+
+def exit_function_py():
+    threadLock.acquire()
+    temp_data.set_run(0)
+    threadLock.release()
+    thread_draw.join()
+
+atexit.register(exit_function_py)
+
+
+class data_handler(object):
+    def __init__(self):
+        self.x = 0
+        self.y = 0
+        self.theta = 0
+        self.delta_s = 0
+        self.delta_r = 0
+        self.phi = 0
+        self.latitude = 0
+        self.longitude = 0
+        self.run = 1
+
+    def set_value(self, x_, y_, theta_, delta_s_, delta_r_, phi_,
+                  latitude_, longitude_):
+        self.x = x_
+        self.y = y_
+        self.theta = theta_
+        self.delta_s = delta_s_
+        self.delta_r = delta_r_
+        self.phi = phi_
+        self.latitude = latitude_
+        self.longitude = longitude_
+
+    def set_run(self, run_):
+        self.run = run_
 
 
 class Socket_handler(object):
@@ -66,6 +106,54 @@ class Socket_handler(object):
         return self.data_socket_send
 
 
+class drawThread (threading.Thread):
+    def __init__(self, lock_):
+        threading.Thread.__init__(self)
+        self.lock = lock_
+        self.run_th = 1
+        self.threadID = 1
+        self.name = "Draw thread"
+        self.counter = 1
+
+    def run(self):
+        fig = plt.figure()
+        fig.subplots_adjust(top=0.8)
+        ax2 = fig.add_axes([0.1, 0.1, 0.8, 0.8])
+        ax2.set_xlabel('Simulation of boat')
+        (ax_min_x, ax_min_y, axis_len) = (-20, -20, 40)
+        while(self.run_th):
+
+            self.lock.acquire()
+            th_data = copy.deepcopy(temp_data)
+            self.lock.release()
+            self.run_th = th_data.run
+
+            plt.cla()   # Clear axis
+            plt.clf()   # Clear figure
+            fig.subplots_adjust(top=0.8)
+            ax2 = fig.add_axes([0.1, 0.1, 0.8, 0.8])
+            ax2.set_xlabel('Simulation of boat %0.1f %0.1f rudder  : %0.3f\
+                            lat %.5f long %.5f' %
+                           (cms.wrapTo2Pi(-th_data.theta+np.pi/2)*180/np.pi,
+                            cms.wrapTo2Pi(-th_data.phi+np.pi/2)*180/np.pi,
+                            th_data.delta_r,
+                            th_data.latitude, th_data.longitude))
+            cds.draw_boat(ax2, 1, th_data.x, th_data.y,
+                          th_data.theta, th_data.delta_s, th_data.delta_r)
+            ax_min_x = x-axis_len/2.0
+            ax_min_y = y-axis_len/2.0
+            cds.draw_wind_direction(ax2, (ax_min_x+1,
+                                          ax_min_y+1), axis_len, 1, phi)
+            plt.axis([ax_min_x, ax_min_x+axis_len,
+                      ax_min_y, ax_min_y+axis_len])
+            plt.draw()
+            plt.pause(0.001)
+
+        print("Stopping Draw Thread")
+        plt.close()
+
+temp_data = data_handler()
+
 if __name__ == '__main__':
 
     # Create a TCP/IP socket
@@ -82,6 +170,10 @@ if __name__ == '__main__':
     s_hand = Socket_handler()
     s_hand.socket_pack()
 
+    # multithreading management:
+    threadLock = threading.Lock()
+    thread_draw = drawThread(threadLock)
+
     dt = 0.1
 
     bytes_received = 0
@@ -90,66 +182,66 @@ if __name__ == '__main__':
     # Set up windspeed,direction (where the wind is going in radian)
     simulation.set_wind(3, np.pi/2)
 
-    fig = plt.figure()
-    fig.subplots_adjust(top=0.8)
-    ax2 = fig.add_axes([0.1, 0.1, 0.8, 0.8])
-    ax2.set_xlabel('Simulation of boat')
-    (ax_min_x, ax_min_y, axis_len) = (-20, -20, 40)
-
-    time.sleep(0.1)
+    time.sleep(0.05)
     sock.setblocking(0)
     delta_t = 0.05
 
-    while(True):
+    print("Start drawing thread")
+    thread_draw.start()
 
-        deb = time.time()
-        # Handle socket receive first
-        ready_to_read, ready_to_write, in_error = select.select([sock], [sock],
-                                                                [sock], 0.01)
+    try:
+        while(True):
 
-        if len(ready_to_read):
-            data += sock.recv(2*2-bytes_received)
-            bytes_received = len(data)
-            if bytes_received is 4:
-                (command_rudder, command_sheet) = s_hand.socket_unpack(data)
-                simulation.set_actuators(command_rudder, command_sheet)
-                bytes_received = 0
-                data = bytearray()
+            deb = time.time()
+            # Handle socket receive first
+            ready_to_read, ready_to_write, in_error = select.select([sock],
+                                                                    [sock],
+                                                                    [sock],
+                                                                    0.01)
 
-        simulation.one_loop(delta_t)
-        (head, gps, ardu, wind) = simulation.get_to_socket_value()
-        (x, y, theta) = simulation.get_boat().get_graph_values()
-        (delta_r, delta_s,
-         phi_ap, phi, latitude, longitude) = simulation.get_graph_values()
+            if len(ready_to_read):
+                data += sock.recv(2*2-bytes_received)
+                bytes_received = len(data)
+                if bytes_received is 4:
+                    (command_rudder,
+                     command_sheet) = s_hand.socket_unpack(data)
+                    simulation.set_actuators(command_rudder, command_sheet)
+                    bytes_received = 0
+                    data = bytearray()
 
-        # plt.cla()   # Clear axis
-        # plt.clf()   # Clear figure
-        # fig.subplots_adjust(top=0.8)
-        # ax2 = fig.add_axes([0.1, 0.1, 0.8, 0.8])
-        # ax2.set_xlabel('Simulation of boat %0.1f %0.1f rudder  : %0.3f\
-        #                lat %.5f long %.5f' %
-        #               (cms.wrapTo2Pi(-theta+np.pi/2)*180/np.pi,
-        #                cms.wrapTo2Pi(-phi+np.pi/2)*180/np.pi,
-        #                delta_r,
-        #                latitude, longitude))
-        # cds.draw_boat(ax2, 1, x, y, theta, delta_s, delta_r)
-        # ax_min_x = x-axis_len/2.0
-        # ax_min_y = y-axis_len/2.0
-        # cds.draw_wind_direction(ax2, (ax_min_x+1,
-        #                              ax_min_y+1), axis_len, 1, phi)
-        # plt.axis([ax_min_x, ax_min_x+axis_len, ax_min_y, ax_min_y+axis_len])
-        # plt.draw()
-        # plt.pause(0.001)
+            simulation.one_loop(delta_t)
+            (head, gps, ardu, wind) = simulation.get_to_socket_value()
+            (x, y, theta) = simulation.get_boat().get_graph_values()
+            (delta_r, delta_s,
+             phi_ap, phi, latitude, longitude) = simulation.get_graph_values()
 
-        s_hand.set_gps(gps[0], gps[1], gps[2], gps[3], gps[4])
-        s_hand.set_windsensor(wind[1], wind[0])
-        s_hand.set_compass_heading(head[0][0])
-        s_hand.set_arduino(ardu[0], ardu[1], ardu[2], ardu[3])
-        s_hand.socket_pack()
-        ready_to_read, ready_to_write, in_error = select.select([sock], [sock],
-                                                                [sock], 0.01)
+            threadLock.acquire()
+            temp_data.set_value(x, y, theta, delta_s, delta_r, phi,
+                                latitude, longitude)
+            threadLock.release()
 
-        if len(ready_to_write):
-            sock.sendall(s_hand.get_data_pack_send())
-        print("Time :", time.time()-deb)
-        time.sleep(0.05)
+            s_hand.set_gps(gps[0], gps[1], gps[2], gps[3], gps[4])
+            s_hand.set_windsensor(wind[1], wind[0])
+            s_hand.set_compass_heading(head[0][0])
+            s_hand.set_arduino(ardu[0], ardu[1], ardu[2], ardu[3])
+            s_hand.socket_pack()
+            ready_to_read, ready_to_write, in_error = select.select([sock],
+                                                                    [sock],
+                                                                    [sock],
+                                                                    0.01)
+
+            if len(ready_to_write):
+                sock.sendall(s_hand.get_data_pack_send())
+
+            dt_sleep = 0.05-(time.time()-deb)
+            if dt_sleep < 0:
+                dt_sleep = 0.05
+            time.sleep(dt_sleep)
+
+    except socket.error as msg:
+        print("Error :", msg)
+
+    threadLock.acquire()
+    temp_data.set_run(0)
+    threadLock.release()
+    thread_draw.join()
