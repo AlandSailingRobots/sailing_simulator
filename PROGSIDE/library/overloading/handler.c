@@ -5,9 +5,10 @@
 #include <stdio.h>
 #include <sys/timerfd.h>
 #include <signal.h>
+#include <semaphore.h>
 
 #include "shdata.h"
-#include <semaphore.h>
+
 
 //-----------------------------------------------------------------------------
 struct HANDLERS

@@ -7,8 +7,8 @@
 #include <errno.h>
 #include <string.h>
 
-#include <ptmx.h>
-#include <nmea.h>
+#include "ptmx.h"
+#include "nmea.h"
 
 //-----------------------------------------------------------------------------
 struct PTMX ptmx;

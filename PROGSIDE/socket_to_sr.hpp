@@ -6,6 +6,8 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 
+#include "ptmx.h"
+
 //-----------------------------------------------------------------------------
 struct DATA_SOCKET_RECEIVE{
 
@@ -48,6 +50,8 @@ struct THREAD_HANDLER {
   int *run_threads;
   struct DATA_SOCKET_SEND *data_socket_send;
   struct DATA_SOCKET_RECEIVE *data_socket_receive;
+  struct PTMX *serial_port;
+  int *pipe;
 };
 
 struct HANDLERS_SOCKET

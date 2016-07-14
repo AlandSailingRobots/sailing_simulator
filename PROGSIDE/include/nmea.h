@@ -70,7 +70,6 @@ extern "C" {
 int nmea_gll(struct NMEA_GLL *gll);
 int nmea_vtg(struct NMEA_VTG *vtg);
 int nmea_rmc(struct NMEA_RMC *rmc);
-int nmea_gsa(struct NMEA_GSA *gsa);
 
 #ifdef __cplusplus
 }

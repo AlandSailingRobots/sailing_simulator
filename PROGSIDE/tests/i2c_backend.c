@@ -8,7 +8,7 @@
 #include <string.h>
 #include <sys/timerfd.h>
 
-#include "handler.h"
+#include "i2c_backend/handler.h"
 
 //-----------------------------------------------------------------------------
 struct HANDLERS handlers;
