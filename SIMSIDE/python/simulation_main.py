@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 import socket
 import sys
 import select
@@ -15,12 +17,14 @@ from matplotlib import lines
 
 
 def exit_function_py():
-    threadLock.acquire()
-    temp_data.set_run(0)
-    threadLock.release()
-    thread_draw.join()
+    if init_prog:
+        threadLock.acquire()
+        temp_data.set_run(0)
+        threadLock.release()
+        thread_draw.join()
 
 atexit.register(exit_function_py)
+init_prog = 0
 
 
 class data_handler(object):
@@ -156,11 +160,20 @@ temp_data = data_handler()
 
 if __name__ == '__main__':
 
+    if len(sys.argv) == 2:
+        address_prog = sys.argv[1]
+        if address_prog == '-h':
+            print("Usage: simulation_main [ip_address]")
+            print("    ip _address    default is localhost\n")
+            exit(0)
+    else:
+        address_prog = 'localhost'
+
     # Create a TCP/IP socket
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
     # Connect the socket to the port where the server is listening
-    server_address = ('localhost', 6400)
+    server_address = (address_prog, 6400)
     print('connecting to %s port %s' % server_address)
     try:
         sock.connect(server_address)
@@ -173,6 +186,7 @@ if __name__ == '__main__':
     # multithreading management:
     threadLock = threading.Lock()
     thread_draw = drawThread(threadLock)
+    init_prog = 1
 
     dt = 0.1
 

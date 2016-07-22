@@ -148,7 +148,8 @@ class simulation(object):
         self.rudder = int(rudder_deg_to_arduino(self.delta_r))
         self.speed_knot = hypot(speed[0], speed[1])*1.94384  # m/s to knot
         self.a_ap = self.a_ap_                      # kept in m/s
-        self.phi_ap = wrapTo2Pi(self.phi_ap_+np.pi)*180/np.pi
+        self.phi_ap = wrapTo2Pi(-self.phi_ap_+np.pi)*180/np.pi
+        print("send phi_ap: ", self.phi_ap, " from ", phi_ap_*180/np.pi)
         self.heading = self.course_magn
 
     def get_to_socket_value(self):
