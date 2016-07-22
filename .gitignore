@@ -11,3 +11,4 @@
 *port_path.sh
 simu_asr.db
 simu_asr.db-journal
+*/build*
