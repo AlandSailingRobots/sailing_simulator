@@ -152,7 +152,7 @@ static int readBlocks(uint8_t  *block,int length){
     block[5] = handlers.shdata->shdata_arduino.sheet_lsb;
     block[6] = handlers.shdata->shdata_arduino.battery_msb;
     block[7] = handlers.shdata->shdata_arduino.battery_lsb;
-    block[8] = handlers.shdata->shdata_arduino.address_arduino;
+    block[8] = 0x07;//handlers.shdata->shdata_arduino.address_arduino;
     sem_post(handlers.sem);
     return 9;
 }
@@ -171,7 +171,7 @@ static int readOneCompassByte(){
          break;
      case COM_POST_ACCEL:return_value = handlers.shdata->shdata_compass.accelVector[stepInReadingProcess++];
          break;
-     case REG_SLAVE_ADDRESS:return_value = handlers.shdata->shdata_compass.address_compass;
+     case REG_SLAVE_ADDRESS:return_value = 0x19;//handlers.shdata->shdata_compass.address_compass;
          break;
      default: return_value = 0;
    }
