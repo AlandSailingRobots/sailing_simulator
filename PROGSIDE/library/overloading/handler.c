@@ -210,6 +210,11 @@ int wiringPiI2CWrite (int fd, int data){
   return 1;
 }
 
+int wiringPiI2CWriteReg8 (int fd, int reg, int value)
+{
+  writeCommand(REG_SLAVE_ADDRESS);
+  return 1;
+}
 
 
 int wiringPiI2CReadBlock(int fd,uint8_t  *block,int length)
