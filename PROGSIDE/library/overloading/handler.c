@@ -22,7 +22,7 @@ struct HANDLERS
 //-----------------------------------------------------------------------------
 static int hndopen();
 static void hndclose();
-static void readBlocks(uint8_t  *block);
+static int readBlocks(uint8_t  *block,int length);
 static int readOneCompassByte();
 static void writeCommand(uint8_t data);
 
@@ -138,18 +138,23 @@ static void hndclose()
 }
 
 //-----------------------------------------------------------------------------
-static void readBlocks(uint8_t  *block){
+static int readBlocks(uint8_t  *block,int length){
+    if (length < 9)
+    {
+      return 0;
+    }
     sem_wait(handlers.sem);
-    block[2] = handlers.shdata->shdata_arduino.pressure_msb;
-    block[3] = handlers.shdata->shdata_arduino.pressure_lsb;
-    block[4] = handlers.shdata->shdata_arduino.rudder_msb;
-    block[5] = handlers.shdata->shdata_arduino.rudder_lsb;
-    block[6] = handlers.shdata->shdata_arduino.sheet_msb;
-    block[7] = handlers.shdata->shdata_arduino.sheet_lsb;
-    block[8] = handlers.shdata->shdata_arduino.battery_msb;
-    block[9] = handlers.shdata->shdata_arduino.battery_lsb;
-    block[10] = handlers.shdata->shdata_arduino.address_arduino;
+    block[0] = handlers.shdata->shdata_arduino.pressure_msb;
+    block[1] = handlers.shdata->shdata_arduino.pressure_lsb;
+    block[2] = handlers.shdata->shdata_arduino.rudder_msb;
+    block[3] = handlers.shdata->shdata_arduino.rudder_lsb;
+    block[4] = handlers.shdata->shdata_arduino.sheet_msb;
+    block[5] = handlers.shdata->shdata_arduino.sheet_lsb;
+    block[6] = handlers.shdata->shdata_arduino.battery_msb;
+    block[7] = handlers.shdata->shdata_arduino.battery_lsb;
+    block[8] = handlers.shdata->shdata_arduino.address_arduino;
     sem_post(handlers.sem);
+    return 9;
 }
 
 //-----------------------------------------------------------------------------
@@ -205,11 +210,12 @@ int wiringPiI2CWrite (int fd, int data){
   return 1;
 }
 
+
+
+int wiringPiI2CReadBlock(int fd,uint8_t  *block,int length)
+{
+  return readBlocks(block,length);
+
 }
 
-int wiringPiI2CReadBlock(int fd,uint8_t  *block)
-{
-  readBlocks(block);
-
-  return 1;
 }
