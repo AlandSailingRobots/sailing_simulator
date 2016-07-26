@@ -5,7 +5,7 @@ function clean_up {
 
 	# Perform program exit housekeeping
 
-  ps -ef | grep "/sr ./sailing_simulator/ simu_asr.db" | grep -v grep | awk '{print $2}' | xargs kill -9 --verbose
+  ps -ef | grep "/sr ./sailing_simulator/simu_asr.db" | grep -v grep | awk '{print $2}' | xargs kill -9 --verbose
 
   sleep 3
   ps -ef | grep gpsd  | grep -v grep | awk '{print $2}' | xargs kill -9 --verbose
