@@ -34,7 +34,7 @@ sqlite3 simu_asr.db "UPDATE windsensor_config SET port='$CV7_PORT_SIMU';"
 
 sleep 1
 
-cd ../ && LD_PRELOAD=sailing_simulator/PROGSIDE/libwiringPiH.so ./sr ./sailing_simulator/ simu_asr.db &
+cd ../ && LD_PRELOAD=sailing_simulator/PROGSIDE/libwiringPiH.so ./sr ./sailing_simulator/simu_asr.db &
 
 trap clean_up SIGINT SIGTERM SIGHUP
 wait %1
