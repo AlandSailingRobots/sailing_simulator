@@ -30,7 +30,7 @@ gpsd -N $GPS_PORT_SIMU &
 sqlite3 simu_asr.db "UPDATE maestro_controller_config SET port='$MAESTRO_PORT_SIMU';"
 sqlite3 simu_asr.db "UPDATE windsensor_config SET port='$CV7_PORT_SIMU';"
 
-#python $SIMU_PATH/../SIMSIDE/python/simulation_main.py &
+python $SIMU_PATH/../SIMSIDE/python/simulation_main.py &
 
 sleep 1
 
