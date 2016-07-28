@@ -70,7 +70,6 @@ class Socket_handler(object):
 
     def set_compass_heading(self, heading):
         self.compass[0][0] = int(heading*10)
-        print("heading cmp", heading)
 
     def set_gps(self, latitude, longitude, course_real, course_magn,
                 speed_knot):
@@ -143,7 +142,7 @@ class drawThread (threading.Thread):
                             th_data.delta_r,
                             th_data.latitude, th_data.longitude))
             cds.draw_boat(ax2, 1, th_data.x, th_data.y,
-                          th_data.theta, th_data.delta_s, th_data.delta_r)
+                          th_data.theta, th_data.delta_r, th_data.delta_s)
             ax_min_x = x-axis_len/2.0
             ax_min_y = y-axis_len/2.0
             cds.draw_wind_direction(ax2, (ax_min_x+1,
