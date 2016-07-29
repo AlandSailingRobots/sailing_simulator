@@ -1,6 +1,13 @@
 SAILING_SIMULATOR
 =================
 
+This repository need to be inside the [sailingrobot](https://github.com/AlandSailingRobots/sailingrobot) repository as a submodule:
+
+Donwload it as a submodule in sailingrobot repository:
+
+    $ git submodule init
+    $ git submodule sync
+    $ git submodule update
 
 ## Required Packages:
 
@@ -38,17 +45,19 @@ You may want to change some value:
 
     $ ./simu_updateDB.sh
 
-or
+or (ie To change between waypoint following and line following):
 
     $ sqlite3 simu_asr.db
+    $ update sailing_robot_config set line_follow=1; (*or 0 for waypoint routing*)
 
-## Launch the simulation
-
-This repository need to be inside the [sailingrobot](https://github.com/AlandSailingRobots/sailingrobot) repository as a submodule:
+## Launch the simulation (in *sailingrobot/sailing_simulator*)
 
     $ ./simu_run.sh
 
-This launch the sailingrobot side of the simulation, in another terminal:
+You may want to launch the simulation on another computer than where the code is running,
+you will need to comment the line 33 in *simu_run.sh* and change the ip address when launching the python:
 
     $ cd SIMSIDE/python
-    $ python simulation_main.py
+    $ ./simulation_main.py ip_address
+
+It should be launch after socket_to_sr programme but preferably before sr (programm to test)
