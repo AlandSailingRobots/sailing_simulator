@@ -38,9 +38,10 @@ class data_handler(object):
         self.latitude = 0
         self.longitude = 0
         self.run = 1
+        self.speed = 0
 
     def set_value(self, x_, y_, theta_, delta_s_, delta_r_, phi_,
-                  latitude_, longitude_):
+                  latitude_, longitude_, speed_):
         self.x = x_
         self.y = y_
         self.theta = theta_
@@ -49,6 +50,7 @@ class data_handler(object):
         self.phi = phi_
         self.latitude = latitude_
         self.longitude = longitude_
+        self.speed = speed_
 
     def set_run(self, run_):
         self.run = run_
@@ -134,10 +136,11 @@ class drawThread (threading.Thread):
             plt.clf()   # Clear figure
             fig.subplots_adjust(top=0.8)
             ax2 = fig.add_axes([0.1, 0.1, 0.8, 0.8])
-            ax2.set_xlabel('Simulation of boat %0.1f %0.1f rudder  : %0.3f\
-                            lat %.5f long %.5f' %
+            ax2.set_xlabel('Simulation of boat %0.1f %0.1f speed:%0.1f m/s rudder:%0.3f\
+lat %.5f long %.5f ' %
                            (cms.wrapTo2Pi(-th_data.theta+np.pi/2)*180/np.pi,
                             cms.wrapTo2Pi(-th_data.phi+np.pi/2)*180/np.pi,
+                            th_data.speed,
                             th_data.delta_r,
                             th_data.latitude, th_data.longitude))
             cds.draw_boat(ax2, 1, th_data.x, th_data.y,
@@ -229,7 +232,7 @@ if __name__ == '__main__':
 
             threadLock.acquire()
             temp_data.set_value(x, y, theta, delta_s, delta_r, phi,
-                                latitude, longitude)
+                                latitude, longitude, gps[4]/1.94384)
             threadLock.release()
 
             s_hand.set_gps(gps[0], gps[1], gps[2], gps[3], gps[4])
