@@ -34,7 +34,7 @@ python $SIMU_PATH/../SIMSIDE/python/simulation_main.py &
 
 sleep 1
 
-cd ../ && LD_PRELOAD=sailing_simulator/PROGSIDE/libwiringPiH.so gdb ./sr ./sailing_simulator/simu_asr.db 
+cd ../ && LD_PRELOAD=sailing_simulator/PROGSIDE/libwiringPiH.so ./sr ./sailing_simulator/simu_asr.db &
 
 trap clean_up SIGINT SIGTERM SIGHUP
 wait %1
