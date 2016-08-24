@@ -87,8 +87,8 @@ class Boat():
 
 class simulation(object):
     def __init__(self, ref_ellipse=23,
-                 lat_origin=60.073090,
-                 long_origin=19.8985,
+                 lat_origin=60.107240,
+                 long_origin=19.922397,
                  x_init=[0, 0, np.pi/2+0.3, 0, 0],
                  dt=0.1,
                  a=2,

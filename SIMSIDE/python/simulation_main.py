@@ -67,7 +67,7 @@ class Socket_handler(object):
         self.compass = [[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0, 0],
                         int(0x19)]
         self.arduino = (0, 0, 0, 0, int(0x07))
-        self.gps = (60.20, 19.14, 0, 0, 0)
+        self.gps = (60.107240, 19.922397, 0, 0, 0)
         self.windsensor = (0, 0, 0)
 
     def set_compass_heading(self, heading):
