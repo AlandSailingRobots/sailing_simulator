@@ -2,7 +2,7 @@
 #define CV7SERIAL_H
 
 //-----------------------------------------------------------------------------
-#define CV7PHRASE_SIZE 32
+#define CV7PHRASE_SIZE 80
 
 //---------------
 struct CV7PHRASE
