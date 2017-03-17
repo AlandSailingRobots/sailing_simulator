@@ -1,10 +1,7 @@
+
 import numpy as np
 from math import cos, sin, atan2, hypot
-import time
 import LatLongUTMconversion as LLUTM
-
-from sailing_boat import SailingBoat
-
 
 # Calculate the drift of and change in position from the boat's current velocity and the force of
 # the wind on the sails
@@ -81,36 +78,90 @@ def f(currState, trueWindSpeed, trueWindAngle, sailAngle, rudderAngle):
             apparentWindAngle,
             [x_dot, y_dot])
 
-
 def wrapTo2Pi(theta):
     if theta < 0:
         theta += 2*np.pi
     theta = theta % (2*np.pi)
     return theta
 
+class SailingBoat():
+    def __init__(self, latitudeOrigin, longitudeOrigin):
+        # Boat State
+        self._latitude = latitudeOrigin
+        self._longitude = longitudeOrigin
+        self._courseReal = 0
+        self._courseMagn = 0
+        self._gpsSpeed = 0
+        self._apparentWindSpeed = 0
+        self._apparentWindDir = 0
 
-def rudder_deg_to_arduino(delta):
-    return int(1500*delta*(6/np.pi)*(235/1500.0)+285)
-
-
-def order_to_deg(command_rudder, command_sheet):
-    if command_rudder > 8000 or command_rudder < 3000:
-        command_sheet = 4215
-        command_rudder = 5520
-    return ((command_rudder-5520)*(np.pi/6.0)/1500.0,
-            (command_sheet-4215)*(np.pi/-6.165)/900.0)
-
-
-class Boat():
-    def __init__(self):
+        # Sim State
         self._x = 0
         self._y = 0
         self._heading = 0
         self._speed = 0
         self._rotationSpeed = 0
+        self._rudderAngle = 0
+        self._sailAngle = 0
+        self._utmOriginX = 0
+        self._utmOriginY = 0
+        self._ref_ellipse = 23
+        (self._utmZone, self._utmOriginX, self._utmOriginY) = LLUTM.LLtoUTM( self._ref_ellipse, self._latitude, self._longitude)
 
-    def one_loop(self, dt, a, phi, delta_s, delta_r):
-        (df, a_ap, phi_ap, speed) = f(np.array([self._x, self._y, self._heading, self._speed, self._rotationSpeed]), a, phi, delta_s, delta_r)
+    def setSail( self, sailAngle ):
+        self._sailAngle = sailAngle
+    
+    def setRudder( self, rudderAngle ):
+        self._rudderAngle = rudderAngle
+    
+    # Returns the boats sail angle
+    def sail(self):
+        return self._sailAngle
+
+    # Returns the rudder angle
+    def rudder(self):
+        return self._rudderAngle
+
+    def latitude(self):
+        return self._latitude
+
+    def longitude(self):
+        return self._longitude
+        # GPS course
+    def courseReal(self):
+        return self._courseReal
+        # Compass heading
+    def courseMagn(self):
+        return self._courseMagn
+
+    def gpsSpeed(self):
+        return self._gpsSpeed
+
+    def apparentWindDirection(self):
+        return self._apparentWindDir
+
+    def apparentWindSpeed(self):
+        return self._apparentWindSpeed
+
+    def simulate(self, timestep, trueWindSpeed, trueWindAngle):
+        (x,
+         apparentWindSpeed,
+         apparentWindAngle,
+         speed) = self.one_loop(timestep, trueWindSpeed, trueWindAngle)
+
+        (self._latitude, self._longitude) = LLUTM.UTMtoLL(self._ref_ellipse, self._utmOriginY+x[1], self._utmOriginX+x[0], self._utmZone)
+
+        self._courseReal = wrapTo2Pi( -atan2( speed[1], speed[0] ) + np.pi / 2 ) * 180 / np.pi
+        self._courseMagn = wrapTo2Pi( -self._heading + np.pi / 2 ) * 180/ np.pi
+
+        self._gpsSpeed = hypot(speed[0], speed[1])
+        self._apparentWindDir = wrapTo2Pi( -apparentWindAngle + np.pi ) * 180 / np.pi
+        self._apparentWindSpeed = apparentWindSpeed
+
+        return (x, apparentWindSpeed, apparentWindAngle, speed)
+
+    def one_loop(self, dt, trueWindSpeed, trueWindAngle):
+        (df, a_ap, phi_ap, speed) = f(np.array([self._x, self._y, self._heading, self._speed, self._rotationSpeed]), trueWindSpeed, trueWindAngle, self._sailAngle, self._rudderAngle)
         #self.x += dt*df
         self._x += df[0] * dt
         self._y += df[1] * dt
@@ -123,86 +174,3 @@ class Boat():
 
     def get_graph_values(self):
         return (self._x, self._y, self._heading)
-
-
-class simulation(object):
-    def __init__(self, ref_ellipse=23,
-                 lat_origin=60.107240,
-                 long_origin=19.922397,
-                 x_init=[0, 0, np.pi/2+0.3, 0, 0],
-                 dt=0.1,
-                 a=2,
-                 phi=1):
-
-        self.latitude = 0
-        self.longitude = 0
-        self.ref_ellipse = ref_ellipse
-        self.lat_origin = lat_origin
-        self.long_origin = long_origin
-        (self.UTMZone, self.utm_x_origin, self.utm_y_origin) = LLUTM.LLtoUTM(
-                                          self.ref_ellipse,
-                                          self.lat_origin,
-                                          self.long_origin)
-        self.speed_knot = 0
-        self.boat_ = SailingBoat(lat_origin, long_origin)
-        self.a = a
-        self.phi = phi
-        self.pressure = 181
-        self.rudder = 0
-        self.sheet = 0
-        self.battery = 0
-        self.apparentWindSpeed = 0
-        self.phi_ap = 0
-        self.apparentWindSpeed_ = 0
-        self.heading = 0
-
-    def set_actuators(self, command_rudder, command_sheet):
-        (delta_r, delta_s) = order_to_deg(command_rudder,
-                                                    command_sheet)
-        self.boat_.setSail(delta_s)
-        self.boat_.setRudder(delta_r)
-
-    def set_wind(self, windspeed, wind_direction):
-        self.a = windspeed
-        self.phi = wind_direction
-
-    def one_loop(self, dt):
-        (x,
-         self.apparentWindSpeed_,
-         self.phi_ap_,
-         speed) = self.boat_.simulate(dt, self.a, self.phi)
-
-        self.apparentWindSpeed = self.apparentWindSpeed_                      # kept in m/s
-        self.phi_ap = wrapTo2Pi(-self.phi_ap_+np.pi)*180/np.pi
-        self.heading = self.boat_.courseMagn()
-
-    def get_to_socket_value(self):
-        heading = ((self.boat_.courseMagn(), 0, 0), (0, 0, 0), (0, 0, 0), (0, 0, 0, 0))
-        gps = (self.boat_.latitude(), self.boat_.longitude(), self.boat_.courseReal(),
-               self.boat_.courseMagn(), self.boat_.gpsSpeed())
-        arduino = (0, 0, 0, 0)
-        windsensor = (self.boat_.apparentWindSpeed(), self.boat_.apparentWindDirection())
-        return (heading, gps, arduino, windsensor)
-
-    def get_boat(self):
-        return self.boat_
-
-    def get_graph_values(self):
-        delta_s_g = self.boat_.sail()
-        sigma = cos(self.phi_ap_)+cos(self.boat_.sail())
-        if (sigma < 0):
-            delta_s_g = np.pi+self.phi_ap_
-        else:
-            if sin(self.phi_ap_)is not 0:
-                delta_s_g = -np.sign(sin(self.phi_ap_))*abs(self.boat_.sail())
-        return (self.boat_.rudder(), delta_s_g,
-                self.phi_ap_, self.phi, self.boat_.latitude(), self.boat_.longitude())
-
-if __name__ == '__main__':
-
-    x = np.array([0, 0, 0, 0, 0], dtype='float64')
-
-    while True:
-        x += 0.5*f(x, 1, 1, 0.5, 0.1)
-        print(x)
-        time.sleep(0.1)
