@@ -11,9 +11,12 @@ from struct import *
 import numpy as np
 import core_model_sim as cms
 import core_draw_sim as cds
+from sailing_boat import SailingBoat
 
 from matplotlib import pylab as plt
 from matplotlib import lines
+
+import json
 
 
 def exit_function_py():
@@ -109,7 +112,6 @@ class Socket_handler(object):
     def get_data_pack_send(self):
         return self.data_socket_send
 
-
 class drawThread (threading.Thread):
     def __init__(self, lock_):
         threading.Thread.__init__(self)
@@ -157,6 +159,26 @@ lat %.5f long %.5f ' %
         print("Stopping Draw Thread")
         plt.close()
 
+
+def wrapTo2Pi(theta):
+    if theta < 0:
+        theta += 2*np.pi
+    theta = theta % (2*np.pi)
+    return theta
+
+
+def loadConfiguration():
+    with open('config.json') as data_file:    
+        config = json.load(data_file)
+
+    latOrigin = config["lat_origin"]
+    lonOrigin = config["lon_origin"]
+
+    trueWindDir = wrapTo2Pi(np.deg2rad(config["wind_direction"] - 90))
+    trueWindSpeed = config["wind_speed"]
+
+    return (SailingBoat( latOrigin, lonOrigin ), cms.WindState( trueWindDir, trueWindSpeed ) )
+
 temp_data = data_handler()
 
 if __name__ == '__main__':
@@ -193,9 +215,10 @@ if __name__ == '__main__':
 
     bytes_received = 0
     data = bytearray()
-    simulation = cms.simulation()
-    # Set up windspeed,direction (where the wind is going in radian)
-    simulation.set_wind(3, np.pi/2)
+
+    ( simulatedBoat, trueWind ) = loadConfiguration()
+
+    simulation = cms.simulation( simulatedBoat, trueWind )
 
     time.sleep(0.05)
     sock.setblocking(0)

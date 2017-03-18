@@ -2,6 +2,7 @@
 import numpy as np
 from math import cos, sin, atan2, hypot
 import LatLongUTMconversion as LLUTM
+import core_model_sim as cms
 
 # Calculate the drift of and change in position from the boat's current velocity and the force of
 # the wind on the sails
@@ -17,25 +18,25 @@ def calculateDrift( driftCoefficient, boatSpeed, boatHeading, trueWindSpeed, tru
 
     return (x_dot, y_dot)
 
-def calculateApparentWind( trueWindAngle, trueWindSpeed, boatHeading, boatSpeed ):
-    apparentWindVector = [trueWindSpeed * cos( trueWindAngle - boatHeading ) - boatSpeed, trueWindSpeed * sin(trueWindAngle - boatHeading)]
+def calculateApparentWind( trueWind, boatHeading, boatSpeed ):
+    apparentWindVector = [trueWind.speed() * cos( trueWind.direction() - boatHeading ) - boatSpeed, trueWind.speed() * sin(trueWind.direction() - boatHeading)]
 
     apparentWindAngle = atan2(apparentWindVector[1], apparentWindVector[0])
     apparentWindSpeed = hypot(apparentWindVector[0], apparentWindVector[1]) 
 
-    return ( apparentWindAngle, apparentWindSpeed )
+    return cms.WindState( apparentWindAngle, apparentWindSpeed )
 
-def calculateCorrectSailAngle( apparentWindAngle, sailAngle ):
-    sigma = cos(apparentWindAngle) + cos(sailAngle)
+def calculateCorrectSailAngle( apparentWind, sailAngle ):
+    sigma = cos(apparentWind.direction()) + cos(sailAngle)
     if (sigma < 0):
-        return np.pi + apparentWindAngle
-    elif sin(apparentWindAngle) is not 0:
+        return np.pi + apparentWind.direction()
+    elif sin(apparentWind.direction()) is not 0:
         # Ensure the sail is on the right side of the boat
-        return -np.sign( sin( apparentWindAngle ) ) * abs(sailAngle)
+        return -np.sign( sin( apparentWind.direction() ) ) * abs(sailAngle)
     else:
         return sailAngle
 
-def f(currState, trueWindSpeed, trueWindAngle, sailAngle, rudderAngle):
+def f(currState, trueWind, sailAngle, rudderAngle):
     driftCoefficient = 0.03
     tangentialFriction = 40     # kg s^-1
     angularFriction = 6000      # kg m
@@ -52,13 +53,13 @@ def f(currState, trueWindSpeed, trueWindAngle, sailAngle, rudderAngle):
     speed = currState[3]
     rotationSpeed = currState[4]
 
-    (x_dot, y_dot) = calculateDrift( driftCoefficient, speed, boatHeading, trueWindSpeed, trueWindAngle)
-    (apparentWindAngle, apparentWindSpeed) = calculateApparentWind( trueWindAngle, trueWindSpeed, boatHeading, speed )
-    sailAngle = calculateCorrectSailAngle( apparentWindAngle, sailAngle )
+    (x_dot, y_dot) = calculateDrift( driftCoefficient, speed, boatHeading, trueWind.speed(), trueWind.direction() )
+    apparentWind = calculateApparentWind( trueWind, boatHeading, speed )
+    sailAngle = calculateCorrectSailAngle( apparentWind, sailAngle )
 
     # The acceleration of the boat is affected by three forces, the wind on the sail, a braking force
     # from the water on the rudder, and a tangential friction force
-    forceOnSail = sailLift * apparentWindSpeed * sin( sailAngle - apparentWindAngle )
+    forceOnSail = sailLift * apparentWind.speed() * sin( sailAngle - apparentWind.direction() )
     forceOnRudder = rudderLift * speed * sin( rudderAngle )
 
     sailAccelerationForce = forceOnSail * sin( sailAngle )
@@ -74,8 +75,7 @@ def f(currState, trueWindSpeed, trueWindAngle, sailAngle, rudderAngle):
     rotationSpeed_dot = (sailRotationForce - rudderRotationForce - rotationForce) / momentOfInertia
 
     return (np.array([x_dot, y_dot, rotationSpeed, acceleration_dot, rotationSpeed_dot]),
-            apparentWindSpeed,
-            apparentWindAngle,
+            apparentWind,
             [x_dot, y_dot])
 
 def wrapTo2Pi(theta):
@@ -108,6 +108,30 @@ class SailingBoat():
         self._ref_ellipse = 23
         (self._utmZone, self._utmOriginX, self._utmOriginY) = LLUTM.LLtoUTM( self._ref_ellipse, self._latitude, self._longitude)
 
+    # Boat State In terms of the control system
+    def latitude(self):
+        return self._latitude
+
+    def longitude(self):
+        return self._longitude
+
+    def gpsCourse(self):
+        return self._courseReal
+
+    def compassHeading(self):
+        return self._courseMagn
+
+    def gpsSpeed(self):
+        return self._gpsSpeed
+
+    def apparentWindDirection(self):
+        return self._apparentWindDir
+
+    def apparentWindSpeed(self):
+        return self._apparentWindSpeed
+
+    # Simulator State
+
     def setSail( self, sailAngle ):
         self._sailAngle = sailAngle
     
@@ -122,32 +146,10 @@ class SailingBoat():
     def rudder(self):
         return self._rudderAngle
 
-    def latitude(self):
-        return self._latitude
-
-    def longitude(self):
-        return self._longitude
-        # GPS course
-    def courseReal(self):
-        return self._courseReal
-        # Compass heading
-    def courseMagn(self):
-        return self._courseMagn
-
-    def gpsSpeed(self):
-        return self._gpsSpeed
-
-    def apparentWindDirection(self):
-        return self._apparentWindDir
-
-    def apparentWindSpeed(self):
-        return self._apparentWindSpeed
-
-    def simulate(self, timestep, trueWindSpeed, trueWindAngle):
+    def simulate(self, timestep, trueWind ):
         (x,
-         apparentWindSpeed,
-         apparentWindAngle,
-         speed) = self.one_loop(timestep, trueWindSpeed, trueWindAngle)
+         apparentWind,
+         speed) = self.one_loop(timestep, trueWind )
 
         (self._latitude, self._longitude) = LLUTM.UTMtoLL(self._ref_ellipse, self._utmOriginY+x[1], self._utmOriginX+x[0], self._utmZone)
 
@@ -155,13 +157,13 @@ class SailingBoat():
         self._courseMagn = wrapTo2Pi( -self._heading + np.pi / 2 ) * 180/ np.pi
 
         self._gpsSpeed = hypot(speed[0], speed[1])
-        self._apparentWindDir = wrapTo2Pi( -apparentWindAngle + np.pi ) * 180 / np.pi
-        self._apparentWindSpeed = apparentWindSpeed
+        self._apparentWindDir = wrapTo2Pi( -apparentWind.direction() + np.pi ) * 180 / np.pi
+        self._apparentWindSpeed = apparentWind.speed()
 
-        return (x, apparentWindSpeed, apparentWindAngle, speed)
+        return apparentWind.direction()
 
-    def one_loop(self, dt, trueWindSpeed, trueWindAngle):
-        (df, a_ap, phi_ap, speed) = f(np.array([self._x, self._y, self._heading, self._speed, self._rotationSpeed]), trueWindSpeed, trueWindAngle, self._sailAngle, self._rudderAngle)
+    def one_loop(self, dt, trueWind):
+        (df, apparentWind, speed) = f(np.array([self._x, self._y, self._heading, self._speed, self._rotationSpeed]), trueWind, self._sailAngle, self._rudderAngle)
         #self.x += dt*df
         self._x += df[0] * dt
         self._y += df[1] * dt
@@ -170,7 +172,7 @@ class SailingBoat():
         self._rotationSpeed += df[4] * dt
 
         self._heading = wrapTo2Pi(self._heading)
-        return (np.array([self._x, self._y, self._heading, self._speed, self._rotationSpeed]), a_ap, phi_ap, speed)
+        return (np.array([self._x, self._y, self._heading, self._speed, self._rotationSpeed]), apparentWind, speed)
 
     def get_graph_values(self):
         return (self._x, self._y, self._heading)
