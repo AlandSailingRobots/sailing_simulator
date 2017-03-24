@@ -3,6 +3,7 @@ import numpy as np
 from math import cos, sin, atan2, hypot
 import LatLongUTMconversion as LLUTM
 import core_model_sim as cms
+from physics_models import SailingPhysicsModel, WindState
 
 # Calculate the drift of and change in position from the boat's current velocity and the force of
 # the wind on the sails
@@ -107,6 +108,7 @@ class SailingBoat():
         self._utmOriginY = 0
         self._ref_ellipse = 23
         (self._utmZone, self._utmOriginX, self._utmOriginY) = LLUTM.LLtoUTM( self._ref_ellipse, self._latitude, self._longitude)
+        self._physics = SailingPhysicsModel()
 
     # Boat State In terms of the control system
     def latitude(self):
@@ -132,11 +134,10 @@ class SailingBoat():
 
     # Simulator State
 
-    def setSail( self, sailAngle ):
+    def setActuators( self, sailAngle, rudderAngle ):
         self._sailAngle = sailAngle
-    
-    def setRudder( self, rudderAngle ):
         self._rudderAngle = rudderAngle
+        self._physics.setActuators( sailAngle, rudderAngle )
     
     # Returns the boats sail angle
     def sail(self):
@@ -147,16 +148,25 @@ class SailingBoat():
         return self._rudderAngle
 
     def simulate(self, timestep, trueWind ):
-        (x,
-         apparentWind,
-         speed) = self.one_loop(timestep, trueWind )
 
-        (self._latitude, self._longitude) = LLUTM.UTMtoLL(self._ref_ellipse, self._utmOriginY+x[1], self._utmOriginX+x[0], self._utmZone)
+        self._physics.simulate( timestep, trueWind )
 
-        self._courseReal = wrapTo2Pi( -atan2( speed[1], speed[0] ) + np.pi / 2 ) * 180 / np.pi
-        self._courseMagn = wrapTo2Pi( -self._heading + np.pi / 2 ) * 180/ np.pi
+        ( x, y ) = self._physics.utmCoordinate()
 
-        self._gpsSpeed = hypot(speed[0], speed[1])
+        apparentWind = self._physics.apparentWind()
+        
+        #(x,
+         #apparentWind,
+         #speed) = self.one_loop(timestep, trueWind )
+
+        (self._latitude, self._longitude) = LLUTM.UTMtoLL(self._ref_ellipse, self._utmOriginY+y, self._utmOriginX+x, self._utmZone)
+
+        #self._courseReal = wrapTo2Pi( -atan2( speed[1], speed[0] ) + np.pi / 2 ) * 180 / np.pi
+        self._courseReal = wrapTo2Pi( -self._physics.heading() + np.pi / 2 ) * 180/ np.pi
+        self._courseMagn = self._courseReal
+
+        self._gpsSpeed = self._physics.speed()
+        #self._gpsSpeed = hypot(speed[0], speed[1])
         self._apparentWindDir = wrapTo2Pi( -apparentWind.direction() + np.pi ) * 180 / np.pi
         self._apparentWindSpeed = apparentWind.speed()
 
@@ -175,4 +185,6 @@ class SailingBoat():
         return (np.array([self._x, self._y, self._heading, self._speed, self._rotationSpeed]), apparentWind, speed)
 
     def get_graph_values(self):
-        return (self._x, self._y, self._heading)
+        ( x, y ) = self._physics.utmCoordinate()
+        heading = self._physics.heading()
+        return (x, y, heading)

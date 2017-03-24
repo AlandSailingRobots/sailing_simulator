@@ -46,8 +46,7 @@ class simulation(object):
     def set_actuators(self, command_rudder, command_sheet):
         (delta_r, delta_s) = order_to_deg(command_rudder,
                                                     command_sheet)
-        self.boat_.setSail(delta_s)
-        self.boat_.setRudder(delta_r)
+        self.boat_.setActuators( delta_s, delta_r )
 
     def one_loop(self, dt):
         ( self.phi_ap_ ) = self.boat_.simulate(dt, self._trueWind )

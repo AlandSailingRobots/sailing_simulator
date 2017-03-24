@@ -175,6 +175,7 @@ def loadConfiguration():
     lonOrigin = config["lon_origin"]
 
     trueWindDir = wrapTo2Pi(np.deg2rad(config["wind_direction"] - 90))
+    print "True Wind:" + str(trueWindDir)
     trueWindSpeed = config["wind_speed"]
 
     return (SailingBoat( latOrigin, lonOrigin ), cms.WindState( trueWindDir, trueWindSpeed ) )
