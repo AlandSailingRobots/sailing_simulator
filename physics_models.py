@@ -68,6 +68,9 @@ class SailingPhysicsModel(PhysicsModel):
         self._sailAngle = sail
         self._rudderAngle = rudder
 
+    def getActuators(self):
+        return ( self._sailAngle, self._rudderAngle )
+
     def apparentWind(self):
         return self._apparentWind
 

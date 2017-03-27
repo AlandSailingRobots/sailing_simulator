@@ -12,6 +12,11 @@ import numpy as np
 import core_model_sim as cms
 import core_draw_sim as cds
 from sailing_boat import SailingBoat
+from simulator import Simulator
+from physics_models import SailingPhysicsModel
+from vessel import SailBoat
+
+from math import cos, sin, atan2, hypot
 
 from matplotlib import pylab as plt
 from matplotlib import lines
@@ -149,8 +154,7 @@ lat %.5f long %.5f ' %
                           th_data.theta, th_data.delta_r, th_data.delta_s)
             ax_min_x = x-axis_len/2.0
             ax_min_y = y-axis_len/2.0
-            cds.draw_wind_direction(ax2, (ax_min_x+1,
-                                          ax_min_y+1), axis_len, 1, phi)
+            cds.draw_wind_direction(ax2, (ax_min_x+1, ax_min_y+1), axis_len, 1, th_data.phi)
             plt.axis([ax_min_x, ax_min_x+axis_len,
                       ax_min_y, ax_min_y+axis_len])
             plt.draw()
@@ -166,6 +170,37 @@ def wrapTo2Pi(theta):
     theta = theta % (2*np.pi)
     return theta
 
+def order_to_deg(command_rudder, command_sheet):
+    if command_rudder > 8000 or command_rudder < 3000:
+        command_sheet = 4215
+        command_rudder = 5520
+    return ((command_rudder-5520)*(np.pi/6.0)/1500.0,
+            (command_sheet-4215)*(np.pi/-6.165)/900.0)
+
+
+def get_to_socket_value( sailBoat ):
+    heading = sailBoat.heading()
+    (lat, lon) = sailBoat.position()
+    course = sailBoat.course()
+    speed =  sailBoat.speed()
+
+    gps = (lat, lon, course, heading, speed)
+
+    windsensor = ( sailBoat.apparentWind().speed(), sailBoat.apparentWind().direction() )
+    return (heading, gps, windsensor)
+
+def get_graph_values( sailBoat ):
+    (sail, rudder) = sailBoat.sailAndRudder()
+    phi_ap = sailBoat.apparentWind().direction()
+
+    sigma = cos( phi_ap ) + cos( sail )
+    if (sigma < 0):
+        sail = np.pi + phi_ap
+    else:
+        if sin(phi_ap)is not 0:
+            sail = -np.sign( sin(phi_ap) ) * abs( sail )
+    (lat, lon) = sailBoat.position()
+    return ( rudder, sail, phi_ap, lat, lon )
 
 def loadConfiguration():
     with open('config.json') as data_file:    
@@ -178,7 +213,11 @@ def loadConfiguration():
     print "True Wind:" + str(trueWindDir)
     trueWindSpeed = config["wind_speed"]
 
-    return (SailingBoat( latOrigin, lonOrigin ), cms.WindState( trueWindDir, trueWindSpeed ) )
+    sailBoat = SailBoat( SailingPhysicsModel(), latOrigin, lonOrigin, 0, 0 )
+
+    #SailingBoat( latOrigin, lonOrigin )
+
+    return ( sailBoat, cms.WindState( trueWindDir, trueWindSpeed ) )
 
 temp_data = data_handler()
 
@@ -218,8 +257,9 @@ if __name__ == '__main__':
     data = bytearray()
 
     ( simulatedBoat, trueWind ) = loadConfiguration()
+    #simulation = cms.simulation( simulatedBoat, trueWind )
 
-    simulation = cms.simulation( simulatedBoat, trueWind )
+    simulator = Simulator( [ simulatedBoat ], trueWind )
 
     time.sleep(0.05)
     sock.setblocking(0)
@@ -244,25 +284,37 @@ if __name__ == '__main__':
                 if bytes_received is 4:
                     (command_rudder,
                      command_sheet) = s_hand.socket_unpack(data)
-                    simulation.set_actuators(command_rudder, command_sheet)
+                    #simulation.set_actuators(command_rudder, command_sheet)
+                    (delta_r, delta_s) = order_to_deg(command_rudder, command_sheet)
+
+                    simulatedBoat.physicsModel().setActuators( delta_s, delta_r )
                     bytes_received = 0
                     data = bytearray()
 
-            simulation.one_loop(delta_t)
-            (head, gps, ardu, wind) = simulation.get_to_socket_value()
-            (x, y, theta) = simulation.get_boat().get_graph_values()
-            (delta_r, delta_s,
-             phi_ap, phi, latitude, longitude) = simulation.get_graph_values()
+            #simulation.one_loop(delta_t)
+
+            simulator.step()
+
+
+            (head, gps, wind) = get_to_socket_value( simulatedBoat )
+            (x, y) = simulatedBoat.physicsModel().utmCoordinate()
+            theta = simulatedBoat.physicsModel().heading()
+            (delta_r, delta_s, phi, latitude, longitude) = get_graph_values( simulatedBoat )
+
+            # (head, gps, ardu, wind) = simulation.get_to_socket_value()
+            #(x, y, theta) = simulation.get_boat().get_graph_values()
+            #(delta_r, delta_s,
+            #phi_ap, phi, latitude, longitude) = simulation.get_graph_values()
 
             threadLock.acquire()
-            temp_data.set_value(x, y, theta, delta_s, delta_r, phi,
-                                latitude, longitude, gps[4]/1.94384)
+            print trueWind.direction()
+            temp_data.set_value(x, y, theta, delta_s, delta_r, trueWind.direction(),
+                                latitude, longitude, gps[4])
             threadLock.release()
 
             s_hand.set_gps(gps[0], gps[1], gps[2], gps[3], gps[4])
             s_hand.set_windsensor(wind[1], wind[0])
-            s_hand.set_compass_heading(head[0][0])
-            s_hand.set_arduino(ardu[0], ardu[1], ardu[2], ardu[3])
+            s_hand.set_compass_heading(head)
             s_hand.socket_pack()
             ready_to_read, ready_to_write, in_error = select.select([sock],
                                                                     [sock],
