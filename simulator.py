@@ -1,5 +1,5 @@
 
-from physics_models import PhysicsModel, WindState
+from physics_models import SailingPhysicsModel, PhysicsModel, WindState
 
 
 class Simulator:
