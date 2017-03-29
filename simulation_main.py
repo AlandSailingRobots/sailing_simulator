@@ -69,60 +69,6 @@ class data_handler(object):
     def set_run(self, run_):
         self.run = run_
 
-
-class Socket_handler(object):
-    def __init__(self):
-        print("value")
-        self.data_pack_receive = 0
-        self.data_pack_send = 0
-        self.send_format = '=8f4H12HBB'
-        self.receive_format = '=HH'
-
-        self.compass = [[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0, 0],
-                        int(0x19)]
-        self.arduino = (0, 0, 0, 0, int(0x07))
-        self.gps = (60.107240, 19.922397, 0, 0, 0)
-        self.windsensor = (0, 0, 0)
-
-    def set_compass_heading(self, heading):
-        self.compass[0][0] = int(heading)
-
-    def set_gps(self, latitude, longitude, course_real, course_magn,
-                speed_knot):
-        self.gps = (latitude, longitude, course_real, course_magn, speed_knot)
-
-    def set_arduino(self, pressure, rudder, sheet, battery, address=0x07):
-        if rudder < 0:
-            rudder = 0
-        self.arduino = (int(pressure), int(rudder), int(sheet), int(battery),
-                        int(address))
-
-    def set_windsensor(self, wind_direction, wind_speed, temperature=24):
-        self.windsensor = (wind_direction, wind_speed, int(temperature))
-
-    def socket_pack(self):
-        self.data_socket_send = pack(self.send_format, self.gps[0],
-                                     self.gps[1], self.gps[2], self.gps[3],
-                                     self.gps[4],
-                                     self.windsensor[0], self.windsensor[1],
-                                     self.windsensor[2],
-                                     self.arduino[0], self.arduino[1],
-                                     self.arduino[2], self.arduino[3],
-                                     self.compass[0][0],
-                                     self.compass[0][1], self.compass[0][2],
-                                     self.compass[1][0], self.compass[1][1],
-                                     self.compass[1][2], self.compass[2][0],
-                                     self.compass[2][1], self.compass[2][2],
-                                     self.compass[3][0], self.compass[3][1],
-                                     self.compass[3][2], self.compass[4],
-                                     int(self.arduino[4]))
-
-    def socket_unpack(self, data):
-        return unpack(self.receive_format, data)
-
-    def get_data_pack_send(self):
-        return self.data_socket_send
-
 class drawThread (threading.Thread):
     def __init__(self, lock_):
         threading.Thread.__init__(self)
@@ -221,43 +167,19 @@ def loadConfiguration():
 
     sailBoat = SailBoat( SailingPhysicsModel(), latOrigin, lonOrigin, 0, 0 )
 
-    #SailingBoat( latOrigin, lonOrigin )
-
     return ( sailBoat, WindState( trueWindDir, trueWindSpeed ) )
 
 temp_data = data_handler()
 
 if __name__ == '__main__':
-
-    if len(sys.argv) == 2:
-        address_prog = sys.argv[1]
-        if address_prog == '-h':
-            print("Usage: simulation_main [ip_address]")
-            print("    ip _address    default is localhost\n")
-            exit(0)
-    else:
-        address_prog = 'localhost'
-
-    # Create a TCP/IP socket
-    #sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-    # Connect the socket to the port where the server is listening
-    #server_address = (address_prog, 6400)
-    #print('connecting to %s port %s' % server_address)
-    #try:
-    #    sock.connect(server_address)
-    #except socket.error as e:
-    #    print('Socket error:', e)
-
     net = Network( "localhost", 6900 )
 
     ( simulatedBoat, trueWind ) = loadConfiguration()
-    #simulation = cms.simulation( simulatedBoat, trueWind )
 
-    simulator = Simulator( [ simulatedBoat ], trueWind )
+    simulator = Simulator( trueWind, 1 )
 
-    s_hand = Socket_handler()
-    s_hand.socket_pack()
+    # Add all the vessels we want to simulate
+    simulator.addPhysicsModel( simulatedBoat.physicsModel() )
 
     # multithreading management:
     threadLock = threading.Lock()
@@ -270,7 +192,6 @@ if __name__ == '__main__':
     data = bytearray()
 
     time.sleep(0.05)
-    #sock.setblocking(0)
     delta_t = 0.05
 
     print("Start drawing thread")
@@ -279,37 +200,17 @@ if __name__ == '__main__':
     delta_s = 0
 
     try:
-        #net.connected()
-        while( True ):
+        while( net.connected() ):
 
             deb = time.time()
-            # Handle socket receive first
-            #ready_to_read, ready_to_write, in_error = select.select([sock],
-            #                                                        [sock],
-            #                                                        [sock],
-            #                                                        0.01)
 
-            #if len(ready_to_read):
-            #    data += sock.recv(2*2-bytes_received)
-            #    bytes_received = len(data)
-            #    if bytes_received is 4:
-            #        (command_rudder, command_sheet) = s_hand.socket_unpack(data)
-                    #simulation.set_actuators(command_rudder, command_sheet)
-            #        (delta_r, delta_s) = order_to_deg(command_rudder, command_sheet)
-            #        print "Got Data from boat: %d %d %f %f" % (command_rudder, command_sheet, delta_r, delta_s)
-
-
-                    #simulatedBoat.physicsModel().setActuators( delta_s, delta_r )
             (command_rudder, command_sheet) = net.readActuatorData()
             (delta_r, delta_s) = order_to_deg(command_rudder, command_sheet)
 
             simulatedBoat.physicsModel().setActuators( delta_s, delta_r )
-            #bytes_received = 0
-            #data = bytearray()
 
-            #simulation.one_loop(delta_t)
-
-            simulator.step()
+            # TODO - Jordan: Make this a variable step, so we aren't at a fixed rate of simulation
+            simulator.step( 0.05 )
 
             net.sendBoatData( simulatedBoat )
 
@@ -318,29 +219,10 @@ if __name__ == '__main__':
             theta = simulatedBoat.physicsModel().heading()
             (delta_r, delta_s, phi, latitude, longitude) = get_graph_values( simulatedBoat )
 
-            print "GPS: %f, %f Compass: %d Wind: %d, %f Sail: %d, Rudder: %d" % (gps[0], gps[1], head, wind[0], wind[1], delta_s, delta_s)
-
-            # (head, gps, ardu, wind) = simulation.get_to_socket_value()
-            #(x, y, theta) = simulation.get_boat().get_graph_values()
-            #(delta_r, delta_s,
-            #phi_ap, phi, latitude, longitude) = simulation.get_graph_values()
-
             threadLock.acquire()
             temp_data.set_value(x, y, theta, delta_s, delta_r, trueWind.direction(),
                                 latitude, longitude, simulatedBoat.speed())
             threadLock.release()
-
-            #s_hand.set_gps(gps[0], gps[1], gps[2], gps[3], gps[4])
-            #s_hand.set_windsensor(wind[1], wind[0])
-            #s_hand.set_compass_heading(head)
-            #s_hand.socket_pack()
-            #ready_to_read, ready_to_write, in_error = select.select([sock],
-            #                                                        [sock],
-            #                                                        [sock],
-            #                                                        0.01)
-
-            #if len(ready_to_write):
-            #    sock.sendall(s_hand.get_data_pack_send())
 
             dt_sleep = 0.05-(time.time()-deb)
             if dt_sleep < 0:

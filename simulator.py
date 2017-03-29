@@ -3,16 +3,16 @@ from physics_models import SailingPhysicsModel, PhysicsModel, WindState
 
 
 class Simulator:
-    def __init__(self, vessels, trueWind):
-        self._vessels = vessels
+    def __init__( self, trueWind, timeModifier ):
         self._trueWind = trueWind
+        self._timeModifier = timeModifier
+        self._physicModels = []
 
-    def step(self):
-        # TODO, variable time step
-        timeStep = 0.05
+    def addPhysicsModel( self, physicsModel ):
+        self._physicModels.append( physicsModel )
 
-        for vessel in self._vessels:
-            physics = vessel.physicsModel()
-            physics.simulate( timeStep, self._trueWind )
+    def step(self, timeDelta):
+        finalTimeDelta = timeDelta * self._timeModifier
 
-        # Check for collisions
+        for vessel in self._physicModels:
+            vessel.simulate( finalTimeDelta, self._trueWind )
