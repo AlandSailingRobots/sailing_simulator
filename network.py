@@ -33,7 +33,7 @@ class Network:
         self._connected = True
         try:
             self._sock.connect( (serverAddr, serverPort) )
-            print "Connected to control system!"
+            print("Connected to control system!")
             self._sock.setblocking(0)
         except socket.error as e:
             print('Socket error:', e)
@@ -74,11 +74,11 @@ class Network:
         #   Msg Type(B), Lat(f), Lon(f), Speed(f), Course(h), WindDir(h), WindSpeed(f), heading(h), rudder(h), sail(h)
 
         sendFormat = '=HB3f2H1f3H'
-        data = pack( sendFormat, dataLength, MESSAGE_TYPE_BOAT_DATA,
-                     latitude, longitude, speed, course,
-                     windDir, windSpeed,
-                     heading,
-                     rudder, sail )
+        data = pack( sendFormat, int(dataLength), MESSAGE_TYPE_BOAT_DATA,
+                     latitude, longitude, speed, int(course),
+                     int(windDir), windSpeed,
+                     int(heading),
+                     int(rudder), int(sail) )
         self.sendData( data )
 
     def sendData( self, data ):

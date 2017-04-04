@@ -162,7 +162,7 @@ def loadConfiguration():
     lonOrigin = config["lon_origin"]
 
     trueWindDir = wrapTo2Pi(np.deg2rad(config["wind_direction"] - 90))
-    print "True Wind:" + str(trueWindDir)
+    print ("True Wind:" + str(trueWindDir))
     trueWindSpeed = config["wind_speed"]
 
     sailBoat = SailBoat( SailingPhysicsModel(), latOrigin, lonOrigin, 0, 0 )
