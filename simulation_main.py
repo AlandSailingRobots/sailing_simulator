@@ -11,8 +11,8 @@ from struct import *
 import numpy as np
 import core_draw_sim as cds
 from simulator import Simulator
-from physics_models import SailingPhysicsModel, WindState
-from vessel import SailBoat
+from physics_models import SimplePhysicsModel,SailingPhysicsModel, WindState
+from vessel import Vessel,SailBoat
 from network import Network
 
 from math import cos, sin, atan2, hypot
@@ -23,6 +23,9 @@ from matplotlib import lines
 import json
 
 
+# Returns the milliseconds 
+getMillis = lambda: int(round(time.time() * 1000))
+
 def exit_function_py():
     if init_prog:
         threadLock.acquire()
@@ -32,6 +35,8 @@ def exit_function_py():
 
 atexit.register(exit_function_py)
 init_prog = 0
+
+BOAT_UPDATE_MS = 100;
 
 
 def wrapTo2Pi(theta):
@@ -161,25 +166,43 @@ def loadConfiguration():
     latOrigin = config["lat_origin"]
     lonOrigin = config["lon_origin"]
 
+    if config.get("boat_update_ms"):
+        BOAT_UPDATE_MS = config["boat_update_ms"];
+
+    vessels = []
+
     trueWindDir = wrapTo2Pi(np.deg2rad(config["wind_direction"] - 90))
     print ("True Wind:" + str(trueWindDir))
     trueWindSpeed = config["wind_speed"]
 
-    sailBoat = SailBoat( SailingPhysicsModel(), latOrigin, lonOrigin, 0, 0 )
+    vessels.append(SailBoat( SailingPhysicsModel(), latOrigin, lonOrigin, 0, 0 ))
 
-    return ( sailBoat, WindState( trueWindDir, trueWindSpeed ) )
+    # Load Marine Traffic
+    for marineVessel in config["traffic"]:
+        lat = marineVessel["lat_origin"]
+        lon = marineVessel["lon_origin"]
+        heading = wrapTo2Pi(np.deg2rad(marineVessel["heading"] - 90))
+        speed = marineVessel["speed"]
+        vessels.append(Vessel(SimplePhysicsModel(heading, speed), lat, lon, heading, speed))
+
+    return ( vessels, WindState( trueWindDir, trueWindSpeed ) )
 
 temp_data = data_handler()
 
 if __name__ == '__main__':
     net = Network( "localhost", 6900 )
 
-    ( simulatedBoat, trueWind ) = loadConfiguration()
+    ( vessels, trueWind ) = loadConfiguration()
+    simulatedBoat = vessels[0]
+    print(simulatedBoat);
 
     simulator = Simulator( trueWind, 1 )
 
-    # Add all the vessels we want to simulate
-    simulator.addPhysicsModel( simulatedBoat.physicsModel() )
+    files = []
+    for i in range(0, len(vessels)):
+        files.append(open("GPS_Track_" + str(i) + ".track", 'w'))
+        files[i].write("id,latitudes,longitude\n")
+        simulator.addPhysicsModel( vessels[i].physicsModel() )
 
     # multithreading management:
     threadLock = threading.Lock()
@@ -197,7 +220,9 @@ if __name__ == '__main__':
     print("Start drawing thread")
     thread_draw.start()
     delta_r = 0
-    delta_s = 0
+    delta_s = 0  
+
+    lastSentBoatData = 0
 
     try:
         while( net.connected() ):
@@ -212,7 +237,10 @@ if __name__ == '__main__':
             # TODO - Jordan: Make this a variable step, so we aren't at a fixed rate of simulation
             simulator.step( 0.05 )
 
-            net.sendBoatData( simulatedBoat )
+            # Send the boat data
+            if getMillis() > lastSentBoatData + BOAT_UPDATE_MS:
+                net.sendBoatData( simulatedBoat )
+                lastSentBoatData = getMillis()
 
             (head, gps, wind) = get_to_socket_value( simulatedBoat )
             (x, y) = simulatedBoat.physicsModel().utmCoordinate()
@@ -224,6 +252,11 @@ if __name__ == '__main__':
                                 latitude, longitude, simulatedBoat.speed())
             threadLock.release()
 
+            # Log marine traffic
+            for i in range(0, len(vessels)):
+                (lat, lon) = vessels[i].position();
+                files[i].write("0," + str(lat) + "," + str(lon) + "\n")
+
             dt_sleep = 0.05-(time.time()-deb)
             if dt_sleep < 0:
                 dt_sleep = 0.05
@@ -231,6 +264,9 @@ if __name__ == '__main__':
 
     except socket.error as msg:
         print("Error :", msg)
+
+    for filePtr in files:
+        filePtr.close()
 
     threadLock.acquire()
     temp_data.set_run(0)

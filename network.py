@@ -8,6 +8,8 @@ from vessel import SailBoat
 
 
 MESSAGE_TYPE_BOAT_DATA = 0
+MESSAGE_TYPE_AIS_CONTACT = 1
+MESSAGE_TYPE_TIS_CONTACT = 2
 
 
 class BoatData:
@@ -79,6 +81,18 @@ class Network:
                      int(windDir), windSpeed,
                      int(heading),
                      int(rudder), int(sail) )
+        self.sendData( data )
+
+    def sendAISContact( self, boat ):
+        sendFormat = '=HB3fH'
+
+        dataLength = 17
+        (latitude, longtitude) = boat.position()
+        course = boat.position()
+        speed = boat.speed()
+
+        data = pack( sendFormat, int(dataLength), MESSAGE_TYPE_AIS_CONTACT, 
+                    latitude, longtitude, speed, int(course) )
         self.sendData( data )
 
     def sendData( self, data ):

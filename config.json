@@ -3,5 +3,22 @@
     "lon_origin": 19.922397,
 
     "wind_direction": 180,
-    "wind_speed": 3
+    "wind_speed": 3,
+
+    "boat_update_ms":100,
+
+    "traffic": [
+        {
+            "heading": 180,
+            "lat_origin": 60.107715,
+            "lon_origin": 19.920972,
+            "speed": 3
+        },
+        {
+            "heading": 0,
+            "lat_origin": 60.101308, 
+            "lon_origin": 19.921842,
+            "speed": 3
+        }
+    ]
 }

@@ -37,7 +37,7 @@ class PhysicsModel:
     def speed(self):
         return self._speed
 
-    def simulate(timeDelta, trueWind):
+    def simulate(self, timeDelta, trueWind):
         raise NotImplementedError("Must override simulate method!")
 
 
@@ -145,3 +145,19 @@ class SailingPhysicsModel(PhysicsModel):
 
     def forceOnRudder(self):
         return self._rudderLift * self._speed * sin( self._rudderAngle )
+
+class SimplePhysicsModel(PhysicsModel):
+     # X and y are in UTM coordinates, the heading is in radians
+    def __init__(self, heading = 0, speed = 0, x = 0, y = 0):
+        self._x = x
+        self._y = y
+        self._heading = heading
+        self._rotationSpeed = 0
+        self._speed = speed
+
+    def simulate(self, timeDelta, trueWind):
+        velocityX = self._speed * cos(self._heading)
+        velocityY = self._speed * sin(self._heading)
+        self._x += velocityX * timeDelta
+        self._y += velocityY * timeDelta
+        print("Position: " + str(self._x) + ", " + str(self._y) + " Speed: " + str(self._speed) + " Heading: " + str(self._heading));
