@@ -121,13 +121,8 @@ class SailingPhysicsModel(PhysicsModel):
 
     def updateApparentWind(self, trueWind ):
         apparentWindVector = [trueWind.speed() * cos( trueWind.direction() - self._heading ) - self._speed, trueWind.speed() * sin( trueWind.direction() - self._heading )]
-        #print trueWind.direction() 
-        #print trueWind.speed()
-        #print apparentWindVector
         apparentWindAngle = atan2(apparentWindVector[1], apparentWindVector[0])
-        #print apparentWindAngle
         apparentWindSpeed = hypot(apparentWindVector[0], apparentWindVector[1]) 
-        #print apparentWindSpeed
         self._apparentWind = WindState( apparentWindAngle, apparentWindSpeed )
 
     # Ensures the sail is on the correct side of the boat
@@ -140,7 +135,6 @@ class SailingPhysicsModel(PhysicsModel):
             self._sailAngle = -np.sign( sin( self._apparentWind.direction() ) ) * abs( self._sailAngle )
 
     def forceOnSails(self):
-        #print str(self._sailLift) + " " + str(self._apparentWind.speed()) + " : " + str( self._sailAngle ) + " " + str(self._apparentWind.direction() )
         return self._sailLift * self._apparentWind.speed() * sin( self._sailAngle - self._apparentWind.direction() )
 
     def forceOnRudder(self):
@@ -160,4 +154,3 @@ class SimplePhysicsModel(PhysicsModel):
         velocityY = self._speed * sin(self._heading)
         self._x += velocityX * timeDelta
         self._y += velocityY * timeDelta
-        print("Position: " + str(self._x) + ", " + str(self._y) + " Speed: " + str(self._speed) + " Heading: " + str(self._heading));
