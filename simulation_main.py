@@ -12,7 +12,7 @@ import numpy as np
 import core_draw_sim as cds
 from simulator import Simulator
 from physics_models import SimplePhysicsModel,SailingPhysicsModel, WindState
-from vessel import Vessel,SailBoat
+from vessel import Vessel,SailBoat, MarineTraffic
 from network import Network
 
 from math import cos, sin, atan2, hypot
@@ -21,6 +21,8 @@ from matplotlib import pylab as plt
 from matplotlib import lines
 
 import json
+
+import LatLonMath
 
 
 # Returns the milliseconds 
@@ -36,7 +38,11 @@ def exit_function_py():
 atexit.register(exit_function_py)
 init_prog = 0
 
-BOAT_UPDATE_MS = 100;
+
+
+BOAT_UPDATE_MS = 100
+AIS_UPDATE_MS = 500
+CAMERA_ANGLE = 24
 
 
 def wrapTo2Pi(theta):
@@ -159,8 +165,59 @@ def get_graph_values( sailBoat ):
     (lat, lon) = sailBoat.position()
     return ( rudder, sail, phi_ap, lat, lon )
 
-def loadConfiguration():
-    with open('config.json') as data_file:    
+def wrapAngle( angle ):
+    while angle < 0 or angle >= 360:
+        if angle < 0:
+            angle += 360
+        else:
+            angle -= 360
+
+    return angle
+
+def getBearing( asv, vessel ):
+    (asvLat, asvLon) = asv.position()
+    (vesselLat, vesslLon) = asv.position()
+
+    boatLatitudeInRadian = np.deg2rad(asvLat)
+    waypointLatitudeInRadian = np.deg2rad(vesselLat)
+    deltaLongitudeRadian = np.deg2rad(vesslLon - asvLon)
+
+    y_coordinate = sin(deltaLongitudeRadian) * cos(waypointLatitudeInRadian)
+    x_coordinate = cos(boatLatitudeInRadian)* sin(waypointLatitudeInRadian) - sin(boatLatitudeInRadian) * cos(waypointLatitudeInRadian) * cos(deltaLongitudeRadian)
+
+    bearingToWaypointInRadian = atan2(y_coordinate, x_coordinate)
+    bearingToWaypoint = np.rad2deg(bearingToWaypointInRadian)
+    return wrapAngle(bearingToWaypoint)
+
+def getBearingDiff( h1, h2 ):
+    diff = h2 - h1
+    absDiff = abs( diff )
+
+    if (absDiff <= 180):
+        if absDiff == 180:
+            return absdiff
+        else:
+            return diff
+
+    elif (h2 > h1):
+        return absDiff - 360
+    else:
+	    return 360 - absDiff
+
+def boatInVisualRange( asv, vessel):
+    bearing = getBearing(asv, vessel)
+
+    bearingDiff = abs( getBearingDiff(asv.heading(), bearing) )
+
+    if bearingDiff < CAMERA_ANGLE:
+        return True
+    return False
+
+def loadConfiguration(configPath):
+    global AIS_UPDATE_MS
+    global BOAT_UPDATE_MS
+    
+    with open(configPath) as data_file:    
         config = json.load(data_file)
 
     latOrigin = config["lat_origin"]
@@ -168,6 +225,11 @@ def loadConfiguration():
 
     if config.get("boat_update_ms"):
         BOAT_UPDATE_MS = config["boat_update_ms"];
+
+    if config.get("ais_update_ms"):
+        AIS_UPDATE_MS = config["ais_update_ms"];
+
+    print("Boat Update ms: " + str(BOAT_UPDATE_MS) + " AIS Update ms: " + str(AIS_UPDATE_MS))
 
     vessels = []
 
@@ -179,11 +241,12 @@ def loadConfiguration():
 
     # Load Marine Traffic
     for marineVessel in config["traffic"]:
+        id = marineVessel["mmsi"];
         lat = marineVessel["lat_origin"]
         lon = marineVessel["lon_origin"]
         heading = wrapTo2Pi(np.deg2rad(marineVessel["heading"] - 90))
         speed = marineVessel["speed"]
-        vessels.append(Vessel(SimplePhysicsModel(heading, speed), lat, lon, heading, speed))
+        vessels.append(MarineTraffic(SimplePhysicsModel(heading, speed), lat, lon, heading, speed, id))
 
     return ( vessels, WindState( trueWindDir, trueWindSpeed ) )
 
@@ -192,7 +255,12 @@ temp_data = data_handler()
 if __name__ == '__main__':
     net = Network( "localhost", 6900 )
 
-    ( vessels, trueWind ) = loadConfiguration()
+    configPath = "config.json"
+
+    if len(sys.argv) == 2:
+        configPath = sys.argv[1]
+
+    ( vessels, trueWind ) = loadConfiguration(configPath)
     simulatedBoat = vessels[0]
     print(simulatedBoat);
 
@@ -201,7 +269,7 @@ if __name__ == '__main__':
     files = []
     for i in range(0, len(vessels)):
         files.append(open("GPS_Track_" + str(i) + ".track", 'w'))
-        files[i].write("id,latitudes,longitude\n")
+        files[i].write("id,latitudes,longitude,distance\n")
         simulator.addPhysicsModel( vessels[i].physicsModel() )
 
     # multithreading management:
@@ -223,6 +291,7 @@ if __name__ == '__main__':
     delta_s = 0  
 
     lastSentBoatData = 0
+    lastAISSent = 0
 
     try:
         while( net.connected() ):
@@ -237,10 +306,22 @@ if __name__ == '__main__':
             # TODO - Jordan: Make this a variable step, so we aren't at a fixed rate of simulation
             simulator.step( 0.05 )
 
+            millis = getMillis();
+
             # Send the boat data
-            if getMillis() > lastSentBoatData + BOAT_UPDATE_MS:
+            if millis > lastSentBoatData + BOAT_UPDATE_MS:
                 net.sendBoatData( simulatedBoat )
-                lastSentBoatData = getMillis()
+                lastSentBoatData = millis
+
+            # Send AIS data
+            if millis > lastAISSent + AIS_UPDATE_MS:
+                for i in range( 1, len(vessels) ):
+                    if vessels[i].id() < 100000000 and boatInVisualRange(vessels[0], vessels[i]):
+                        net.sendVisualContact( vessels[i] )
+                    else:
+                        net.sendAISContact( vessels[i] )
+                lastAISSent = millis
+
 
             (head, gps, wind) = get_to_socket_value( simulatedBoat )
             (x, y) = simulatedBoat.physicsModel().utmCoordinate()
@@ -252,10 +333,12 @@ if __name__ == '__main__':
                                 latitude, longitude, simulatedBoat.speed())
             threadLock.release()
 
+            (asvLat, asvLon) = vessels[0].position()
             # Log marine traffic
-            for i in range(0, len(vessels)):
-                (lat, lon) = vessels[i].position();
-                files[i].write("0," + str(lat) + "," + str(lon) + "\n")
+            for i in range( 0, len(vessels) ):
+                (lat, lon) = vessels[i].position()
+                distance = LatLonMath.distanceKM(lat, lon, asvLat, asvLon)
+                files[i].write("0," + str(lat) + "," + str(lon) + "," + str(distance) + "\n")
 
             dt_sleep = 0.05-(time.time()-deb)
             if dt_sleep < 0:

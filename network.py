@@ -81,18 +81,31 @@ class Network:
                      int(windDir), windSpeed,
                      int(heading),
                      int(rudder), int(sail) )
+        print("Sent boat data")
         self.sendData( data )
 
     def sendAISContact( self, boat ):
-        sendFormat = '=HB3fH'
+        sendFormat = '=HBI3fH'
 
-        dataLength = 17
+        dataLength = 19
+        id = boat.id()
         (latitude, longtitude) = boat.position()
-        course = boat.position()
+        course = boat.course()
         speed = boat.speed()
-
+        print("Sent AIS data")
         data = pack( sendFormat, int(dataLength), MESSAGE_TYPE_AIS_CONTACT, 
-                    latitude, longtitude, speed, int(course) )
+                    int(id), latitude, longtitude, speed, int(course) )
+        self.sendData( data )
+
+    def sendVisualContact( self, boat ):
+        sendFormat = '=HBI2f'
+
+        dataLength = 19
+        id = boat.id()
+        (latitude, longtitude) = boat.position()
+        print("Sent Visual data")
+        data = pack( sendFormat, int(dataLength), MESSAGE_TYPE_TIS_CONTACT, 
+                    int(id), latitude, longtitude )
         self.sendData( data )
 
     def sendData( self, data ):

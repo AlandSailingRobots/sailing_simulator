@@ -32,6 +32,25 @@ class Vessel:
     def speed(self):
         return self._speed
 
+class MarineTraffic(Vessel):
+    def __init__(self, physicsModel, lat, lon, course, speed, id):
+        self._physicsModel = physicsModel
+        self._course = course
+        # SET INITIAL MODEL COURSE
+        self._elipseRef = 23
+        (self._utmZone, self._utmOriginX, self._utmOriginY) = LLUTM.LLtoUTM( self._elipseRef, lat, lon)
+        self._speed = 0
+        self._id = id
+
+    def course(self):
+        return wrapTo2Pi( -self._physicsModel.heading() + np.pi / 2 ) * 180 / np.pi
+
+    def speed(self):
+        return self._physicsModel.speed()
+
+    def id(self):
+        return self._id;
+
 class SailBoat(Vessel):
     def __init__(self, physicsModel, lat, lon, course, speed):
         self._physicsModel = physicsModel
@@ -39,8 +58,6 @@ class SailBoat(Vessel):
         self._elipseRef = 23
         (self._utmZone, self._utmOriginX, self._utmOriginY) = LLUTM.LLtoUTM( self._elipseRef, lat, lon)
 
-        # Currently just returns the boat's compass heading, this will include current/tidal drift 
-        # eventually TODO
     def course(self):
         return self.heading()
 
