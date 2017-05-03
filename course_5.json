@@ -15,6 +15,20 @@
             "lat_origin": 60.101184,
             "lon_origin": 19.920981,
             "speed": 2.2
+        },
+        {
+            "mmsi": 100100101,
+            "heading": 170,
+            "lat_origin": 60.094990,
+            "lon_origin": 19.921201,
+            "speed": 1.5
+        },
+        {
+            "mmsi": 100100102,
+            "heading": 145,
+            "lat_origin": 60.097023,
+            "lon_origin": 19.921217,
+            "speed": 1.3
         }
     ]
 }
