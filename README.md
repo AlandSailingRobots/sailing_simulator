@@ -1,90 +1,112 @@
 SAILING_SIMULATOR
 =================
 
-This repository need to be inside the [sailingrobot](https://github.com/AlandSailingRobots/sailingrobot) repository as a submodule:
+This repository Aland sailing robot's simulator. The simulator will simulate a sailing ASV and provides a basic simulation of other marine traffic. The GPS tracks of the ASV and the simulated track are outputted in .track files, which the first one being the ASV.
+
+## Usage
+
+    ./simulation_main.py [config]
+
+    Arguements:
+
+        * [config] - Optional:  This is the path to the config file, if no path is included, the simulator will default to ./config.json
 
 ## Required Packages:
 
-For python side of the simulation:
+* numpy
+* matplotlib
+* geopy
+* python-tk
 
-* python-numpy
-* python-matplotlib
-* [python-pip] optionnal
-
-### How to get python packages:
+### Arch Linux
 
 On Arch linux as sudo:
 
     $ pacman -Syy && pacman -S python-pip
     $ pip install numpy
     $ pip install matplotlib
+    $ pip install geopy
+    $ pacman -S tk 
 
-In some cases install for *matplotlib* is corrupted in that case you need to build it:
+In some cases the install for *matplotlib* is corrupted in that case you need to build it:
 
     $ pip uninstall matplotlib
     $ git clone https://github.com/matplotlib/matplotlib.git
     $ cd matplotlib
     $ python setup.py install
 
-# Two way simulation:
-There is now two way to use the simulator:
+### Ubuntu
 
- * The compile time simulation
- * The post compile simulation
+On Ubuntu:
 
-## Compile time simulation:
+    $ apt-get install python-pip
+    $ pip install numpy
+    $ pip install matplotlib
+    $ pip install geopy
+    $ apt-get python-tk
 
-In repository [sailingrobot](https://github.com/AlandSailingRobots/sailingrobot):
+## Using the simulator with the Aland code base
 
-    $ make USE_SIM=1 (add -j for faster compilation)
-    $ ./sr
+The Aland control system's simulator node creates a TCP server which the simulator connects to, this means the control system (Built in simulation mode) needs to be started first. Then the simulator can be started, it will automatically connect to the control system, at which point the simulation will begin.
 
-Here you will use the database in sailingrobot.
-You may need to clean the build before making the executable:
+## Simulator Configuration
 
-    $ make clean
+The configuration file controls the starting position of the ASV, as well as how often the simulator will send update messages and simulated traffic.
 
-Then launch the python code [SIMSIDE/python/simulation_main.py](SIMSIDE/python/simulation_main.py):
+### ASV State
 
-    $ ./simulation_main.py [ip_address]
+The ASV's initial state is controlled by 4 configurable variables
 
-If on the same computer the IP address is optionnal (default is localhost).
+    * "lat_origin" : A double, controls the starting latitude
+    * "lon_origin": A double, controls the starting longitude
+    * "wind_direction": A integer in degrees, controls the wind direction
+    * "wind_speed": A integer in metres, controls the winds speed
 
+### Message Updates
 
-## Post Compile time simulation
+    * "boat_update_ms": A integer in milliseconds, controls how often boat state messages are sent out
+    * "ais_update_ms": A integer in milliseconds, controls how often AIS contact messages are sent out
 
-Download it as a submodule in sailingrobot repository:
+### Simulated Marine traffic
 
-    $ git submodule init
-    $ git submodule sync
-    $ git submodule update
+Simulated marine traffic can be defined in the configuration message, with the json array type with the key "traffic". Each entry describes a single simulated marine vehicle. 
 
-### Build the program side:
+A single marine vehicle is defined as:
 
-    $ cd PROGSIDE && make
-    $ cd ..
+        * "mmsi": The id of the vessel, an integer, used to uniquely id simulated traffic. An id below 100000000 will be regarded as a thermal imaging contact and not a AIS contact.
+        * "heading": An integer, in degress, the heading of the vessel
+        * "lat_origin": A double, controls the starting latitude of the marine vehicle
+        * "lon_origin": A double, controls the starting longitude of the marine vehicle
+        * "speed": 1.5: A double in metres, controls the speed of the marine vehicle
 
-### Create the simulation database
+### Example configuration
 
-    $ ./simu_installdb.sh
+'''
+    {
+        "lat_origin": 60.100863,
+        "lon_origin": 19.921260,
 
-You may want to change some value:
+        "wind_direction": 0,
+        "wind_speed": 3,
 
-    $ ./simu_updateDB.sh
+        "boat_update_ms":100,
+        "ais_update_ms":1000,
 
-or (ie To change between waypoint following and line following):
-
-    $ sqlite3 simu_asr.db
-    $ update sailing_robot_config set line_follow=1;
-
-    (*or 0 for waypoint routing*)
-
-### Launch the simulation (in *sailingrobot/sailing_simulator*)
-
-    $ ./simu_run.sh
-
-You may want to launch the simulation on another computer than where the code is running,
-you will need to comment the line 33 in *simu_run.sh* and change the ip address when launching the python:
-
-    $ cd SIMSIDE/python
-    $ ./simulation_main.py ip_address
+        "traffic": [
+            {
+                "mmsi": 100100100,
+                "heading": 5,
+                "lat_origin": 60.101184,
+                "lon_origin": 19.920981,
+                "speed": 2.2
+            },
+            {
+                "mmsi": 100100101,
+                "heading": 170,
+                "lat_origin": 60.094990,
+                "lon_origin": 19.921201,
+                "speed": 1.5
+            },
+        ]
+    }
+'''
