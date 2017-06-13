@@ -13,3 +13,4 @@
 simu_asr.db-journal
 */build*
 *.db
+*.track
