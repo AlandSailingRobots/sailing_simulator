@@ -1,0 +1,41 @@
+{
+    "lat_origin": 60.107240,
+    "lon_origin": 19.922397,
+
+    "wind_direction": 180,
+    "wind_speed": 3,
+
+    "boat_update_ms":100,
+    "ais_update_ms":1000,
+
+    "traffic": [
+        {
+            "mmsi": 100100100,
+            "heading": 0,
+            "lat_origin": 60.107715,
+            "lon_origin": 19.920972,
+            "speed": 1.5
+        },
+        {
+            "mmsi": 100100101,
+            "heading": 180,
+            "lat_origin": 60.101308, 
+            "lon_origin": 19.921842,
+            "speed": 1.4
+        },
+        {
+            "mmsi": 100100102,
+            "heading": 280,
+            "lat_origin": 60.103377,
+            "lon_origin": 19.922700, 
+            "speed": 0.25
+        },
+        {
+            "mmsi": 100100102,
+            "heading": 320,
+            "lat_origin": 60.100483,
+            "lon_origin": 19.918277,
+            "speed": 1.3
+        }
+    ]
+}

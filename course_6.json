@@ -1,0 +1,20 @@
+{
+    "lat_origin": 60.056853,
+    "lon_origin": 19.786497,
+
+    "wind_direction": 0,
+    "wind_speed": 3,
+
+    "boat_update_ms":100,
+    "ais_update_ms":1000,
+
+    "traffic": [
+        {
+            "mmsi": 100100100,
+            "heading": 178,
+            "lat_origin": 60.053522,
+            "lon_origin": 19.786443,
+            "speed": 3
+        }
+    ]
+}
