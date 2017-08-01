@@ -95,6 +95,7 @@ class drawThread (threading.Thread):
         ax2 = fig.add_axes([0.1, 0.1, 0.8, 0.8])
         ax2.set_xlabel('Simulation of boat')
         (ax_min_x, ax_min_y, axis_len) = (-20, -20, 40)
+        lines = []
         while(self.run_th):
 
             self.lock.acquire()
@@ -106,8 +107,8 @@ class drawThread (threading.Thread):
             plt.clf()   # Clear figure
             fig.subplots_adjust(top=0.8)
             ax2 = fig.add_axes([0.1, 0.1, 0.8, 0.8])
-            ax2.set_xlabel('Simulation of boat %0.1f %0.1f speed:%0.1f m/s rudder:%0.3f\
-lat %.5f long %.5f ' %
+            ax2.set_xlabel('Simulation of boat %0.1f %0.1f speed:%0.1f m/s rudder:%0.3f \
+lat: %.5f lon: %.5f ' %
                            (wrapTo2Pi(-th_data.theta+np.pi/2)*180/np.pi,
                             wrapTo2Pi(-th_data.phi+np.pi/2)*180/np.pi,
                             th_data.speed,
@@ -117,6 +118,7 @@ lat %.5f long %.5f ' %
                           th_data.theta, th_data.delta_r, th_data.delta_s)
             ax_min_x = x-axis_len/2.0
             ax_min_y = y-axis_len/2.0
+            cds.draw_track(ax2, lines, th_data.x, th_data.y)
             cds.draw_wind_direction(ax2, (ax_min_x+1, ax_min_y+1), axis_len, 1, th_data.phi)
             plt.axis([ax_min_x, ax_min_x+axis_len,
                       ax_min_y, ax_min_y+axis_len])

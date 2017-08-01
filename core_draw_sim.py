@@ -33,6 +33,17 @@ def draw_boat(h, s, x, y, a_b, a_r, a_s):
     h.add_line(l5)
 
 
+def draw_track(h, t, x, y):
+    # h  - actual fig add_axes
+    # t  - vector with previous positions
+    # x  - new x position
+    # y  - new y position
+    t.append([x, y])
+    for i in range(1, len(t)):
+        line = lines.Line2D([t[i][0], t[i-1][0]], [t[i][1], t[i-1][1]], color='r')
+        h.add_line(line)
+
+
 def draw_wind_direction(h, axis_min, axis_max_l, s, psi):
     # h  - actual fig add_axes
     # axis_min - minimum of axis (x,y)
