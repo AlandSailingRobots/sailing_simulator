@@ -25,7 +25,7 @@ import json
 import LatLonMath
 
 
-# Returns the milliseconds 
+# Returns the milliseconds
 getMillis = lambda: int(round(time.time() * 1000))
 
 def exit_function_py():
@@ -216,8 +216,8 @@ def boatInVisualRange( asv, vessel):
 def loadConfiguration(configPath):
     global AIS_UPDATE_MS
     global BOAT_UPDATE_MS
-    
-    with open(configPath) as data_file:    
+
+    with open(configPath) as data_file:
         config = json.load(data_file)
 
     latOrigin = config["lat_origin"]
@@ -246,7 +246,9 @@ def loadConfiguration(configPath):
         lon = marineVessel["lon_origin"]
         heading = wrapTo2Pi(np.deg2rad(marineVessel["heading"] - 90))
         speed = marineVessel["speed"]
-        vessels.append(MarineTraffic(SimplePhysicsModel(heading, speed), lat, lon, heading, speed, id))
+        length = marineVessel["length"]
+        beam = marineVessel["beam"]
+        vessels.append(MarineTraffic(SimplePhysicsModel(heading, speed), lat, lon, heading, speed, id, length, beam))
 
     return ( vessels, WindState( trueWindDir, trueWindSpeed ) )
 
@@ -288,7 +290,7 @@ if __name__ == '__main__':
     print("Start drawing thread")
     thread_draw.start()
     delta_r = 0
-    delta_s = 0  
+    delta_s = 0
 
     lastSentBoatData = 0
     lastAISSent = 0

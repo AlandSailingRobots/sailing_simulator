@@ -85,16 +85,18 @@ class Network:
         self.sendData( data )
 
     def sendAISContact( self, boat ):
-        sendFormat = '=HBI3fH'
+        sendFormat = '=HBI3fH2f'
 
-        dataLength = 19
+        dataLength = 27
         id = boat.id()
         (latitude, longtitude) = boat.position()
         course = boat.course()
         speed = boat.speed()
+        length = boat.length()
+        beam = boat.beam()
         print("Sent AIS data")
-        data = pack( sendFormat, int(dataLength), MESSAGE_TYPE_AIS_CONTACT, 
-                    int(id), latitude, longtitude, speed, int(course) )
+        data = pack( sendFormat, int(dataLength), MESSAGE_TYPE_AIS_CONTACT,
+                    int(id), latitude, longtitude, speed, int(course), length, beam )
         self.sendData( data )
 
     def sendVisualContact( self, boat ):
@@ -104,7 +106,7 @@ class Network:
         id = boat.id()
         (latitude, longtitude) = boat.position()
         print("Sent Visual data")
-        data = pack( sendFormat, int(dataLength), MESSAGE_TYPE_TIS_CONTACT, 
+        data = pack( sendFormat, int(dataLength), MESSAGE_TYPE_TIS_CONTACT,
                     int(id), latitude, longtitude )
         self.sendData( data )
 
@@ -113,6 +115,3 @@ class Network:
 
         if( len(writeReady) ):
             self._sock.sendall( data )
-                                                                    
-
-
