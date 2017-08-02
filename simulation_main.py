@@ -51,6 +51,31 @@ def wrapTo2Pi(theta):
     theta = theta % (2*np.pi)
     return theta
 
+class waypoint_handler(object):
+    def __init__(self):
+        self.lon = 0
+        self.lat = 0
+        self.dec = 0
+        self.rad = 0
+        self.prevlon = 0
+        self.prevlat = 0
+        self.prevdec = 0
+        self.prevrad = 0
+        self.run = 1
+
+    def set_value(self, lon, lat, dec, rad, prevlon,
+                  prevlat, prevdec, prevrad):
+        self.lon = lon
+        self.lat = lat
+        self.dec = dec
+        self.rad = rad
+        self.prevlon = prevlon
+        self.prevlat = prevlat
+        self.prevdec = prevdec
+        self.prevrad = prevrad
+
+    def set_run(self, run_):
+        self.run = run_
 
 class data_handler(object):
     def __init__(self):
@@ -94,17 +119,33 @@ class drawThread (threading.Thread):
         fig.subplots_adjust(top=0.8)
         ax2 = fig.add_axes([0.1, 0.1, 0.8, 0.8])
         ax2.set_xlabel('Simulation of boat')
-        (ax_min_x, ax_min_y, axis_len) = (-20, -20, 40)
+        th_data = copy.deepcopy(temp_data)
+        latprev = th_data.latitude
+        lonprev = th_data.longitude
+        # (ax_min_x, ax_min_y, axis_len) = (-20, -20, 40)
         lines = []
+        prevWPlongitude = 0
         while(self.run_th):
 
             self.lock.acquire()
             th_data = copy.deepcopy(temp_data)
+            th_wp = copy.deepcopy(temp_wp)
             self.lock.release()
             self.run_th = th_data.run
+            (ax_min_x, ax_min_y, axis_len) = (th_data.longitude-0.005, th_data.latitude-0.005, 0.01)
 
-            plt.cla()   # Clear axis
-            plt.clf()   # Clear figure
+            # print(th_wp.lon)
+            # print(th_wp.lat)
+            # print(th_wp.dec)
+            # print(th_wp.rad)
+            # print(th_wp.prevlon)
+            # print(th_wp.prevlat)
+            # print(th_wp.prevdec)
+            # print(th_wp.prevrad)
+            # print()
+            
+            # plt.cla()   # Clear axis
+            # plt.clf()   # Clear figure
             fig.subplots_adjust(top=0.8)
             ax2 = fig.add_axes([0.1, 0.1, 0.8, 0.8])
             ax2.set_xlabel('Simulation of boat %0.1f %0.1f speed:%0.1f m/s rudder:%0.3f \
@@ -114,16 +155,23 @@ lat: %.5f lon: %.5f ' %
                             th_data.speed,
                             th_data.delta_r,
                             th_data.latitude, th_data.longitude))
-            cds.draw_boat(ax2, 1, th_data.x, th_data.y,
-                          th_data.theta, th_data.delta_r, th_data.delta_s)
-            ax_min_x = x-axis_len/2.0
-            ax_min_y = y-axis_len/2.0
-            cds.draw_track(ax2, lines, th_data.x, th_data.y)
-            cds.draw_wind_direction(ax2, (ax_min_x+1, ax_min_y+1), axis_len, 1, th_data.phi)
+
+            if th_wp.lon != prevWPlongitude:
+                cds.draw_circle(ax2, 1, th_wp.lon, th_wp.lat, th_wp.rad)
+                prevWPlongitude = th_wp.lon
+            ax_min_x = th_data.longitude-axis_len/2.0
+            ax_min_y = th_data.latitude-axis_len/2.0
+            # cds.draw_track(ax2, lines, th_data.longitude, th_data.latitude)
+            # cds.draw_boat(ax2, 0.0002, th_data.longitude, th_data.latitude,
+            #              th_data.theta, th_data.delta_r, th_data.delta_s)
+            # cds.draw_wind_direction(ax2, (ax_min_x+0.0001, ax_min_y+0.0001), axis_len, 0.0002, th_data.phi)
+            cds.draw_line(ax2, [th_data.longitude, th_data.latitude], [lonprev, latprev], 'r')
             plt.axis([ax_min_x, ax_min_x+axis_len,
                       ax_min_y, ax_min_y+axis_len])
             plt.draw()
             plt.pause(0.001)
+            lonprev = th_data.longitude
+            latprev = th_data.latitude
 
         print("Stopping Draw Thread")
         plt.close()
@@ -255,6 +303,7 @@ def loadConfiguration(configPath):
     return ( vessels, WindState( trueWindDir, trueWindSpeed ) )
 
 temp_data = data_handler()
+temp_wp = waypoint_handler()
 
 if __name__ == '__main__':
     net = Network( "localhost", 6900 )
@@ -305,6 +354,9 @@ if __name__ == '__main__':
             (command_rudder, command_sheet) = net.readActuatorData()
             (delta_r, delta_s) = order_to_deg(command_rudder, command_sheet)
 
+            (wp_lon, wp_lat, wp_dec, wp_radius, wp_prevLon,
+            wp_prevLat, wp_prevDec, wp_prevRad) = net.receiveWaypoint()
+
             simulatedBoat.physicsModel().setActuators( delta_s, delta_r )
 
             # TODO - Jordan: Make this a variable step, so we aren't at a fixed rate of simulation
@@ -335,6 +387,8 @@ if __name__ == '__main__':
             threadLock.acquire()
             temp_data.set_value(x, y, theta, delta_s, delta_r, trueWind.direction(),
                                 latitude, longitude, simulatedBoat.speed())
+            temp_wp.set_value(wp_lon, wp_lat, wp_dec, wp_radius, wp_prevLon,
+            wp_prevLat, wp_prevDec, wp_prevRad)
             threadLock.release()
 
             (asvLat, asvLon) = vessels[0].position()

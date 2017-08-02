@@ -38,6 +38,11 @@ def draw_track(h, t, x, y):
     # t  - vector with previous positions
     # x  - new x position
     # y  - new y position
+    # t.append([x, y])
+    # (xprev, yprev) = t[-1]
+    # # for i in range(1, len(t)):
+    # line = lines.Line2D([x, xprev], [y, yprev], color='r')
+    # h.add_line(line)
     t.append([x, y])
     for i in range(1, len(t)):
         line = lines.Line2D([t[i][0], t[i-1][0]], [t[i][1], t[i-1][1]], color='r')
@@ -66,6 +71,16 @@ def draw_wind_direction(h, axis_min, axis_max_l, s, psi):
     h.add_line(l1)
     h.add_line(l2)
     h.add_line(l3)
+
+def draw_circle(h, s, x, y, radius):
+    # circle1 = plt.Circle((0, 0), 2, color='r')
+    # now make a circle with no fill, which is good for hi-lighting key results
+    # circle2 = plt.Circle((5, 5), 0.5, color='b', fill=False)
+    radius_degree = radius/1.132*1e-5
+    circle1 = plt.Circle((x,y), radius_degree/10, color='g')
+    circle2 = plt.Circle((x,y), radius_degree, fill=False)
+    h.add_artist(circle1)
+    h.add_artist(circle2)
 
 
 def draw_line(h, a, b, color_line='b'):
