@@ -3,6 +3,7 @@ class NetworkInterface
     def __init__( self, address, port):
         self._address = address
         self._port = port
+        self._connected = False;
 
     def setup(self):
         """
@@ -17,6 +18,20 @@ class NetworkInterface
         Stops the network interface in a controlled manner
         """
         raise NotImplementedError("Must override stop() method!")
+
+    def connected(self):
+        """
+        Indicates if the network interface is connected and working
+
+        @returns boolean
+        """
+        return self._connected
+
+    def readNetworkData(self):
+        """
+        Reads network data off the line
+        """
+        raise NotImplementedError("Must override readNetworkData() method!")
     
     def getSailCommand(self):
         """
@@ -62,8 +77,8 @@ class NetworkInterface
         """
         raise NotImplementedError("Must override setWindData(windDirection, windSpeed) method!")
 
-    def setAISData(self, marineTrafficList):
+    def setAISData(self, marineTraffic):
         """
-        Sets the list of MarineTraffic objects to send to the endpoint
+        Sends a marineTraffic contact
         """ 
         raise NotImplementedError("Must override setAISData(marineTrafficList) method!")  
