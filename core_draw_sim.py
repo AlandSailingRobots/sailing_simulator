@@ -76,7 +76,7 @@ def draw_circle(h, s, x, y, radius):
     # circle1 = plt.Circle((0, 0), 2, color='r')
     # now make a circle with no fill, which is good for hi-lighting key results
     # circle2 = plt.Circle((5, 5), 0.5, color='b', fill=False)
-    radius_degree = radius/1.132*1e-5
+    radius_degree = (radius+3)*1.132*1e-5
     circle1 = plt.Circle((x,y), radius_degree/10, color='g')
     circle2 = plt.Circle((x,y), radius_degree, fill=False)
     h.add_artist(circle1)
