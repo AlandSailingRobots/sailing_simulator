@@ -1,6 +1,17 @@
 import numpy as np
 from math import cos, sin, atan2, hypot
 
+
+def wrapAngle( angle ):
+    while angle < 0 or angle >= 360:
+        if angle < 0:
+            angle += 360
+        else:
+            angle -= 360
+
+    return angle
+
+
 class Functions:
     def wrapTo2Pi(theta):
         if theta < 0:
@@ -39,14 +50,14 @@ class Functions:
         (lat, lon) = sailBoat.position()
         return ( rudder, sail, phi_ap, lat, lon )
 
-    def wrapAngle( angle ):
-        while angle < 0 or angle >= 360:
-            if angle < 0:
-                angle += 360
-            else:
-                angle -= 360
-
-        return angle
+    # def wrapAngle( angle ):
+    #     while angle < 0 or angle >= 360:
+    #         if angle < 0:
+    #             angle += 360
+    #         else:
+    #             angle -= 360
+    #
+    #     return angle
 
     def getDTW(asvpos,wppos):
         radiusEarth = 6371
@@ -73,7 +84,7 @@ class Functions:
         deltaLongitudeRadian = np.deg2rad(vesslLon - asvLon)
 
         y_coordinate = sin(deltaLongitudeRadian) * cos(waypointLatitudeInRadian)
-        x_coordinate = cos(boatLatitudeInRadian)* sin(waypointLatitudeInRadian) - sin(boatLatitudeInRadian) * cos(waypointLatitudeInRadian) * cos(deltaLongitudeRadian)
+        x_coordinate = cos(boatLatitudeInRadian) * sin(waypointLatitudeInRadian) - sin(boatLatitudeInRadian) * cos(waypointLatitudeInRadian) * cos(deltaLongitudeRadian)
 
         bearingToWaypointInRadian = atan2(y_coordinate, x_coordinate)
         bearingToWaypoint = np.rad2deg(bearingToWaypointInRadian)
@@ -87,15 +98,15 @@ class Functions:
         deltaLongitudeRadian = np.deg2rad(vesselLon - asvLon)
 
         y_coordinate = sin(deltaLongitudeRadian) * cos(waypointLatitudeInRadian)
-        x_coordinate = cos(boatLatitudeInRadian)* sin(waypointLatitudeInRadian) - sin(boatLatitudeInRadian) * cos(waypointLatitudeInRadian) * cos(deltaLongitudeRadian)
+        x_coordinate = cos(boatLatitudeInRadian) * sin(waypointLatitudeInRadian) - sin(boatLatitudeInRadian) * cos(waypointLatitudeInRadian) * cos(deltaLongitudeRadian)
 
         bearingToWaypointInRadian = atan2(y_coordinate, x_coordinate)
         btw = np.rad2deg(bearingToWaypointInRadian)
-        if btw < 0:
-            btw += 360
-        else:
-            btw -= 360
-        return btw
+        # if btw < 0:
+        #     btw += 360
+        # else:
+        #     btw -= 360
+        return wrapAngle(btw)
 
     def getBearingDiff( h1, h2 ):
         diff = h2 - h1
@@ -110,7 +121,7 @@ class Functions:
         elif (h2 > h1):
             return absDiff - 360
         else:
-    	    return 360 - absDiff
+            return 360 - absDiff
 
     def boatInVisualRange( asv, vessel):
         bearing = getBearing(asv, vessel)

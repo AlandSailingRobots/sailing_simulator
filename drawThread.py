@@ -25,8 +25,8 @@ import json
 
 import LatLonMath
 
-temp_data = data_handler()
-temp_wp = waypoint_handler()
+# temp_data = data_handler()
+# temp_wp = waypoint_handler()
 
 
 def wrapTo2Pi(theta):

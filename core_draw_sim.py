@@ -65,12 +65,13 @@ def draw_wind_direction(h, axis_min, axis_max_l, s, psi):
            m_y+3*s*sin(psi),
            m_y+3*s*sin(psi)-s*sin(psi-pi/4),
            m_y+3*s*sin(psi)-s*sin(psi+pi/4)]
-    l1 = lines.Line2D([x_w[0], x_w[1]], [y_w[0], y_w[1]], color='b')
-    l2 = lines.Line2D([x_w[1], x_w[2]], [y_w[1], y_w[2]], color='b')
-    l3 = lines.Line2D([x_w[1], x_w[3]], [y_w[1], y_w[3]], color='b')
+    l1 = lines.Line2D([x_w[0], x_w[1]], [y_w[0], y_w[1]], color='w')
+    l2 = lines.Line2D([x_w[1], x_w[2]], [y_w[1], y_w[2]], color='w')
+    l3 = lines.Line2D([x_w[1], x_w[3]], [y_w[1], y_w[3]], color='w')
     h.add_line(l1)
     h.add_line(l2)
     h.add_line(l3)
+
 
 def draw_circle(h, s, x, y, radius):
     # circle1 = plt.Circle((0, 0), 2, color='r')
@@ -84,7 +85,8 @@ def draw_circle(h, s, x, y, radius):
 
 
 def draw_line(h, a, b, color_line='b'):
-    l1 = lines.Line2D([a[0], b[0]], [a[1], b[1]], color=color_line)
+    l1 = lines.Line2D([a[0], b[0]], [a[1], b[1]], color=color_line, linestyle='--', dashes=(2,4))
+    # l1.set_dashes('-')
     h.add_line(l1)
 
 

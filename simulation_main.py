@@ -56,6 +56,47 @@ def wrapTo2Pi(theta):
     theta = theta % (2*np.pi)
     return theta
 
+
+def zoom_factory(ax, zoom, base_scale=0.99):
+    def zoom_fun(event):
+        # get the current x and y limits
+        cur_xlim = ax.get_xlim()
+        cur_ylim = ax.get_ylim()
+        cur_xrange = (cur_xlim[1] - cur_xlim[0])*.5
+        cur_yrange = (cur_ylim[1] - cur_ylim[0])*.5
+        xdata = event.xdata  # get event x location
+        ydata = event.ydata  # get event y location
+        if event.button == 'up':
+            # deal with zoom in
+            if zoom.length > 0.003:
+                zoom.length -= 0.001
+            scale_factor = 1/base_scale
+        elif event.button == 'down':
+            # deal with zoom out
+            if zoom.length < 0.15:
+                zoom.length += 0.001
+            scale_factor = base_scale
+        else:
+            # deal with something that should never happen
+            scale_factor = 1
+            print (event.button)
+        # set new limits
+        # ax.set_xlim([xdata - cur_xrange*scale_factor# xdata + cur_xrange*scale_factor])
+        #  ax.set_ylim([ydata - cur_yrange*scale_factor,# ydata + cur_yrange*scale_factor])
+        #  plt.draw()  # force re-draw
+
+    fig = ax.get_figure()  # get the figure of interest
+    # attach the call back
+    fig.canvas.mpl_connect('scroll_event',zoom_fun)
+
+    # return the function
+    return zoom_fun
+
+
+def center_boat(event):
+    boatInCenter = True
+
+
 class zoom(object):
     length = 0.008
 
@@ -79,18 +120,18 @@ class drawThread (threading.Thread):
         self.name = "Draw thread"
         self.counter = 1
 
-
-
     def run(self):
         zoom_ = zoom()
         print(zoom_.length)
         axis_length = 0.008
+        boatInCenter = True
+
         fig = plt.figure(figsize=(9, 9))
         fig.patch.set_facecolor('teal')
         fig.subplots_adjust(top=0.8)
         ax2 = fig.add_axes([0.1, 0.1, 0.7, 0.8])
-        ax2.set_xlabel('Simulation of boat')
         ax2.patch.set_facecolor('lightblue')
+
         th_data = copy.deepcopy(temp_data)
         latprev = th_data.latitude
         lonprev = th_data.longitude
@@ -99,36 +140,47 @@ class drawThread (threading.Thread):
         prevWPlatitude = 0
 
         textbox = fig.text(0.7, 0.7, '')
-        zoomtext = fig.text(0.815, 0.5,'ZOOM')
-        zoomtext.set_color('white')
+        # zoomtext = fig.text(0.815, 0.5,'ZOOM')
+        # zoomtext.set_color('white')
+        #
+        ax_bcenter = fig.add_axes([0.812, 0.43, 0.08, 0.05])
+        # ax_in = fig.add_axes([0.902, 0.44, 0.08, 0.05])
+        # bzoomout = Button(ax_out, 'Out')
+        # bzoomin = Button(ax_in, 'In')
+        #
+        # bzoomout.on_clicked(zoom_.zoomout)
+        # bzoomin.on_clicked(zoom_.zoomin)
 
-        ax_out = fig.add_axes([0.812, 0.44, 0.08, 0.05])
-        ax_in = fig.add_axes([0.902, 0.44, 0.08, 0.05])
-        bzoomout = Button(ax_out, 'Out')
-        bzoomin = Button(ax_in, 'In')
-
-        bzoomout.on_clicked(zoom_.zoomout)
-        bzoomin.on_clicked(zoom_.zoomin)
-
-        windtext = fig.text(0.815, 0.66, 'Wind Direction')
+        bcenter = Button(ax_bcenter, 'Center', color='white')
+        bcenter.on_clicked(center_boat)
+        windtext = fig.text(0.815, 0.6, 'Wind Direction')
         windtext.set_color('white')
-        wind_ax = fig.add_axes([0.82,0.55,0.1,0.1])
+        wind_ax = fig.add_axes([0.82,0.49,0.1,0.1])
         wind_ax.set_axis_off()
         cds.draw_wind_direction(wind_ax, (0, -0.5), 1, 0.3, th_data.phi)
 
+        f = zoom_factory(ax2, zoom_)
+
+        ax2.xaxis.set_visible(False)
+        ax2.yaxis.set_visible(False)
+
         while(self.run_th):
+            if boatInCenter:
+                centerx = th_data.longitude
+                centery = th_data.latitude
             axis_length = zoom_.length
             self.lock.acquire()
             th_data = copy.deepcopy(temp_data)
             th_wp = copy.deepcopy(temp_wp)
             self.lock.release()
             self.run_th = th_data.run
-            (ax_min_x, ax_min_y, axis_len) = (th_data.longitude-axis_length/2, th_data.latitude-axis_length/2, axis_length)
+            (ax_min_x, ax_min_y, axis_len) = (centerx-axis_length/2, centery-axis_length/2, axis_length)
 
             btw = fcn.getBTW([th_data.longitude, th_data.latitude], [th_wp.lon, th_wp.lat])
             dtw = fcn.getDTW([th_data.longitude, th_data.latitude], [th_wp.lon, th_wp.lat])
 
             textstr = "ASV STATE\nLon:          %.5f\nLat:           %.5f\nHeading:  %.2f\nSpeed:       %.2f" % (th_data.longitude, th_data.latitude, wrapTo2Pi(-th_data.theta+np.pi/2)*180/np.pi, th_data.speed)
+            textstr += "\n____________________\n\nRudder:   %.2f\nWingsail:  %.2f" % (th_data.delta_r, 0.00)
             textstr += "\n____________________\n\nWAYPOINT\nBearing:   %.2f\nDistance:  %.2f\nRadius:    %d" % (btw, dtw, th_wp.rad)
 
             # plt.cla()   # Clear axis
@@ -145,22 +197,19 @@ class drawThread (threading.Thread):
                     prevWPlongitude = th_wp.lon
                     prevWPlatitude = th_wp.lat
 
-            ax_min_x = th_data.longitude-axis_len/2.0
-            ax_min_y = th_data.latitude-axis_len/2.0
+            # ax_min_x = th_data.longitude-axis_len/2.0
+            # ax_min_y = th_data.latitude-axis_len/2.0
             # cds.draw_track(ax2, lines, th_data.longitude, th_data.latitude)
             # cds.draw_boat(ax2, 0.0002, th_data.longitude, th_data.latitude,
             #               th_data.theta, th_data.delta_r, th_data.delta_s)
             # cds.draw_wind_direction(ax2, (ax_min_x+0.0001, ax_min_y+0.0001), axis_len, 0.0002, th_data.phi)
             cds.draw_line(ax2, [th_data.longitude, th_data.latitude], [lonprev, latprev], 'r')
-            # ax2.text(0.05, 0.95,textstr)
             plt.axis([ax_min_x, ax_min_x+axis_len,
                       ax_min_y, ax_min_y+axis_len])
             plt.draw()
             fig.texts.remove(textbox)
-            textbox = fig.text(0.82, 0.7, textstr,bbox=dict(edgecolor='white', facecolor='teal'))
+            textbox = fig.text(0.82, 0.63, textstr,bbox=dict(edgecolor='white', facecolor='teal'))
             textbox.set_color('white')
-            # bzoomout.on_clicked(zoom_.zoomout)
-            # bzoomin.on_clicked(zoom_.zoomin)
             # plt.show()
             plt.pause(0.001)
             lonprev = th_data.longitude
@@ -287,7 +336,6 @@ if __name__ == '__main__':
                         net.sendAISContact( vessels[i] )
                 lastAISSent = millis
 
-
             (head, gps, wind) = fcn.get_to_socket_value( simulatedBoat )
             (x, y) = simulatedBoat.physicsModel().utmCoordinate()
             theta = simulatedBoat.physicsModel().heading()
@@ -297,7 +345,7 @@ if __name__ == '__main__':
             temp_data.set_value(x, y, theta, delta_s, delta_r, trueWind.direction(),
                                 latitude, longitude, simulatedBoat.speed())
             temp_wp.set_value(wp_lon, wp_lat, wp_dec, wp_radius, wp_prevLon,
-            wp_prevLat, wp_prevDec, wp_prevRad)
+                              wp_prevLat, wp_prevDec, wp_prevRad)
             threadLock.release()
 
             (asvLat, asvLon) = vessels[0].position()
