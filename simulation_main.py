@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 import socket
 import sys
@@ -8,21 +8,28 @@ import time
 import copy
 import atexit
 from struct import *
+from utils import wrapTo2Pi,wrapAngle
 import numpy as np
 import core_draw_sim as cds
 from simulator import Simulator
-from physics_models import SimplePhysicsModel,SailingPhysicsModel, WindState
+from physics_models import SimplePhysicsModel,SailingPhysicsModel,ASPirePhysicsModel, WindState
 from vessel import Vessel,SailBoat, MarineTraffic
 from network import Network
 
+
 from math import cos, sin, atan2, hypot
 
-from matplotlib import pylab as plt
+from matplotlib import pyplot as plt
 from matplotlib import lines
 
 import json
 
 import LatLonMath
+
+MESSAGE_TYPE_SAILBOAT_DATA = 0
+MESSAGE_TYPE_WINGBOAT_DATA = 1
+MESSAGE_TYPE_AIS_CONTACT   = 2
+MESSAGE_TYPE_TIS_CONTACT   = 3
 
 
 # Returns the milliseconds 
@@ -43,13 +50,6 @@ init_prog = 0
 BOAT_UPDATE_MS = 100
 AIS_UPDATE_MS = 500
 CAMERA_ANGLE = 24
-
-
-def wrapTo2Pi(theta):
-    if theta < 0:
-        theta += 2*np.pi
-    theta = theta % (2*np.pi)
-    return theta
 
 
 class data_handler(object):
@@ -81,13 +81,14 @@ class data_handler(object):
         self.run = run_
 
 class drawThread (threading.Thread):
-    def __init__(self, lock_):
+    def __init__(self, lock_,boat_type):
         threading.Thread.__init__(self)
         self.lock = lock_
         self.run_th = 1
         self.threadID = 1
         self.name = "Draw thread"
         self.counter = 1
+        self.boat_type = boat_type
 
     def run(self):
         fig = plt.figure()
@@ -106,15 +107,20 @@ class drawThread (threading.Thread):
             plt.clf()   # Clear figure
             fig.subplots_adjust(top=0.8)
             ax2 = fig.add_axes([0.1, 0.1, 0.8, 0.8])
-            ax2.set_xlabel('Simulation of boat %0.1f %0.1f speed:%0.1f m/s rudder:%0.3f\
+            ax2.set_xlabel('Simulation of boat heading:%0.1f wind_direction:%0.1f speed:%0.1f m/s rudder:%0.3f\
 lat %.5f long %.5f ' %
                            (wrapTo2Pi(-th_data.theta+np.pi/2)*180/np.pi,
                             wrapTo2Pi(-th_data.phi+np.pi/2)*180/np.pi,
                             th_data.speed,
                             th_data.delta_r,
                             th_data.latitude, th_data.longitude))
-            cds.draw_boat(ax2, 1, th_data.x, th_data.y,
-                          th_data.theta, th_data.delta_r, th_data.delta_s)
+            if self.boat_type == 0:
+                cds.draw_SailBoat(ax2, 1, th_data.x, th_data.y,
+                                  th_data.theta, th_data.delta_r, th_data.delta_s)
+            else:
+                cds.draw_WingBoat(ax2,1, th_data.x, th_data.y,
+                                   th_data.theta, th_data.delta_r)
+            print(x,y)
             ax_min_x = x-axis_len/2.0
             ax_min_y = y-axis_len/2.0
             cds.draw_wind_direction(ax2, (ax_min_x+1, ax_min_y+1), axis_len, 1, th_data.phi)
@@ -126,12 +132,6 @@ lat %.5f long %.5f ' %
         print("Stopping Draw Thread")
         plt.close()
 
-
-def wrapTo2Pi(theta):
-    if theta < 0:
-        theta += 2*np.pi
-    theta = theta % (2*np.pi)
-    return theta
 
 def order_to_deg(command_rudder, command_sheet):
     if command_rudder > 8000 or command_rudder < 3000:
@@ -165,14 +165,7 @@ def get_graph_values( sailBoat ):
     (lat, lon) = sailBoat.position()
     return ( rudder, sail, phi_ap, lat, lon )
 
-def wrapAngle( angle ):
-    while angle < 0 or angle >= 360:
-        if angle < 0:
-            angle += 360
-        else:
-            angle -= 360
 
-    return angle
 
 def getBearing( asv, vessel ):
     (asvLat, asvLon) = asv.position()
@@ -202,7 +195,7 @@ def getBearingDiff( h1, h2 ):
     elif (h2 > h1):
         return absDiff - 360
     else:
-	    return 360 - absDiff
+        return 360 - absDiff
 
 def boatInVisualRange( asv, vessel):
     bearing = getBearing(asv, vessel)
@@ -219,7 +212,8 @@ def loadConfiguration(configPath):
     
     with open(configPath) as data_file:    
         config = json.load(data_file)
-
+    print(config)
+    boat_type = config["boat_type"]
     latOrigin = config["lat_origin"]
     lonOrigin = config["lon_origin"]
 
@@ -236,9 +230,10 @@ def loadConfiguration(configPath):
     trueWindDir = wrapTo2Pi(np.deg2rad(config["wind_direction"] - 90))
     print ("True Wind:" + str(trueWindDir))
     trueWindSpeed = config["wind_speed"]
-
-    vessels.append(SailBoat( SailingPhysicsModel(), latOrigin, lonOrigin, 0, 0 ))
-
+    if boat_type == 0:
+        vessels.append(SailBoat( SailingPhysicsModel(), latOrigin, lonOrigin, 0, 0 ))
+    else:
+        vessels.append(SailBoat( ASPirePhysicsModel() , latOrigin, lonOrigin, 0, 0 ))
     # Load Marine Traffic
     for marineVessel in config["traffic"]:
         id = marineVessel["mmsi"];
@@ -248,7 +243,7 @@ def loadConfiguration(configPath):
         speed = marineVessel["speed"]
         vessels.append(MarineTraffic(SimplePhysicsModel(heading, speed), lat, lon, heading, speed, id))
 
-    return ( vessels, WindState( trueWindDir, trueWindSpeed ) )
+    return ( boat_type ,vessels, WindState( trueWindDir, trueWindSpeed ) )
 
 temp_data = data_handler()
 
@@ -260,9 +255,13 @@ if __name__ == '__main__':
     if len(sys.argv) == 2:
         configPath = sys.argv[1]
 
-    ( vessels, trueWind ) = loadConfiguration(configPath)
+    ( boat_type,vessels, trueWind ) = loadConfiguration(configPath)
     simulatedBoat = vessels[0]
     print(simulatedBoat);
+    if boat_type == 0:
+        message_type = MESSAGE_TYPE_SAILBOAT_DATA
+    else :
+        message_type = MESSAGE_TYPE_WINGBOAT_DATA
 
     simulator = Simulator( trueWind, 1 )
 
@@ -274,7 +273,7 @@ if __name__ == '__main__':
 
     # multithreading management:
     threadLock = threading.Lock()
-    thread_draw = drawThread(threadLock)
+    thread_draw = drawThread(threadLock,boat_type)
     init_prog = 1
 
     dt = 0.1
@@ -297,9 +296,11 @@ if __name__ == '__main__':
         while( net.connected() ):
 
             deb = time.time()
-
-            (command_rudder, command_sheet) = net.readActuatorData()
-            (delta_r, delta_s) = order_to_deg(command_rudder, command_sheet)
+            if boat_type == 0:
+                (command_rudder, command_sheet) = net.readActuatorData()
+                (delta_r, delta_s) = order_to_deg(command_rudder, command_sheet)
+            else :
+                (delta_r,delta_s) = (0,0)
 
             simulatedBoat.physicsModel().setActuators( delta_s, delta_r )
 
@@ -310,7 +311,7 @@ if __name__ == '__main__':
 
             # Send the boat data
             if millis > lastSentBoatData + BOAT_UPDATE_MS:
-                net.sendBoatData( simulatedBoat )
+                net.sendBoatData( simulatedBoat,message_type )
                 lastSentBoatData = millis
 
             # Send AIS data

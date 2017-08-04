@@ -1,14 +1,9 @@
 import LatLongUTMconversion as LLUTM
 import numpy as np
 from physics_models import WindState, PhysicsModel
+from utils import wrapTo2Pi
 
 # MOVE TO UTIL FILE
-def wrapTo2Pi(theta):
-    if theta < 0:
-        theta += 2*np.pi
-    theta = theta % (2*np.pi)
-    return theta
-
 class Vessel:
     def __init__(self, physicsModel, lat, lon, course, speed):
         self._physicsModel = physicsModel

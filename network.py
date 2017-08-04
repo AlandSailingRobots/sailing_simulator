@@ -2,14 +2,16 @@ import socket
 import sys
 import select
 from struct import *
-
+from utils import wrapAngle
 from physics_models import WindState, SailingPhysicsModel
 from vessel import SailBoat
 
 
-MESSAGE_TYPE_BOAT_DATA = 0
-MESSAGE_TYPE_AIS_CONTACT = 1
-MESSAGE_TYPE_TIS_CONTACT = 2
+MESSAGE_TYPE_SAILBOAT_DATA = 0
+MESSAGE_TYPE_WINGBOAT_DATA = 1
+MESSAGE_TYPE_AIS_CONTACT   = 2
+MESSAGE_TYPE_TIS_CONTACT   = 3
+
 
 
 class BoatData:
@@ -56,31 +58,44 @@ class Network:
         return (self._rudderCmd, self._sailCmd)
 
     # Packets up and sends the boat data across TCP
-    def sendBoatData( self, sailboat ):
+    def sendBoatData( self, sailboat,MESSAGE_TYPE ):
         # latitude, longitude, course, speed      # GPS
         #windDir, windSpeed, windTemp     # Wind
         #heading, pitch, roll,                   # Compass
         #sail, rudder                            # Arduino
-
-        dataLength = 27
+        
+        
         (latitude, longitude) = sailboat.position()
-        course = sailboat.course()
+        course = wrapAngle(sailboat.course())
         speed = sailboat.speed()
-        windDir = sailboat.apparentWind().direction()
+        windDir = wrapAngle(sailboat.apparentWind().direction())
         windSpeed = sailboat.apparentWind().speed()
-        heading = sailboat.heading()
-        sail = 0
+        heading = wrapAngle(sailboat.heading())
         rudder = 0
 
+        if MESSAGE_TYPE == MESSAGE_TYPE_SAILBOAT_DATA:
         # The sending format is:
-        #   Msg Type(B), Lat(f), Lon(f), Speed(f), Course(h), WindDir(h), WindSpeed(f), heading(h), rudder(h), sail(h)
+            #   Msg Type(B), Lat(f), Lon(f), Speed(f), Course(h), WindDir(h), WindSpeed(f), heading(h), rudder(h), sail(h)
+            dataLength = 27
+            sail = 0
+            sendFormat = '=HB3f2H1f3H'
+            data = pack( sendFormat, int(dataLength), MESSAGE_TYPE,
+                         latitude, longitude, speed, int(course),
+                         int(windDir), windSpeed,
+                         int(heading),
+                         int(rudder), int(sail) )
 
-        sendFormat = '=HB3f2H1f3H'
-        data = pack( sendFormat, int(dataLength), MESSAGE_TYPE_BOAT_DATA,
-                     latitude, longitude, speed, int(course),
-                     int(windDir), windSpeed,
-                     int(heading),
-                     int(rudder), int(sail) )
+        elif MESSAGE_TYPE == MESSAGE_TYPE_WINGBOAT_DATA:
+        # The sending format is:
+            #   Msg Type(B), Lat(f), Lon(f), Speed(f), Course(h), WindDir(h), WindSpeed(f), heading(h), rudder(h), sail(h)
+            dataLength = 27
+            tail = 0
+            sendFormat = '=HB3f2H1f3H'
+            data = pack( sendFormat, int(dataLength), MESSAGE_TYPE,
+                         latitude, longitude, speed, int(course),
+                         int(windDir), windSpeed,
+                         int(heading),
+                         int(rudder), int(tail) )   
         print("Sent boat data")
         self.sendData( data )
 
@@ -89,12 +104,12 @@ class Network:
 
         dataLength = 19
         id = boat.id()
-        (latitude, longtitude) = boat.position()
-        course = boat.course()
+        (latitude, longitude) = boat.position()
+        course = wrapAngle(boat.course())
         speed = boat.speed()
         print("Sent AIS data")
         data = pack( sendFormat, int(dataLength), MESSAGE_TYPE_AIS_CONTACT, 
-                    int(id), latitude, longtitude, speed, int(course) )
+                    int(id), latitude, longitude, speed, int(course) )
         self.sendData( data )
 
     def sendVisualContact( self, boat ):
