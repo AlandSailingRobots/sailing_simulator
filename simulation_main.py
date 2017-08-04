@@ -10,12 +10,16 @@ import atexit
 from struct import *
 import numpy as np
 import core_draw_sim as cds
+from data_handler import data_handler, waypoint_handler
 from simulator import Simulator
 from physics_models import SimplePhysicsModel,SailingPhysicsModel, WindState
 from vessel import Vessel,SailBoat, MarineTraffic
 from network import Network
-
+from mathFcns import Functions as fcn
+# from drawThread import drawThread
 from math import cos, sin, atan2, hypot
+from matplotlib.widgets import Button
+
 
 from matplotlib import pylab as plt
 from matplotlib import lines
@@ -28,6 +32,7 @@ import LatLonMath
 # Returns the milliseconds
 getMillis = lambda: int(round(time.time() * 1000))
 
+
 def exit_function_py():
     if init_prog:
         threadLock.acquire()
@@ -35,9 +40,9 @@ def exit_function_py():
         threadLock.release()
         thread_draw.join()
 
+
 atexit.register(exit_function_py)
 init_prog = 0
-
 
 
 BOAT_UPDATE_MS = 100
@@ -51,59 +56,19 @@ def wrapTo2Pi(theta):
     theta = theta % (2*np.pi)
     return theta
 
-class waypoint_handler(object):
-    def __init__(self):
-        self.lon = 0
-        self.lat = 0
-        self.dec = 0
-        self.rad = 0
-        self.prevlon = 0
-        self.prevlat = 0
-        self.prevdec = 0
-        self.prevrad = 0
-        self.run = 1
+class zoom(object):
+    length = 0.008
 
-    def set_value(self, lon, lat, dec, rad, prevlon,
-                  prevlat, prevdec, prevrad):
-        self.lon = lon
-        self.lat = lat
-        self.dec = dec
-        self.rad = rad
-        self.prevlon = prevlon
-        self.prevlat = prevlat
-        self.prevdec = prevdec
-        self.prevrad = prevrad
+    def zoomout(self, event):
+        if self.length < 0.04:
+            self.length += 0.001
+        print(self.length)
 
-    def set_run(self, run_):
-        self.run = run_
+    def zoomin(self, event):
+        if self.length > 0.005:
+            self.length -= 0.001
+        print(self.length)
 
-class data_handler(object):
-    def __init__(self):
-        self.x = 0
-        self.y = 0
-        self.theta = 0
-        self.delta_s = 0
-        self.delta_r = 0
-        self.phi = 0
-        self.latitude = 0
-        self.longitude = 0
-        self.run = 1
-        self.speed = 0
-
-    def set_value(self, x_, y_, theta_, delta_s_, delta_r_, phi_,
-                  latitude_, longitude_, speed_):
-        self.x = x_
-        self.y = y_
-        self.theta = theta_
-        self.delta_s = delta_s_
-        self.delta_r = delta_r_
-        self.phi = phi_
-        self.latitude = latitude_
-        self.longitude = longitude_
-        self.speed = speed_
-
-    def set_run(self, run_):
-        self.run = run_
 
 class drawThread (threading.Thread):
     def __init__(self, lock_):
@@ -114,7 +79,12 @@ class drawThread (threading.Thread):
         self.name = "Draw thread"
         self.counter = 1
 
+
+
     def run(self):
+        zoom_ = zoom()
+        print(zoom_.length)
+        axis_length = 0.008
         fig = plt.figure(figsize=(9, 9))
         fig.patch.set_facecolor('teal')
         fig.subplots_adjust(top=0.8)
@@ -124,37 +94,48 @@ class drawThread (threading.Thread):
         th_data = copy.deepcopy(temp_data)
         latprev = th_data.latitude
         lonprev = th_data.longitude
-        # (ax_min_x, ax_min_y, axis_len) = (-20, -20, 40)
         lines = []
         prevWPlongitude = 0
         prevWPlatitude = 0
-        textstr = ''
-        textbox = fig.text(0.7, 0.7, textstr)
-        while(self.run_th):
 
+        textbox = fig.text(0.7, 0.7, '')
+        zoomtext = fig.text(0.815, 0.5,'ZOOM')
+        zoomtext.set_color('white')
+
+        ax_out = fig.add_axes([0.812, 0.44, 0.08, 0.05])
+        ax_in = fig.add_axes([0.902, 0.44, 0.08, 0.05])
+        bzoomout = Button(ax_out, 'Out')
+        bzoomin = Button(ax_in, 'In')
+
+        bzoomout.on_clicked(zoom_.zoomout)
+        bzoomin.on_clicked(zoom_.zoomin)
+
+        windtext = fig.text(0.815, 0.66, 'Wind Direction')
+        windtext.set_color('white')
+        wind_ax = fig.add_axes([0.82,0.55,0.1,0.1])
+        wind_ax.set_axis_off()
+        cds.draw_wind_direction(wind_ax, (0, -0.5), 1, 0.3, th_data.phi)
+
+        while(self.run_th):
+            axis_length = zoom_.length
             self.lock.acquire()
             th_data = copy.deepcopy(temp_data)
             th_wp = copy.deepcopy(temp_wp)
             self.lock.release()
             self.run_th = th_data.run
-            (ax_min_x, ax_min_y, axis_len) = (th_data.longitude-0.005, th_data.latitude-0.005, 0.01)
+            (ax_min_x, ax_min_y, axis_len) = (th_data.longitude-axis_length/2, th_data.latitude-axis_length/2, axis_length)
 
-            btw = getBTW([th_data.longitude, th_data.latitude], [th_wp.lon, th_wp.lat])
-            dtw = getDTW([th_data.longitude, th_data.latitude], [th_wp.lon, th_wp.lat])
+            btw = fcn.getBTW([th_data.longitude, th_data.latitude], [th_wp.lon, th_wp.lat])
+            dtw = fcn.getDTW([th_data.longitude, th_data.latitude], [th_wp.lon, th_wp.lat])
 
             textstr = "ASV STATE\nLon:          %.5f\nLat:           %.5f\nHeading:  %.2f\nSpeed:       %.2f" % (th_data.longitude, th_data.latitude, wrapTo2Pi(-th_data.theta+np.pi/2)*180/np.pi, th_data.speed)
             textstr += "\n____________________\n\nWAYPOINT\nBearing:   %.2f\nDistance:  %.2f\nRadius:    %d" % (btw, dtw, th_wp.rad)
+
             # plt.cla()   # Clear axis
             # plt.clf()   # Clear figure
+
             fig.subplots_adjust(top=0.8)
             ax2 = fig.add_axes([0.1, 0.1, 0.7, 0.8])
-            ax2.set_xlabel('Simulation of boat %0.1f %0.1f speed:%0.1f m/s rudder:%0.3f \
-lat: %.5f lon: %.5f ' %
-                           (wrapTo2Pi(-th_data.theta+np.pi/2)*180/np.pi,
-                            wrapTo2Pi(-th_data.phi+np.pi/2)*180/np.pi,
-                            th_data.speed,
-                            th_data.delta_r,
-                            th_data.latitude, th_data.longitude))
 
             if th_wp.lon != prevWPlongitude:
                 if th_wp.lon > 0.01 and th_wp.lon < 1e3:
@@ -176,8 +157,10 @@ lat: %.5f lon: %.5f ' %
                       ax_min_y, ax_min_y+axis_len])
             plt.draw()
             fig.texts.remove(textbox)
-            textbox = fig.text(0.82, 0.715, textstr,bbox=dict(edgecolor='white', facecolor='teal'))
+            textbox = fig.text(0.82, 0.7, textstr,bbox=dict(edgecolor='white', facecolor='teal'))
             textbox.set_color('white')
+            # bzoomout.on_clicked(zoom_.zoomout)
+            # bzoomin.on_clicked(zoom_.zoomin)
             # plt.show()
             plt.pause(0.001)
             lonprev = th_data.longitude
@@ -186,122 +169,6 @@ lat: %.5f lon: %.5f ' %
         print("Stopping Draw Thread")
         plt.close()
 
-
-def wrapTo2Pi(theta):
-    if theta < 0:
-        theta += 2*np.pi
-    theta = theta % (2*np.pi)
-    return theta
-
-def order_to_deg(command_rudder, command_sheet):
-    if command_rudder > 8000 or command_rudder < 3000:
-        command_sheet = 4215
-        command_rudder = 5520
-    return ((command_rudder-5520)*(np.pi/6.0)/1500.0,
-            (command_sheet-4215)*(np.pi/-6.165)/900.0)
-
-
-def get_to_socket_value( sailBoat ):
-    heading = sailBoat.heading()
-    (lat, lon) = sailBoat.position()
-    course = sailBoat.course()
-    speed =  sailBoat.speed()
-
-    gps = (lat, lon, course, heading, speed)
-
-    windsensor = ( sailBoat.apparentWind().speed(), sailBoat.apparentWind().direction() )
-    return (heading, gps, windsensor)
-
-def get_graph_values( sailBoat ):
-    (sail, rudder) = sailBoat.sailAndRudder()
-    phi_ap = sailBoat.apparentWind().direction()
-
-    sigma = cos( phi_ap ) + cos( sail )
-    if (sigma < 0):
-        sail = np.pi + phi_ap
-    else:
-        if sin(phi_ap)is not 0:
-            sail = -np.sign( sin(phi_ap) ) * abs( sail )
-    (lat, lon) = sailBoat.position()
-    return ( rudder, sail, phi_ap, lat, lon )
-
-def wrapAngle( angle ):
-    while angle < 0 or angle >= 360:
-        if angle < 0:
-            angle += 360
-        else:
-            angle -= 360
-
-    return angle
-
-def getDTW(asvpos,wppos):
-    radiusEarth = 6371
-    (asvLon, asvLat) = asvpos
-    (wpLon, wpLat) = wppos
-    deltaLat = np.deg2rad(asvLat-wpLat)
-    asvLat = np.deg2rad(asvLat)
-    wpLat = np.deg2rad(wpLat)
-    deltaLon = np.deg2rad(wpLon-asvLon)
-
-    tmp = np.sin(deltaLat/2)*np.sin(deltaLat/2) + \
-        np.cos(asvLat)*np.cos(wpLat) * \
-        np.sin(deltaLon/2)*np.sin(deltaLon/2)
-    tmp = 2 * np.arctan2(np.sqrt(tmp), np.sqrt(1-tmp))
-    dtw = radiusEarth * tmp*1000
-    return dtw
-
-def getBearing( asv, vessel ):
-    (asvLat, asvLon) = asv.position()
-    (vesselLat, vesslLon) = asv.position()
-
-    boatLatitudeInRadian = np.deg2rad(asvLat)
-    waypointLatitudeInRadian = np.deg2rad(vesselLat)
-    deltaLongitudeRadian = np.deg2rad(vesslLon - asvLon)
-
-    y_coordinate = sin(deltaLongitudeRadian) * cos(waypointLatitudeInRadian)
-    x_coordinate = cos(boatLatitudeInRadian)* sin(waypointLatitudeInRadian) - sin(boatLatitudeInRadian) * cos(waypointLatitudeInRadian) * cos(deltaLongitudeRadian)
-
-    bearingToWaypointInRadian = atan2(y_coordinate, x_coordinate)
-    bearingToWaypoint = np.rad2deg(bearingToWaypointInRadian)
-    return wrapAngle(bearingToWaypoint)
-
-def getBTW(asvpos, wppos):
-    (asvLon, asvLat) = asvpos
-    (vesselLon, vesselLat) = wppos
-    boatLatitudeInRadian = np.deg2rad(asvLat)
-    waypointLatitudeInRadian = np.deg2rad(vesselLat)
-    deltaLongitudeRadian = np.deg2rad(vesselLon - asvLon)
-
-    y_coordinate = sin(deltaLongitudeRadian) * cos(waypointLatitudeInRadian)
-    x_coordinate = cos(boatLatitudeInRadian)* sin(waypointLatitudeInRadian) - sin(boatLatitudeInRadian) * cos(waypointLatitudeInRadian) * cos(deltaLongitudeRadian)
-
-    bearingToWaypointInRadian = atan2(y_coordinate, x_coordinate)
-    bearingToWaypoint = np.rad2deg(bearingToWaypointInRadian)
-    return wrapAngle(bearingToWaypoint)
-
-def getBearingDiff( h1, h2 ):
-    diff = h2 - h1
-    absDiff = abs( diff )
-
-    if (absDiff <= 180):
-        if absDiff == 180:
-            return absdiff
-        else:
-            return diff
-
-    elif (h2 > h1):
-        return absDiff - 360
-    else:
-	    return 360 - absDiff
-
-def boatInVisualRange( asv, vessel):
-    bearing = getBearing(asv, vessel)
-
-    bearingDiff = abs( getBearingDiff(asv.heading(), bearing) )
-
-    if bearingDiff < CAMERA_ANGLE:
-        return True
-    return False
 
 def loadConfiguration(configPath):
     global AIS_UPDATE_MS
@@ -314,10 +181,10 @@ def loadConfiguration(configPath):
     lonOrigin = config["lon_origin"]
 
     if config.get("boat_update_ms"):
-        BOAT_UPDATE_MS = config["boat_update_ms"];
+        BOAT_UPDATE_MS = config["boat_update_ms"]
 
     if config.get("ais_update_ms"):
-        AIS_UPDATE_MS = config["ais_update_ms"];
+        AIS_UPDATE_MS = config["ais_update_ms"]
 
     print("Boat Update ms: " + str(BOAT_UPDATE_MS) + " AIS Update ms: " + str(AIS_UPDATE_MS))
 
@@ -331,7 +198,7 @@ def loadConfiguration(configPath):
 
     # Load Marine Traffic
     for marineVessel in config["traffic"]:
-        id = marineVessel["mmsi"];
+        id = marineVessel["mmsi"]
         lat = marineVessel["lat_origin"]
         lon = marineVessel["lon_origin"]
         heading = wrapTo2Pi(np.deg2rad(marineVessel["heading"] - 90))
@@ -342,10 +209,12 @@ def loadConfiguration(configPath):
 
     return ( vessels, WindState( trueWindDir, trueWindSpeed ) )
 
+
 temp_data = data_handler()
 temp_wp = waypoint_handler()
 
 if __name__ == '__main__':
+    # global temp_wp, temp_data
     net = Network( "localhost", 6900 )
 
     configPath = "config.json"
@@ -392,7 +261,7 @@ if __name__ == '__main__':
             deb = time.time()
 
             (command_rudder, command_sheet) = net.readActuatorData()
-            (delta_r, delta_s) = order_to_deg(command_rudder, command_sheet)
+            (delta_r, delta_s) = fcn.order_to_deg(command_rudder, command_sheet)
 
             (wp_lon, wp_lat, wp_dec, wp_radius, wp_prevLon,
              wp_prevLat, wp_prevDec, wp_prevRad) = net.receiveWaypoint()
@@ -419,10 +288,10 @@ if __name__ == '__main__':
                 lastAISSent = millis
 
 
-            (head, gps, wind) = get_to_socket_value( simulatedBoat )
+            (head, gps, wind) = fcn.get_to_socket_value( simulatedBoat )
             (x, y) = simulatedBoat.physicsModel().utmCoordinate()
             theta = simulatedBoat.physicsModel().heading()
-            (delta_r, delta_s, phi, latitude, longitude) = get_graph_values( simulatedBoat )
+            (delta_r, delta_s, phi, latitude, longitude) = fcn.get_graph_values( simulatedBoat )
 
             threadLock.acquire()
             temp_data.set_value(x, y, theta, delta_s, delta_r, trueWind.direction(),
@@ -451,5 +320,6 @@ if __name__ == '__main__':
 
     threadLock.acquire()
     temp_data.set_run(0)
+    temp_wp.set_run(0)
     threadLock.release()
     thread_draw.join()
