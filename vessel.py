@@ -38,7 +38,7 @@ class MarineTraffic(Vessel):
 		self._id = id
 
 	def course(self):
-		return wrapTo2Pi( -self._physicsModel.heading() + np.pi / 2 ) * 180 / np.pi
+		return wrapTo2Pi( self._physicsModel.heading() ) * 180 / np.pi
 
 	def speed(self):
 		return self._physicsModel.speed()
@@ -57,7 +57,7 @@ class SailBoat(Vessel):
 		return self.heading()
 
 	def heading(self):
-		heading = wrapTo2Pi( -self._physicsModel.heading() + np.pi / 2 ) * 180 / np.pi
+		heading = wrapTo2Pi( self._physicsModel.heading() ) * 180 / np.pi
 		return heading
 
 	def speed(self):
@@ -65,7 +65,7 @@ class SailBoat(Vessel):
 
 	def apparentWind( self ):
 		apparentWind = self._physicsModel.apparentWind()
-		windDir = wrapTo2Pi( -apparentWind.direction() + np.pi ) * 180 / np.pi
+		windDir = wrapTo2Pi( apparentWind.direction()) * 180 / np.pi
 		windSpeed = apparentWind.speed()
 		return WindState( windDir, windSpeed )
 
