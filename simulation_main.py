@@ -19,7 +19,7 @@ from mathFcns import Functions as fcn
 # from drawThread import drawThread
 from math import cos, sin, atan2, hypot
 from matplotlib.widgets import Button
-
+from mpl_interaction import figure_pz
 
 from matplotlib import pylab as plt
 from matplotlib import lines
@@ -48,6 +48,7 @@ init_prog = 0
 BOAT_UPDATE_MS = 100
 AIS_UPDATE_MS = 500
 CAMERA_ANGLE = 24
+boatInCenter = False
 
 
 def wrapTo2Pi(theta):
@@ -68,7 +69,7 @@ def zoom_factory(ax, zoom, base_scale=0.99):
         ydata = event.ydata  # get event y location
         if event.button == 'up':
             # deal with zoom in
-            if zoom.length > 0.003:
+            if zoom.length > 0.001:
                 zoom.length -= 0.001
             scale_factor = 1/base_scale
         elif event.button == 'down':
@@ -93,12 +94,9 @@ def zoom_factory(ax, zoom, base_scale=0.99):
     return zoom_fun
 
 
-def center_boat(event):
-    boatInCenter = True
-
-
 class zoom(object):
     length = 0.008
+    boatInCenter = True
 
     def zoomout(self, event):
         if self.length < 0.04:
@@ -109,6 +107,9 @@ class zoom(object):
         if self.length > 0.005:
             self.length -= 0.001
         print(self.length)
+
+    def boatInCenter(self, event):
+        self.boatInCenter = True
 
 
 class drawThread (threading.Thread):
@@ -124,9 +125,8 @@ class drawThread (threading.Thread):
         zoom_ = zoom()
         print(zoom_.length)
         axis_length = 0.008
-        boatInCenter = True
 
-        fig = plt.figure(figsize=(9, 9))
+        fig = figure_pz(figsize=(9, 9))
         fig.patch.set_facecolor('teal')
         fig.subplots_adjust(top=0.8)
         ax2 = fig.add_axes([0.1, 0.1, 0.7, 0.8])
@@ -135,24 +135,14 @@ class drawThread (threading.Thread):
         th_data = copy.deepcopy(temp_data)
         latprev = th_data.latitude
         lonprev = th_data.longitude
-        lines = []
         prevWPlongitude = 0
         prevWPlatitude = 0
 
         textbox = fig.text(0.7, 0.7, '')
-        # zoomtext = fig.text(0.815, 0.5,'ZOOM')
-        # zoomtext.set_color('white')
-        #
         ax_bcenter = fig.add_axes([0.812, 0.43, 0.08, 0.05])
-        # ax_in = fig.add_axes([0.902, 0.44, 0.08, 0.05])
-        # bzoomout = Button(ax_out, 'Out')
-        # bzoomin = Button(ax_in, 'In')
-        #
-        # bzoomout.on_clicked(zoom_.zoomout)
-        # bzoomin.on_clicked(zoom_.zoomin)
 
         bcenter = Button(ax_bcenter, 'Center', color='white')
-        bcenter.on_clicked(center_boat)
+        bcenter.on_clicked(zoom_.boatInCenter)
         windtext = fig.text(0.815, 0.6, 'Wind Direction')
         windtext.set_color('white')
         wind_ax = fig.add_axes([0.82,0.49,0.1,0.1])
@@ -161,11 +151,21 @@ class drawThread (threading.Thread):
 
         f = zoom_factory(ax2, zoom_)
 
-        ax2.xaxis.set_visible(False)
-        ax2.yaxis.set_visible(False)
+        # ax2.xaxis.set_visible(False)
+        # ax2.yaxis.set_visible(False)
 
+        centerx = lonprev
+        centery = latprev
+        print(centerx, centery)
+        axis_length = zoom_.length
+
+        (ax_min_x, ax_min_y, axis_len) = (centerx-axis_length/2, centery-axis_length/2, axis_length)
         while(self.run_th):
-            if boatInCenter:
+            if (ax_min_x-ax2.get_xlim()[0] != 0 or ax_min_y-ax2.get_ylim()[0] != 0) and ax2.get_xlim()[0] != 0:
+                centerx = ax2.get_xlim()[0]+axis_length/2
+                centery = ax2.get_ylim()[0]+axis_length/2
+                zoom_.boatInCenter = False
+            if zoom_.boatInCenter:
                 centerx = th_data.longitude
                 centery = th_data.latitude
             axis_length = zoom_.length
@@ -178,9 +178,9 @@ class drawThread (threading.Thread):
 
             btw = fcn.getBTW([th_data.longitude, th_data.latitude], [th_wp.lon, th_wp.lat])
             dtw = fcn.getDTW([th_data.longitude, th_data.latitude], [th_wp.lon, th_wp.lat])
-
-            textstr = "ASV STATE\nLon:          %.5f\nLat:           %.5f\nHeading:  %.2f\nSpeed:       %.2f" % (th_data.longitude, th_data.latitude, wrapTo2Pi(-th_data.theta+np.pi/2)*180/np.pi, th_data.speed)
-            textstr += "\n____________________\n\nRudder:   %.2f\nWingsail:  %.2f" % (th_data.delta_r, 0.00)
+            heading = wrapTo2Pi(-th_data.theta+np.pi/2)*180/np.pi
+            textstr = "ASV STATE\nLon:          %.5f\nLat:           %.5f\nHeading:  %.2f\nSpeed:       %.2f" % (th_data.longitude, th_data.latitude, heading, th_data.speed)
+            textstr += "\n____________________\n\nRudder:   %.2f\nWingsail:  %.2f" % (th_data.delta_r, th_data.delta_s)
             textstr += "\n____________________\n\nWAYPOINT\nBearing:   %.2f\nDistance:  %.2f\nRadius:    %d" % (btw, dtw, th_wp.rad)
 
             # plt.cla()   # Clear axis
@@ -193,19 +193,19 @@ class drawThread (threading.Thread):
                 if th_wp.lon > 0.01 and th_wp.lon < 1e3:
                     if prevWPlongitude != 0:
                         cds.draw_line(ax2, [th_wp.lon, th_wp.lat], [prevWPlongitude, prevWPlatitude], 'k')
-                    cds.draw_circle(ax2, 1, th_wp.lon, th_wp.lat, th_wp.rad)
+                    cds.draw_wp(ax2, 1, th_wp.lon, th_wp.lat, th_wp.rad)
                     prevWPlongitude = th_wp.lon
                     prevWPlatitude = th_wp.lat
-
+            cds.draw_track(ax2, [th_data.longitude, th_data.latitude], [lonprev, latprev])
             # ax_min_x = th_data.longitude-axis_len/2.0
             # ax_min_y = th_data.latitude-axis_len/2.0
             # cds.draw_track(ax2, lines, th_data.longitude, th_data.latitude)
-            # cds.draw_boat(ax2, 0.0002, th_data.longitude, th_data.latitude,
-            #               th_data.theta, th_data.delta_r, th_data.delta_s)
+            cds.draw_boat(ax2, 0.0002, th_data.longitude, th_data.latitude,
+                          th_data.theta, th_data.delta_r, th_data.delta_s)
             # cds.draw_wind_direction(ax2, (ax_min_x+0.0001, ax_min_y+0.0001), axis_len, 0.0002, th_data.phi)
-            cds.draw_line(ax2, [th_data.longitude, th_data.latitude], [lonprev, latprev], 'r')
             plt.axis([ax_min_x, ax_min_x+axis_len,
                       ax_min_y, ax_min_y+axis_len])
+            # print(ax2.get_xlim()[1]-ax2.get_xlim()[0])
             plt.draw()
             fig.texts.remove(textbox)
             textbox = fig.text(0.82, 0.63, textstr,bbox=dict(edgecolor='white', facecolor='teal'))
@@ -214,7 +214,10 @@ class drawThread (threading.Thread):
             plt.pause(0.001)
             lonprev = th_data.longitude
             latprev = th_data.latitude
-
+            for i in range(1,6):
+                ax2.lines.pop(-1)
+                # lin.remove()
+                # del lin
         print("Stopping Draw Thread")
         plt.close()
 

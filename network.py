@@ -62,7 +62,7 @@ class Network:
         receiveFormat = '=HHH'
 
         if len(readReady):
-            data = self._sock.recv(6) # 2 bytes for packet length, 2 bytes for rudder, and 2 bytes for sail
+            data = self._sock.recv(6)  # 2 bytes for packet length, 2 bytes for rudder, and 2 bytes for sail
             if len(data) is 6:
                 (length, self._rudderCmd, self._sailCmd) = unpack(receiveFormat, data)
         return (self._rudderCmd, self._sailCmd)
@@ -96,9 +96,9 @@ class Network:
     # Packets up and sends the boat data across TCP
     def sendBoatData( self, sailboat ):
         # latitude, longitude, course, speed      # GPS
-        #windDir, windSpeed, windTemp     # Wind
-        #heading, pitch, roll,                   # Compass
-        #sail, rudder                            # Arduino
+        # windDir, windSpeed, windTemp     # Wind
+        # heading, pitch, roll,                   # Compass
+        # sail, rudder                            # Arduino
 
         dataLength = 27
         (latitude, longitude) = sailboat.position()
@@ -134,7 +134,7 @@ class Network:
         beam = boat.beam()
         # print("Sent AIS data")
         data = pack( sendFormat, int(dataLength), MESSAGE_TYPE_AIS_CONTACT,
-                    int(id), latitude, longtitude, speed, int(course), length, beam )
+                     int(id), latitude, longtitude, speed, int(course), length, beam )
         self.sendData( data )
 
     def sendVisualContact( self, boat ):
@@ -145,7 +145,7 @@ class Network:
         (latitude, longtitude) = boat.position()
         # print("Sent Visual data")
         data = pack( sendFormat, int(dataLength), MESSAGE_TYPE_TIS_CONTACT,
-                    int(id), latitude, longtitude )
+                     int(id), latitude, longtitude )
         self.sendData( data )
 
     def sendData( self, data ):

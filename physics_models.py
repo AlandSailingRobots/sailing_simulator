@@ -8,6 +8,7 @@ def wrapTo2Pi(theta):
     theta = theta % (2*np.pi)
     return theta
 
+
 class WindState(object):
     def __init__(self, windDirection, windSpeed):
         self._dir = windDirection
@@ -19,9 +20,10 @@ class WindState(object):
     def speed(self):
         return self._spd
 
+
 class PhysicsModel:
     # X and y are in UTM coordinates, the heading is in radians
-    def __init__(self, x = 0, y = 0, heading = 0):
+    def __init__(self, x=0, y=0, heading=0):
         self._x = x
         self._y = y
         self._heading = heading
@@ -43,7 +45,7 @@ class PhysicsModel:
 
 class SailingPhysicsModel(PhysicsModel):
     # X and y are in UTM coordinates, the heading is in radians
-    def __init__(self, x = 0, y = 0, heading = 0):
+    def __init__(self, x=0, y=0, heading=0):
         self._x = np.float64(x)
         self._y = np.float64(y)
         self._heading = np.float64(heading)
@@ -62,7 +64,7 @@ class SailingPhysicsModel(PhysicsModel):
         self._distanceToRudder = 2        # m
         self._boatMass = 300              # kg
         self._momentOfInertia = 400       # kg m^2
-        self._rudderBreakCoefficient = 0.2   
+        self._rudderBreakCoefficient = 0.2
 
     def setActuators(self, sail, rudder):
         self._sailAngle = sail
@@ -73,7 +75,6 @@ class SailingPhysicsModel(PhysicsModel):
 
     def apparentWind(self):
         return self._apparentWind
-
 
     def simulate(self, timeDelta, trueWind):
         (x_dot, y_dot) = self.calculateDrift( trueWind )
@@ -96,7 +97,6 @@ class SailingPhysicsModel(PhysicsModel):
         rotationForce = self._angularFriction * self._rotationSpeed * abs( self._speed )
 
         rotationSpeed_dot = (sailRotationForce - rudderRotationForce - rotationForce) / self._momentOfInertia
-        
 
         self._x += x_dot * timeDelta
         self._y += y_dot * timeDelta
@@ -104,7 +104,7 @@ class SailingPhysicsModel(PhysicsModel):
         self._speed += acceleration_dot * timeDelta
         self._rotationSpeed += rotationSpeed_dot * timeDelta
         self._heading = wrapTo2Pi(self._heading)
-    
+
     # Calculate the drift of and change in position from the boat's current velocity and the force of
     # the wind on the sails
     def calculateDrift(self, trueWind ):
@@ -122,7 +122,7 @@ class SailingPhysicsModel(PhysicsModel):
     def updateApparentWind(self, trueWind ):
         apparentWindVector = [trueWind.speed() * cos( trueWind.direction() - self._heading ) - self._speed, trueWind.speed() * sin( trueWind.direction() - self._heading )]
         apparentWindAngle = atan2(apparentWindVector[1], apparentWindVector[0])
-        apparentWindSpeed = hypot(apparentWindVector[0], apparentWindVector[1]) 
+        apparentWindSpeed = hypot(apparentWindVector[0], apparentWindVector[1])
         self._apparentWind = WindState( apparentWindAngle, apparentWindSpeed )
 
     # Ensures the sail is on the correct side of the boat
@@ -140,9 +140,10 @@ class SailingPhysicsModel(PhysicsModel):
     def forceOnRudder(self):
         return self._rudderLift * self._speed * sin( self._rudderAngle )
 
+
 class SimplePhysicsModel(PhysicsModel):
-     # X and y are in UTM coordinates, the heading is in radians
-    def __init__(self, heading = 0, speed = 0, x = 0, y = 0):
+    # X and y are in UTM coordinates, the heading is in radians
+    def __init__(self, heading=0, speed=0, x=0, y=0):
         self._x = x
         self._y = y
         self._heading = heading

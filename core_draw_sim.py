@@ -33,20 +33,13 @@ def draw_boat(h, s, x, y, a_b, a_r, a_s):
     h.add_line(l5)
 
 
-def draw_track(h, t, x, y):
+def draw_track(h, a, b, color_='r'):
     # h  - actual fig add_axes
     # t  - vector with previous positions
     # x  - new x position
     # y  - new y position
-    # t.append([x, y])
-    # (xprev, yprev) = t[-1]
-    # # for i in range(1, len(t)):
-    # line = lines.Line2D([x, xprev], [y, yprev], color='r')
-    # h.add_line(line)
-    t.append([x, y])
-    for i in range(1, len(t)):
-        line = lines.Line2D([t[i][0], t[i-1][0]], [t[i][1], t[i-1][1]], color='r')
-        h.add_line(line)
+    l1 = lines.Line2D([a[0], b[0]], [a[1], b[1]], color=color_, linewidth=0.5)
+    h.add_line(l1)
 
 
 def draw_wind_direction(h, axis_min, axis_max_l, s, psi):
@@ -73,7 +66,7 @@ def draw_wind_direction(h, axis_min, axis_max_l, s, psi):
     h.add_line(l3)
 
 
-def draw_circle(h, s, x, y, radius):
+def draw_wp(h, s, x, y, radius):
     # circle1 = plt.Circle((0, 0), 2, color='r')
     # now make a circle with no fill, which is good for hi-lighting key results
     # circle2 = plt.Circle((5, 5), 0.5, color='b', fill=False)

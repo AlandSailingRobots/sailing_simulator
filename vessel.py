@@ -3,11 +3,14 @@ import numpy as np
 from physics_models import WindState, PhysicsModel
 
 # MOVE TO UTIL FILE
+
+
 def wrapTo2Pi(theta):
     if theta < 0:
         theta += 2*np.pi
     theta = theta % (2*np.pi)
     return theta
+
 
 class Vessel:
     def __init__(self, physicsModel, lat, lon, course, speed, length, beam):
@@ -40,6 +43,7 @@ class Vessel:
     def beam(self):
         return self._beam
 
+
 class MarineTraffic(Vessel):
     def __init__(self, physicsModel, lat, lon, course, speed, id, length, beam):
         self._physicsModel = physicsModel
@@ -59,13 +63,14 @@ class MarineTraffic(Vessel):
         return self._physicsModel.speed()
 
     def id(self):
-        return self._id;
+        return self._id
 
     def length(self):
         return self._length
 
     def beam(self):
         return self._beam
+
 
 class SailBoat(Vessel):
     def __init__(self, physicsModel, lat, lon, course, speed):

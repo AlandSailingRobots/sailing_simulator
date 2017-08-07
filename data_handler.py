@@ -24,6 +24,7 @@ class waypoint_handler(object):
     def set_run(self, run_):
         self.run = run_
 
+
 class data_handler(object):
     def __init__(self):
         self.x = 0
