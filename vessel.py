@@ -1,7 +1,7 @@
 import LatLongUTMconversion as LLUTM
 import numpy as np
-from physics_models import WindState, PhysicsModel
-from utils import wrapTo2Pi
+from physics_models import WindState, PhysicsModel, mainBoatPhysicsModel, ASPirePhysicsModel, SailingPhysicsModel
+from utils import wrapTo2Pi, radTodeg
 
 # MOVE TO UTIL FILE
 class Vessel:
@@ -38,8 +38,8 @@ class MarineTraffic(Vessel):
 		self._id = id
 
 	def course(self):
-		return wrapTo2Pi( self._physicsModel.heading() ) * 180 / np.pi
-
+		return radTodeg( wrapTo2Pi( self._physicsModel.heading() ) )
+	
 	def speed(self):
 		return self._physicsModel.speed()
 
@@ -57,7 +57,7 @@ class SailBoat(Vessel):
 		return self.heading()
 
 	def heading(self):
-		heading = wrapTo2Pi( self._physicsModel.heading() ) * 180 / np.pi
+		heading =radTodeg( wrapTo2Pi( self._physicsModel.heading() ) )
 		return heading
 
 	def speed(self):
@@ -65,7 +65,7 @@ class SailBoat(Vessel):
 
 	def apparentWind( self ):
 		apparentWind = self._physicsModel.apparentWind()
-		windDir = wrapTo2Pi( apparentWind.direction()) * 180 / np.pi
+		windDir =radTodeg( wrapTo2Pi( apparentWind.direction() ) )
 		windSpeed = apparentWind.speed()
 		return WindState( windDir, windSpeed )
 

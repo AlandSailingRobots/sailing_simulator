@@ -8,7 +8,7 @@ import time
 import copy
 import atexit
 from struct import *
-from utils import wrapTo2Pi,wrapAngle
+from utils import wrapTo2Pi,wrapAngle,radTodeg
 import numpy as np
 import core_draw_sim as cds
 from simulator import Simulator
@@ -109,8 +109,8 @@ class drawThread (threading.Thread):
 			ax2 = fig.add_axes([0.1, 0.1, 0.8, 0.8])
 			ax2.set_xlabel('Simulation of boat heading:%0.1f %0.1f speed:%0.1f m/s rudder:%0.3f\
 lat %.5f long %.5f ' %
-						   (wrapTo2Pi(th_data.theta)*180/np.pi,
-							wrapTo2Pi(th_data.phi)*180/np.pi,
+						   (radTodeg( wrapTo2Pi(th_data.theta) ),
+							radTodeg( wrapTo2Pi(th_data.phi) ),
 							th_data.speed,
 							th_data.delta_r,
 							th_data.latitude, th_data.longitude))
@@ -227,7 +227,7 @@ def loadConfiguration(configPath):
 
 	vessels = []
 
-	trueWindDir = wrapTo2Pi(np.deg2rad(config["wind_direction"] - 90))
+	trueWindDir = wrapTo2Pi(np.deg2rad(config["wind_direction"]))
 	print ("True Wind:" + str(trueWindDir))
 	trueWindSpeed = config["wind_speed"]
 	if boat_type == 0:
@@ -239,7 +239,7 @@ def loadConfiguration(configPath):
 		id = marineVessel["mmsi"];
 		lat = marineVessel["lat_origin"]
 		lon = marineVessel["lon_origin"]
-		heading = wrapTo2Pi(np.deg2rad(marineVessel["heading"] - 90))
+		heading = wrapTo2Pi(np.deg2rad(marineVessel["heading"]))
 		speed = marineVessel["speed"]
 		vessels.append(MarineTraffic(SimplePhysicsModel(heading, speed), lat, lon, heading, speed, id))
 
