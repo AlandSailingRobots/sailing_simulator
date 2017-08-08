@@ -70,6 +70,7 @@ class SailBoat(Vessel):
 		return WindState( windDir, windSpeed )
 
 	def sailAndRudder(self):
+		""" if the boat chosen is ASPire, the sail == the tailWing """
 		return self._physicsModel.getActuators()
 
 	def getGraphValues( self ):

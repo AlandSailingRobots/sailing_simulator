@@ -80,19 +80,18 @@ class drawThread (threading.Thread):
 			fig.subplots_adjust(top=0.8)
 			ax2 = fig.add_axes([0.1, 0.1, 0.8, 0.8])
 			ax2.set_xlabel('Simulation of boat heading:%0.1f %0.1f speed:%0.1f m/s rudder:%0.3f\
-lat %.5f long %.5f ' %
+lat %.5f long %.5f MWAngle %.5f' %
 						   (radTodeg( wrapTo2Pi(th_data.theta) ),
 							radTodeg( wrapTo2Pi(th_data.phi) ),
 							th_data.speed,
 							th_data.delta_r,
-							th_data.latitude, th_data.longitude))
+							th_data.latitude, th_data.longitude, th_data.MWAngle))
 			if self.boat_type == 0:
 				cds.draw_SailBoat(ax2, 1, th_data.x, th_data.y,
 								  th_data.theta, th_data.delta_r, th_data.delta_s)
 			else:
 				cds.draw_WingBoat(ax2,1, th_data.x, th_data.y,
-								   th_data.theta, th_data.delta_r)
-			print(x,y)
+								   th_data.theta, th_data.delta_r,th_data.MWAngle,th_data.delta_s)
 			ax_min_x = x-axis_len/2.0
 			ax_min_y = y-axis_len/2.0
 			cds.draw_wind_direction(ax2, (ax_min_x+1, ax_min_y+1), axis_len, 1, th_data.phi)
@@ -259,8 +258,8 @@ if __name__ == '__main__':
 	bytes_received = 0
 	data = bytearray()
 
-	time.sleep(0.05)
-	delta_t = 0.05
+	time.sleep(0.01)
+	delta_t = 0.01
 
 	print("Start drawing thread")
 	thread_draw.start()
@@ -283,7 +282,7 @@ if __name__ == '__main__':
 			simulatedBoat.physicsModel().setActuators( delta_s, delta_r )
 
 			# TODO - Jordan: Make this a variable step, so we aren't at a fixed rate of simulation
-			simulator.step( 0.05 )
+			simulator.step( 0.01 )
 
 			millis = getMillis();
 
@@ -330,9 +329,9 @@ if __name__ == '__main__':
 				distance = LatLonMath.distanceKM(lat, lon, asvLat, asvLon)
 				files[i].write("0," + str(lat) + "," + str(lon) + "," + str(distance) + "\n")
 
-			dt_sleep = 0.05-(time.time()-deb)
+			dt_sleep = 0.01-(time.time()-deb)
 			if dt_sleep < 0:
-				dt_sleep = 0.05
+				dt_sleep = 0.01
 			time.sleep(dt_sleep)
 
 	except socket.error as msg:

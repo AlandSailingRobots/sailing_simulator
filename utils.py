@@ -34,7 +34,7 @@ def wrapAngle(theta):
 
     # ===== Switch between Coordinate System ===== #
 
-def trueWindCoordinatesToMWCoordinates(FxW,FyW,alpha):
+def apparentWindCoordinatesToMWCoordinates(FxW,FyW,alpha):
 	Fy = FyW*np.cos(alpha)-FxW*np.sin(alpha)
 	Fx = FyW*np.sin(alpha)+FxW*np.cos(alpha)
 	return (Fx,Fy)
@@ -44,8 +44,8 @@ def MWCoordinatesToBoatCoordinates(FxMW,FyMW,MWAngle):
 	Fy = FyMW*np.cos(MWAngle)-FxMW*np.sin(MWAngle)
 	return (Fx,Fy)
 
-def trueWindCoordinatesToBoatCoordinates(FxW,FyW,alpha,MWAngle):
-	FxMW,FyMW = trueWindCoordinatesToMWCoordinates(FxW,FyW,alpha)
+def apparentWindCoordinatesToBoatCoordinates(FxW,FyW,alpha,MWAngle):
+	FxMW,FyMW = apparentWindCoordinatesToMWCoordinates(FxW,FyW,alpha)
 	return(MWCoordinatesToBoatCoordinates(FxMW,FyMW,MWAngle))
 
 
