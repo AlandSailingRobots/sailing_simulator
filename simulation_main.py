@@ -15,7 +15,7 @@ from simulator import Simulator
 from physics_models import SimplePhysicsModel,SailingPhysicsModel,ASPirePhysicsModel, WindState
 from vessel import Vessel,SailBoat, MarineTraffic
 from network import Network
-
+from data_handler import sailBoatData, wingBoatData
 
 from math import cos, sin, atan2, hypot
 
@@ -51,35 +51,7 @@ BOAT_UPDATE_MS = 100
 AIS_UPDATE_MS = 500
 CAMERA_ANGLE = 24
 
-
-class data_handler(object):
-	def __init__(self):
-		self.x = 0
-		self.y = 0
-		self.theta = 0
-		self.delta_s = 0
-		self.delta_r = 0
-		self.phi = 0
-		self.latitude = 0
-		self.longitude = 0
-		self.run = 1
-		self.speed = 0
-
-	def set_value(self, x_, y_, theta_, delta_s_, delta_r_, phi_,
-				  latitude_, longitude_, speed_):
-		self.x = x_
-		self.y = y_
-		self.theta = theta_
-		self.delta_s = delta_s_
-		self.delta_r = delta_r_
-		self.phi = phi_
-		self.latitude = latitude_
-		self.longitude = longitude_
-		self.speed = speed_
-
-	def set_run(self, run_):
-		self.run = run_
-
+	
 class drawThread (threading.Thread):
 	def __init__(self, lock_,boat_type):
 		threading.Thread.__init__(self)
@@ -152,18 +124,23 @@ def get_to_socket_value( sailBoat ):
 	windsensor = ( sailBoat.apparentWind().speed(), sailBoat.apparentWind().direction() )
 	return (heading, gps, windsensor)
 
-def get_graph_values( sailBoat ):
-	(sail, rudder) = sailBoat.sailAndRudder()
+def get_graph_values( sailBoat,boat_type ):
+	(sail, rudder) = sailBoat.sailAndRudder() # if boat_type == 1 : sail == tailWing
 	phi_ap = sailBoat.apparentWind().direction()
-
-	sigma = cos( phi_ap ) + cos( sail )
-	if (sigma < 0):
-		sail = np.pi + phi_ap
-	else:
-		if sin(phi_ap)is not 0:
-			sail = -np.sign( sin(phi_ap) ) * abs( sail )
 	(lat, lon) = sailBoat.position()
-	return ( rudder, sail, phi_ap, lat, lon )
+	if boat_type == 1:
+		MWAngle   = sailBoat.physicsModel().MWAngle()
+		tailAngle = sail
+		return( rudder, tailAngle, phi_ap, lat, lon, MWAngle )
+	else:
+	
+		sigma = cos( phi_ap ) + cos( sail )
+		if (sigma < 0):
+			sail = np.pi + phi_ap
+		else:
+			if sin(phi_ap)is not 0:
+				sail = -np.sign( sin(phi_ap) ) * abs( sail )
+		return ( rudder, sail, phi_ap, lat, lon )
 
 
 
@@ -245,7 +222,7 @@ def loadConfiguration(configPath):
 
 	return ( boat_type ,vessels, WindState( trueWindDir, trueWindSpeed ) )
 
-temp_data = data_handler()
+#temp_data = data_handler()
 
 if __name__ == '__main__':
 	net = Network( "localhost", 6900 )
@@ -260,9 +237,10 @@ if __name__ == '__main__':
 	print(simulatedBoat);
 	if boat_type == 0:
 		message_type = MESSAGE_TYPE_SAILBOAT_DATA
+		temp_data    = sailBoatData() 
 	else :
 		message_type = MESSAGE_TYPE_WINGBOAT_DATA
-
+		temp_data    = wingBoatData()
 	simulator = Simulator( trueWind, 1 )
 
 	files = []
@@ -327,14 +305,24 @@ if __name__ == '__main__':
 			(head, gps, wind) = get_to_socket_value( simulatedBoat )
 			(x, y) = simulatedBoat.physicsModel().utmCoordinate()
 			theta = simulatedBoat.physicsModel().heading()
-			(delta_r, delta_s, phi, latitude, longitude) = get_graph_values( simulatedBoat )
+			if boat_type == 0:
+				(delta_r, delta_s, phi, latitude, longitude) = get_graph_values( simulatedBoat, boat_type )
+			else:
+				(delta_r, delta_s, phi, latitude, longitude, MWAngle) = get_graph_values( simulatedBoat, boat_type )
 
+	
 			threadLock.acquire()
-			print('heading_physic model:', theta)
-			temp_data.set_value(x, y, theta, delta_s, delta_r, trueWind.direction(),
-								latitude, longitude, simulatedBoat.speed())
+		
+
+			if boat_type == 0:
+				temp_data.set_value(x, y, theta, delta_s, delta_r, trueWind.direction(),latitude, longitude, simulatedBoat.speed())
+			else:
+				temp_data.set_value(x, y, theta, delta_s, delta_r, trueWind.direction(),latitude, longitude, simulatedBoat.speed(), MWAngle)
+
+				
 			threadLock.release()
 
+			
 			(asvLat, asvLon) = vessels[0].position()
 			# Log marine traffic
 			for i in range( 0, len(vessels) ):

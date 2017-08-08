@@ -205,6 +205,8 @@ class ASPirePhysicsModel(mainBoatPhysicsModel):
 	def apparentWind(self):
 		return self._apparentWind
 
+	def MWAngle(self):
+		return self._wingSail.getMWAngle()
 	 
 	def simulate(self,timeDelta,trueWind):
 		(x_dot, y_dot) = self.calculateDrift( trueWind )

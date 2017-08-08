@@ -7,11 +7,11 @@ from utils import wrapTo2Pi, radTodeg
 class Vessel:
 	def __init__(self, physicsModel, lat, lon, course, speed):
 		self._physicsModel = physicsModel
-		self._course = course
+		self._course       = course
 		# SET INITIAL MODEL COURSE
-		self._elipseRef = 23
+		self._elipseRef    = 23
 		(self._utmZone, self._utmOriginX, self._utmOriginY) = LLUTM.LLtoUTM( self._elipseRef, lat, lon)
-		self._speed = 0
+		self._speed        = 0
 
 	def physicsModel(self):
 		return self._physicsModel
@@ -30,12 +30,12 @@ class Vessel:
 class MarineTraffic(Vessel):
 	def __init__(self, physicsModel, lat, lon, course, speed, id):
 		self._physicsModel = physicsModel
-		self._course = course
+		self._course       = course
 		# SET INITIAL MODEL COURSE
-		self._elipseRef = 23
+		self._elipseRef    = 23
 		(self._utmZone, self._utmOriginX, self._utmOriginY) = LLUTM.LLtoUTM( self._elipseRef, lat, lon)
-		self._speed = 0
-		self._id = id
+		self._speed        = 0
+		self._id           = id
 
 	def course(self):
 		return radTodeg( wrapTo2Pi( self._physicsModel.heading() ) )
@@ -49,15 +49,15 @@ class MarineTraffic(Vessel):
 class SailBoat(Vessel):
 	def __init__(self, physicsModel, lat, lon, course, speed):
 		self._physicsModel = physicsModel
-		self._course = course
-		self._elipseRef = 23
+		self._course       = course
+		self._elipseRef    = 23
 		(self._utmZone, self._utmOriginX, self._utmOriginY) = LLUTM.LLtoUTM( self._elipseRef, lat, lon)
 
 	def course(self):
 		return self.heading()
 
 	def heading(self):
-		heading =radTodeg( wrapTo2Pi( self._physicsModel.heading() ) )
+		heading = radTodeg( wrapTo2Pi( self._physicsModel.heading() ) )
 		return heading
 
 	def speed(self):
@@ -65,15 +65,15 @@ class SailBoat(Vessel):
 
 	def apparentWind( self ):
 		apparentWind = self._physicsModel.apparentWind()
-		windDir =radTodeg( wrapTo2Pi( apparentWind.direction() ) )
-		windSpeed = apparentWind.speed()
+		windDir      = radTodeg( wrapTo2Pi( apparentWind.direction() ) )
+		windSpeed    = apparentWind.speed()
 		return WindState( windDir, windSpeed )
 
 	def sailAndRudder(self):
 		return self._physicsModel.getActuators()
 
 	def getGraphValues( self ):
-		(x, y) = self._physicsModel.utmCoordinates()
+		(x, y)  = self._physicsModel.utmCoordinates()
 		heading = self._physicsModel.heading()
 		return ( x, y, heading )
 

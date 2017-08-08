@@ -1,0 +1,83 @@
+
+
+class data_handler(object):
+	def __init__(self):
+		self.x         = 0
+		self.y         = 0
+		self.theta     = 0
+		self.delta_s   = 0
+		self.delta_r   = 0
+		self.latitude  = 0
+		self.longitude = 0
+		self.run       = 1
+		self.speed     = 0
+		self.phi       = 0
+
+	def set_value(self, x_, y_, theta_, delta_s_, delta_r_, phi_,
+				  latitude_, longitude_, speed_):
+		self.x         = x_
+		self.y         = y_
+		self.theta     = theta_
+		self.delta_s   = delta_s_
+		self.delta_r   = delta_r_
+		self.phi       = phi_
+		self.latitude  = latitude_
+		self.longitude = longitude_
+		self.speed     = speed_
+
+	def set_run(self, run_):
+		self.run = run_
+
+
+
+class sailBoatData(data_handler):
+	def __init__(self):
+		self.x         = 0
+		self.y         = 0
+		self.theta     = 0
+		self.delta_s   = 0
+		self.delta_r   = 0
+		self.latitude  = 0
+		self.longitude = 0
+		self.run       = 1
+		self.speed     = 0
+		self.phi       = 0
+
+	def set_value(self, x_, y_, theta_, delta_s_, delta_r_, phi_,
+				  latitude_, longitude_, speed_):
+		self.x         = x_
+		self.y         = y_
+		self.theta     = theta_
+		self.delta_s   = delta_s_
+		self.delta_r   = delta_r_
+		self.phi       = phi_
+		self.latitude  = latitude_
+		self.longitude = longitude_
+		self.speed     = speed_
+
+class wingBoatData(data_handler):
+	def __init__(self):
+		self.x         = 0
+		self.y         = 0
+		self.theta     = 0
+		self.delta_s   = 0
+		self.delta_r   = 0
+		self.latitude  = 0
+		self.longitude = 0
+		self.run       = 1
+		self.speed     = 0
+		self.MWAngle   = 0
+		self.phi       = 0
+ 
+	def set_value(self, x_, y_, theta_, delta_s_, delta_r_, phi_,
+				  latitude_, longitude_, speed_,MWAngle_):
+		self.x         = x_
+		self.y         = y_
+		self.theta     = theta_
+		self.delta_s   = delta_s_
+		self.delta_r   = delta_r_
+		self.phi       = phi_
+		self.latitude  = latitude_
+		self.longitude = longitude_
+		self.speed     = speed_
+		self.MWAngle   = MWAngle_
