@@ -166,7 +166,7 @@ class SailingPhysicsModel(mainBoatPhysicsModel):
 		
 class ASPirePhysicsModel(mainBoatPhysicsModel):
 
-	def __init__(self,x = 0, y = 0, heading = 0):
+	def __init__(self,x = 0, y = 0, heading = 0 , MWAngleStart = 0):
 		self._x                                = np.float64(x)
 		self._y                                = np.float64(y)
 		self._heading                          = np.float64(heading)
@@ -188,10 +188,10 @@ class ASPirePhysicsModel(mainBoatPhysicsModel):
 		self._distanceToMast                   = 0.5   # m
 		self._boatMass                         = 300   # kg
 		self._momentOfInertia                  = 400   # kg m^2
-		
+		self._MWAngleStart                     = MWAngleStart
 		# creation wingsail 
-		self._wingSail                         = WingSail(self._x,self._y,self._heading,0,0,self._distanceToSailCoE)
-		
+		self._wingSail                         = WingSail(self._x,self._y,self._heading,self._MWAngleStart,0,self._distanceToSailCoE)
+		print('MWAngleStart:',self._MWAngleStart)
 		#self._state                            = np.array([[self._x,self._y,self.heading,self._speed,self._rotationSpeed]])
 		#self._state                            = self._state.reshape((5,1))
 

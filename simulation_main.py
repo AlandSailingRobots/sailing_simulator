@@ -8,7 +8,7 @@ import time
 import copy
 import atexit
 from struct import *
-from utils import wrapTo2Pi,wrapAngle,radTodeg
+from utils import wrapTo2Pi,wrapAngle,radTodeg, degTorad
 import numpy as np
 import core_draw_sim as cds
 from simulator import Simulator
@@ -79,17 +79,25 @@ class drawThread (threading.Thread):
 			plt.clf()   # Clear figure
 			fig.subplots_adjust(top=0.8)
 			ax2 = fig.add_axes([0.1, 0.1, 0.8, 0.8])
-			ax2.set_xlabel('Simulation of boat heading:%0.1f %0.1f speed:%0.1f m/s rudder:%0.3f\
+			
+			if self.boat_type == 0:
+				ax2.set_xlabel('Simulation of boat heading:%0.1f %0.1f speed:%0.1f m/s rudder:%0.3f\
+lat %.5f long %.5f' %
+						   (radTodeg( wrapTo2Pi(th_data.theta) ),
+							radTodeg( wrapTo2Pi(th_data.phi) ),
+							th_data.speed,
+							th_data.delta_r,
+							th_data.latitude, th_data.longitude))
+				cds.draw_SailBoat(ax2, 1, th_data.x, th_data.y,
+								  th_data.theta, th_data.delta_r, th_data.delta_s)
+			else:
+				ax2.set_xlabel('Simulation of boat heading:%0.1f %0.1f speed:%0.1f m/s rudder:%0.3f\
 lat %.5f long %.5f MWAngle %.5f' %
 						   (radTodeg( wrapTo2Pi(th_data.theta) ),
 							radTodeg( wrapTo2Pi(th_data.phi) ),
 							th_data.speed,
 							th_data.delta_r,
 							th_data.latitude, th_data.longitude, th_data.MWAngle))
-			if self.boat_type == 0:
-				cds.draw_SailBoat(ax2, 1, th_data.x, th_data.y,
-								  th_data.theta, th_data.delta_r, th_data.delta_s)
-			else:
 				cds.draw_WingBoat(ax2,1, th_data.x, th_data.y,
 								   th_data.theta, th_data.delta_r,th_data.MWAngle,th_data.delta_s)
 			ax_min_x = x-axis_len/2.0
@@ -133,12 +141,11 @@ def get_graph_values( sailBoat,boat_type ):
 		return( rudder, tailAngle, phi_ap, lat, lon, MWAngle )
 	else:
 	
-		sigma = cos( phi_ap ) + cos( sail )
+		sigma = cos( phi_ap ) + cos( sail_max )
 		if (sigma < 0):
-			sail = np.pi + phi_ap
+			sail = np.pi - phi_ap
 		else:
-			if sin(phi_ap)is not 0:
-				sail = -np.sign( sin(phi_ap) ) * abs( sail )
+			sail = np.sign( sin(phi_ap) ) * abs( sail_max )
 		return ( rudder, sail, phi_ap, lat, lon )
 
 
@@ -209,7 +216,10 @@ def loadConfiguration(configPath):
 	if boat_type == 0:
 		vessels.append(SailBoat( SailingPhysicsModel(), latOrigin, lonOrigin, 0, 0 ))
 	else:
-		vessels.append(SailBoat( ASPirePhysicsModel() , latOrigin, lonOrigin, 0, 0 ))
+		#print(trueWindDir)
+		#mainBoat = SailBoat( ASPirePhysicsModel( 0,0,0,wrapTo2Pi(trueWindDir)) , latOrigin, lonOrigin, 0, 0 )
+		#print('MWAnglePhysicsClass:',mainBoat.physicsModel().MWAngle())
+		vessels.append(SailBoat( ASPirePhysicsModel( 0,0,0,wrapTo2Pi(trueWindDir+degTorad(185))) , latOrigin, lonOrigin, 0, 0 ))
 	# Load Marine Traffic
 	for marineVessel in config["traffic"]:
 		id = marineVessel["mmsi"];
@@ -221,7 +231,7 @@ def loadConfiguration(configPath):
 
 	return ( boat_type ,vessels, WindState( trueWindDir, trueWindSpeed ) )
 
-#temp_data = data_handler()
+
 
 if __name__ == '__main__':
 	net = Network( "localhost", 6900 )

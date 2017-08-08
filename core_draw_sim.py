@@ -59,7 +59,7 @@ def draw_WingBoat(h,s,x,y,a_b,a_r,MWAngle=0,tailAngle=0):
 								  [ 0,-2, -1,  1, 2, 0],
 								  [ 1, 1,  1,  1, 1, 1]])
 		
-	MW                = np.array([[ 1,-1,-4,-1, 1],
+	MW                = np.array([[ 2, 0,-3, 0, 2],
 								  [ 0,-1, 0, 1, 0],
 								  [ 1, 1, 1, 1, 1]])
 		
@@ -94,7 +94,9 @@ def draw_WingBoat(h,s,x,y,a_b,a_r,MWAngle=0,tailAngle=0):
 		
 	plt.plot(hull[0,:],hull[1,:],'k')
 	plt.plot(MW[0,:],MW[1,:],'r')
+	plt.plot(x+distance_MW*cos(a_b),y+distance_MW*sin(a_b),'r+')
 	plt.plot(tailWing[0,:],tailWing[1,:],'g')
+	plt.plot( x+distance_MW*cos(a_b)+distance_tail*cos(MWAngle), y+distance_MW*sin(a_b)+distance_tail*sin(MWAngle),'g+')
 	plt.plot(rudder[0,:],rudder[1,:],'b')
 
 
