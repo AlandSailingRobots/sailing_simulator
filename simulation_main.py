@@ -20,9 +20,12 @@ from mathFcns import Functions as fcn
 from math import cos, sin, atan2, hypot
 from matplotlib.widgets import Button
 from mpl_interaction import figure_pz
+import objgraph
+from matplotlib.collections import LineCollection
 
 from matplotlib import pylab as plt
 from matplotlib import lines
+import matplotlib.patches as patches
 
 import json
 
@@ -126,6 +129,13 @@ class drawThread (threading.Thread):
         print(zoom_.length)
         axis_length = 0.008
 
+        xlist = []
+        ylist = []
+        linecol = []
+        prevPos = []
+        ais_list = copy.deepcopy(vessels)
+        for i in range(1, len(ais_list)):
+            prevPos.append(ais_list[i].position())
         fig = figure_pz(figsize=(9, 9))
         fig.patch.set_facecolor('teal')
         fig.subplots_adjust(top=0.8)
@@ -135,8 +145,8 @@ class drawThread (threading.Thread):
         th_data = copy.deepcopy(temp_data)
         latprev = th_data.latitude
         lonprev = th_data.longitude
-        prevWPlongitude = 0
-        prevWPlatitude = 0
+        prevWPlongitude = lonprev
+        prevWPlatitude = latprev
 
         textbox = fig.text(0.7, 0.7, '')
         ax_bcenter = fig.add_axes([0.812, 0.43, 0.08, 0.05])
@@ -151,14 +161,11 @@ class drawThread (threading.Thread):
 
         f = zoom_factory(ax2, zoom_)
 
-        # ax2.xaxis.set_visible(False)
-        # ax2.yaxis.set_visible(False)
-
         centerx = lonprev
         centery = latprev
         print(centerx, centery)
         axis_length = zoom_.length
-
+        objgraph.show_most_common_types()
         (ax_min_x, ax_min_y, axis_len) = (centerx-axis_length/2, centery-axis_length/2, axis_length)
         while(self.run_th):
             if (ax_min_x-ax2.get_xlim()[0] != 0 or ax_min_y-ax2.get_ylim()[0] != 0) and ax2.get_xlim()[0] != 0:
@@ -172,6 +179,7 @@ class drawThread (threading.Thread):
             self.lock.acquire()
             th_data = copy.deepcopy(temp_data)
             th_wp = copy.deepcopy(temp_wp)
+            ais_list = copy.deepcopy(vessels)
             self.lock.release()
             self.run_th = th_data.run
             (ax_min_x, ax_min_y, axis_len) = (centerx-axis_length/2, centery-axis_length/2, axis_length)
@@ -183,6 +191,7 @@ class drawThread (threading.Thread):
             textstr += "\n____________________\n\nRudder:   %.2f\nWingsail:  %.2f" % (th_data.delta_r, th_data.delta_s)
             textstr += "\n____________________\n\nWAYPOINT\nBearing:   %.2f\nDistance:  %.2f\nRadius:    %d" % (btw, dtw, th_wp.rad)
 
+            # ax2.clear()
             # plt.cla()   # Clear axis
             # plt.clf()   # Clear figure
 
@@ -194,30 +203,43 @@ class drawThread (threading.Thread):
                     if prevWPlongitude != 0:
                         cds.draw_line(ax2, [th_wp.lon, th_wp.lat], [prevWPlongitude, prevWPlatitude], 'k')
                     cds.draw_wp(ax2, 1, th_wp.lon, th_wp.lat, th_wp.rad)
+                    cds.draw_wp(ax2, 1, th_wp.lon, th_wp.lat, th_wp.rad)
                     prevWPlongitude = th_wp.lon
                     prevWPlatitude = th_wp.lat
             cds.draw_track(ax2, [th_data.longitude, th_data.latitude], [lonprev, latprev])
-            # ax_min_x = th_data.longitude-axis_len/2.0
-            # ax_min_y = th_data.latitude-axis_len/2.0
-            # cds.draw_track(ax2, lines, th_data.longitude, th_data.latitude)
-            cds.draw_boat(ax2, 0.0002, th_data.longitude, th_data.latitude,
+
+            # xlist.append(th_data.longitude)
+            linecol.append((th_data.longitude,th_data.latitude))
+            # print(linecol)
+            # xlist.append(None)
+            # ylist.append(th_data.latitude)
+            # ylist.append(None)
+
+            # for i in range(1, len(ais_list)):
+            #     cds.draw_track(ax2, ais_list[i].position(), ais_list[i].course())
+            for i in range(1, len(ais_list)):
+                prevPos[i-1] = cds.draw_ais_track(ax2, ais_list[i].position(), prevPos[i-1], fcn.getDTW([th_data.longitude, th_data.latitude], ais_list[i].position()))
+                cds.draw_ais(ax2, 0.0001, ais_list[i].position(), ais_list[i].course())
+            cds.draw_boat(ax2, 0.00015, th_data.longitude, th_data.latitude,
                           th_data.theta, th_data.delta_r, th_data.delta_s)
-            # cds.draw_wind_direction(ax2, (ax_min_x+0.0001, ax_min_y+0.0001), axis_len, 0.0002, th_data.phi)
-            plt.axis([ax_min_x, ax_min_x+axis_len,
-                      ax_min_y, ax_min_y+axis_len])
-            # print(ax2.get_xlim()[1]-ax2.get_xlim()[0])
+            plt.axis([ax_min_x, ax_min_x+axis_len, ax_min_y, ax_min_y+axis_len])
+            # ax2.plot(xlist,ylist,'r-',alpha=0.5)
+            # linessss = LineCollection(linecol,alpha=0.1)
+            # print(linessss)
+            # ax2.add_collection(linessss)
             plt.draw()
             fig.texts.remove(textbox)
             textbox = fig.text(0.82, 0.63, textstr,bbox=dict(edgecolor='white', facecolor='teal'))
             textbox.set_color('white')
+            # print(ax2.get_children())
             # plt.show()
             plt.pause(0.001)
             lonprev = th_data.longitude
             latprev = th_data.latitude
-            for i in range(1,6):
-                ax2.lines.pop(-1)
-                # lin.remove()
-                # del lin
+            ax2.patches = []
+            # lines = []
+            objgraph.show_most_common_types()
+            print()
         print("Stopping Draw Thread")
         plt.close()
 
@@ -270,6 +292,8 @@ if __name__ == '__main__':
     net = Network( "localhost", 6900 )
 
     configPath = "config.json"
+
+    ais_vessels = []
 
     if len(sys.argv) == 2:
         configPath = sys.argv[1]
@@ -352,12 +376,12 @@ if __name__ == '__main__':
             threadLock.release()
 
             (asvLat, asvLon) = vessels[0].position()
+
             # Log marine traffic
             for i in range( 0, len(vessels) ):
                 (lat, lon) = vessels[i].position()
                 distance = LatLonMath.distanceKM(lat, lon, asvLat, asvLon)
                 files[i].write("0," + str(lat) + "," + str(lon) + "," + str(distance) + "\n")
-
             dt_sleep = 0.05-(time.time()-deb)
             if dt_sleep < 0:
                 dt_sleep = 0.05

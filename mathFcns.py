@@ -63,7 +63,7 @@ class Functions:
         radiusEarth = 6371
         (asvLon, asvLat) = asvpos
         (wpLon, wpLat) = wppos
-        deltaLat = np.deg2rad(asvLat-wpLat)
+        deltaLat = np.deg2rad(wpLat-asvLat)
         asvLat = np.deg2rad(asvLat)
         wpLat = np.deg2rad(wpLat)
         deltaLon = np.deg2rad(wpLon-asvLon)

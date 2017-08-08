@@ -12,7 +12,7 @@
         {
             "mmsi": 100100100,
             "heading": 0,
-            "lat_origin": 70.107715,
+            "lat_origin": 60.107715,
             "lon_origin": 19.920972,
             "speed": 1.5,
             "length": 100,
@@ -21,7 +21,7 @@
         {
             "mmsi": 100100101,
             "heading": 180,
-            "lat_origin": 70.101308,
+            "lat_origin": 60.101308,
             "lon_origin": 19.921842,
             "speed": 1.4,
             "length": 15,
@@ -30,7 +30,7 @@
         {
             "mmsi": 100100102,
             "heading": 280,
-            "lat_origin": 70.103377,
+            "lat_origin": 60.103377,
             "lon_origin": 19.922700,
             "speed": 0.25,
             "length": 40,
@@ -39,7 +39,7 @@
         {
             "mmsi": 100100103,
             "heading": 320,
-            "lat_origin": 70.100483,
+            "lat_origin": 60.100483,
             "lon_origin": 19.918277,
             "speed": 1.3,
             "length": 150,

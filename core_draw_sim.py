@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pylab as plt
 import matplotlib.lines as lines
+import matplotlib.cm as cm
 from math import cos, sin, pi
 
 
@@ -21,25 +22,69 @@ def draw_boat(h, s, x, y, a_b, a_r, a_s):
     pr2 = [x-s*cos(a_b)-s*cos(a_b+a_r), y-s*sin(a_b)-s*sin(a_b+a_r)]
     ps = [x-s*cos(a_b+a_s), y-s*sin(a_b+a_s)]
     # draw lines
-    l1 = lines.Line2D([p2[0], p1[0]], [p2[1], p1[1]], color='k')
-    l2 = lines.Line2D([p3[0], p1[0]], [p3[1], p1[1]], color='k')
-    l3 = lines.Line2D([p2[0], p3[0]], [p2[1], p3[1]], color='k')
-    l4 = lines.Line2D([pr1[0], pr2[0]], [pr1[1], pr2[1]], color='k')   # rudder
-    l5 = lines.Line2D([x, ps[0]], [y, ps[1]], color='k')       # sail
-    h.add_line(l1)
-    h.add_line(l2)
-    h.add_line(l3)
-    h.add_line(l4)
-    h.add_line(l5)
+    points = [p1,p2,[x, y],p3]
+    poly = plt.Polygon(points, fill=None, edgecolor='k', linewidth=0.5)
+    h.add_patch(poly)
+    # l1 = lines.Line2D([p2[0], p1[0]], [p2[1], p1[1]], color='k')
+    # l2 = lines.Line2D([p3[0], p1[0]], [p3[1], p1[1]], color='k')
+    # l3 = lines.Line2D([p2[0], p3[0]], [p2[1], p3[1]], color='k')
+    # l4 = lines.Line2D([pr1[0], pr2[0]], [pr1[1], pr2[1]], color='k')   # rudder
+    # l5 = lines.Line2D([x, ps[0]], [y, ps[1]], color='k')       # sail
+    # h.add_line(l1)
+    # h.add_line(l2)
+    # h.add_line(l3)
+    # h.add_line(l4)
+    # h.add_line(l5)
+    # l1.remove()
+    # l2.remove()
+    # l3.remove()
+    # l4.remove()
+    # l5.remove()
 
 
-def draw_track(h, a, b, color_='r'):
+def draw_track(h, a, b, color_='r', width_=0.5):
     # h  - actual fig add_axes
-    # t  - vector with previous positions
-    # x  - new x position
-    # y  - new y position
-    l1 = lines.Line2D([a[0], b[0]], [a[1], b[1]], color=color_, linewidth=0.5)
+    # a  - longitude
+    # b  - latitude
+    l1 = lines.Line2D([a[0], b[0]], [a[1], b[1]], color=color_, linewidth=width_)
+    # line.add_line(lines.Line2D([a[0], b[0]], [a[1], b[1]], color=color_, linewidth=width_))
     h.add_line(l1)
+
+
+def draw_ais_track(h, a, b, dist):
+    # h  - actual fig add_axes
+    # a  - longitude
+    # b  - latitude
+    def_dist = 100
+    cgrad = def_dist/dist
+    print(dist)
+    # print(cgrad)
+    l1 = lines.Line2D([a[1], b[1]], [a[0], b[0]],color=cm.jet(cgrad),linewidth=0.5)
+    h.add_line(l1)
+    return a
+
+
+def draw_ais(h, s, pos, d, color_='b', width_=0.5):
+    # h  -  figure axes
+    # s  -  scale
+    # x  -  longitude
+    # y  -  latitude
+    # d  -  direction
+    (y, x) = pos
+    # print(x, y)
+    p1 = [x+s*cos(d), y+s*sin(d)]
+    p1 = [x, y]
+    p2 = [x-s*cos(d)*2+s/2*cos(pi/2-d), y-s*sin(d)*2-s/2*sin(pi/2-d)]
+    p3 = [x-s*cos(d)*2-s/2*cos(pi/2-d), y-s*sin(d)*2+s/2*sin(pi/2-d)]
+    p = [p1, p2, p3]
+    poly = plt.Polygon(p, fill=None, edgecolor='b', linewidth=width_)
+    h.add_patch(poly)
+    # l1 = lines.Line2D([p2[0], p1[0]], [p2[1], p1[1]], color=color_, linewidth=width_)
+    # l2 = lines.Line2D([p3[0], p1[0]], [p3[1], p1[1]], color=color_, linewidth=width_)
+    # l3 = lines.Line2D([p2[0], p3[0]], [p2[1], p3[1]], color=color_, linewidth=width_)
+    # h.add_line(l1)
+    # h.add_line(l2)
+    # h.add_line(l3)
 
 
 def draw_wind_direction(h, axis_min, axis_max_l, s, psi):
@@ -66,12 +111,14 @@ def draw_wind_direction(h, axis_min, axis_max_l, s, psi):
     h.add_line(l3)
 
 
-def draw_wp(h, s, x, y, radius):
-    # circle1 = plt.Circle((0, 0), 2, color='r')
-    # now make a circle with no fill, which is good for hi-lighting key results
-    # circle2 = plt.Circle((5, 5), 0.5, color='b', fill=False)
-    radius_degree = (radius+3)*1.132*1e-5
-    circle1 = plt.Circle((x,y), radius_degree/10, color='g')
+def draw_wp(h, s, x, y, r):
+    # h  -  figure axes
+    # s  -  scale
+    # x  -  longitude (center)
+    # y  -  latitude (center)
+    # r  -  radius
+    radius_degree = (r+3)*1.132*1e-5
+    circle1 = plt.Circle((x,y), radius_degree/10, color='w')
     circle2 = plt.Circle((x,y), radius_degree, fill=False)
     h.add_artist(circle1)
     h.add_artist(circle2)
@@ -94,5 +141,6 @@ if __name__ == '__main__':
     draw_boat(ax2, 0.1, 3, 4, 1, 0.5, 0.5)
     draw_wind_direction(ax2, (0, 0), 5, 0.1, pi)
     draw_line(ax2, (1, 1), (2, 2), color_line='r')
+    draw_ais(ax2, 0.15, (1,1), 0)
     plt.axis([0, 5, 0, 5])
     plt.show()
