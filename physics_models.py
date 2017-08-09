@@ -1,7 +1,8 @@
 import numpy as np
 from math import cos, sin, atan2, hypot
-from utils import wrapTo2Pi
+from utils import wrapTo2Pi, loadConfigFile
 from class_wingsail import WingSail
+import json
 
 
 class WindState(object):
@@ -39,7 +40,7 @@ class PhysicsModel:
 
 
 class mainBoatPhysicsModel(PhysicsModel):
-	def __init__(self, x = 0, y = 0, heading = 0):
+	def __init__(self, x = 0, y = 0, heading = 0, configPath = 'Janet_config.json' ):
 		self._x             = x
 		self._y             = y
 		self._heading       = heading
@@ -87,26 +88,36 @@ class mainBoatPhysicsModel(PhysicsModel):
 
 class SailingPhysicsModel(mainBoatPhysicsModel):
 	# X and y are in UTM coordinates, the heading is in radians
-	def __init__(self, x = 0, y = 0, heading = 0):
-		self._x = np.float64(x)
-		self._y = np.float64(y)
-		self._heading = np.float64(heading)
-		self._rotationSpeed = np.float64(0)
-		self._speed = 0
-		self._sailAngle = 0
-		self._rudderAngle = 0
-		self._apparentWind = WindState(0, 0)
-		self._driftCoefficient = 0.03
-		self._tangentialFriction = 40     # kg s^-1
-		self._angularFriction = 6000      # kg m
-		self._sailLift = 500              # kg s^-1
-		self._rudderLift = 2000           # kg s^-1
-		self._distanceToSailCoE = 0.5     # m
-		self._distanceToMast = 0.5        # m
-		self._distanceToRudder = 2        # m
-		self._boatMass = 300              # kg
-		self._momentOfInertia = 400       # kg m^2
-		self._rudderBreakCoefficient = 0.2   
+	def __init__(self, x = 0, y = 0, heading = 0, configPath = 'Janet_config.json'):
+		self._x                      = np.float64(x)
+		self._y                      = np.float64(y)
+		self._heading                = np.float64(heading)
+		self._rotationSpeed          = np.float64(0)
+		self._speed                  = 0
+
+		config  = loadConfigFile(configPath)
+		# sail parameters
+		self._sailAngle              = 0
+		self._sailLift               = config["sailLift"]              # kg s^-1
+
+		#rudder parameters
+		self._rudderAngle            = 0
+		self._rudderLift             = config["rudderLift"]           # kg s^-1
+		self._distanceToRudder       = config["distanceToRudder"]        # m
+		self._rudderBreakCoefficient = config["rudderBreakCoefficient"]
+		
+		# wind parameters
+		self._apparentWind           = WindState(0, 0)
+
+		# parameters for dynamic
+		self._driftCoefficient       = config["driftCoefficient"]
+		self._tangentialFriction     = config["tangentialFriction"]    # kg s^-1
+		self._angularFriction        = config["angularFriction"]  # kg m
+		self._distanceToSailCoE      = config["distanceToSailCoE"]   # m
+		self._distanceToMast         = config["distanceToMast"]   # m
+		self._boatMass               = config["boatMass"]   # kg
+		self._momentOfInertia        = config["momentOfInertia"]   # kg m^2
+		
 
 	def setActuators(self, sail, rudder):
 		self._sailAngle = sail
@@ -141,7 +152,6 @@ class SailingPhysicsModel(mainBoatPhysicsModel):
 
 		rotationSpeed_dot = (sailRotationForce - rudderRotationForce - rotationForce) / self._momentOfInertia
 		
-
 		self._x += x_dot * timeDelta
 		self._y += y_dot * timeDelta
 		self._heading += self._rotationSpeed * timeDelta
@@ -166,35 +176,42 @@ class SailingPhysicsModel(mainBoatPhysicsModel):
 		
 class ASPirePhysicsModel(mainBoatPhysicsModel):
 
-	def __init__(self,x = 0, y = 0, heading = 0 , MWAngleStart = 0):
-		self._x                                = np.float64(x)
-		self._y                                = np.float64(y)
-		self._heading                          = np.float64(heading)
-		self._rotationSpeed                    = np.float64(0)
-		self._speed                            = 0
+	def __init__(self,x = 0, y = 0, heading = 0 , configPath = 'ASPire_config.json' , MWAngleStart = 0):
+		self._x                      = np.float64(x)
+		self._y                      = np.float64(y)
+		self._heading                = np.float64(heading)
+		self._rotationSpeed          = np.float64(0)
+		self._speed                  = 0
+		self._MWAngleStart           = MWAngleStart
+		self._wingSail_config        = 'wingsail_config.json' # default
+
+		config = loadConfigFile(configPath)
 		
 		# rudder parameters
-		self._rudderAngle                      = 0
-		self._rudderLift                       = 2000   # kg s^-1
-		self._distanceToRudder                 = 2      # m
-		self._rudderBreakCoefficient           = 0.2 
+		self._rudderAngle            = 0
+		self._rudderLift             = config["rudderLift"]   # kg s^-1
+		self._distanceToRudder       = config["distanceTorudder"]     # m
+		self._rudderBreakCoefficient = config["rudderBreakCoefficient"] 
 		# Wind parameters
-		self._apparentWind                     = WindState(0, 0)
-		#TO DO check if changes needed
-		self._driftCoefficient                 = 0.03
-		self._tangentialFriction               = 40    # kg s^-1
-		self._angularFriction                  = 6000  # kg m
-		self._distanceToSailCoE                = 0.5   # m
-		self._distanceToMast                   = 0.5   # m
-		self._boatMass                         = 300   # kg
-		self._momentOfInertia                  = 400   # kg m^2
-		self._MWAngleStart                     = MWAngleStart
-		# creation wingsail 
-		self._wingSail                         = WingSail(self._x,self._y,self._heading,self._MWAngleStart,0,self._distanceToSailCoE)
-		print('MWAngleStart:',self._MWAngleStart)
-		#self._state                            = np.array([[self._x,self._y,self.heading,self._speed,self._rotationSpeed]])
-		#self._state                            = self._state.reshape((5,1))
+		self._apparentWind           = WindState(0, 0)
 
+		# parameters for dynamic
+		self._driftCoefficient       = config["driftCoefficient"]
+		self._tangentialFriction     = config["tangentialFriction"]    # kg s^-1
+		self._angularFriction        = config["angularFriction"]  # kg m
+		self._distanceToSailCoE      = config["distanceToSailCoE"]   # m
+		self._distanceToMast         = config["distanceToMast"]   # m
+		self._boatMass               = config["boatMass"]   # kg
+		self._momentOfInertia        = config["momentOfInertia"]   # kg m^2
+
+		if "wingSailConfigPath" in config.keys():
+			self._wingSail_config = config["wingSailConfigPath"]
+		# creation wingsail 
+		self._wingSail               = WingSail(self._x,self._y,self._heading,self._MWAngleStart,0,self._distanceToSailCoE, self._wingSail_config)
+		print('MWAngleStart:',self._MWAngleStart)
+
+
+		
 	def setActuators(self, tail, rudder):
 		self._wingSail.setTailAngle(tail)
 		self._rudderAngle = rudder
