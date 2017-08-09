@@ -1,0 +1,13 @@
+{
+	"sailLift":500,
+	"rudderLift":2000,
+	"distanceToRudder":2,
+	"driftCoefficient": 0.03,
+	"tangentialFriction": 40,
+	"angularFriction": 6000,		
+	"distanceToSailCoE": 0.5,
+	"distanceToMast": 0.5,   
+	"boatMass": 300,         
+	"momentOfInertia": 400,  
+	"rudderBreakCoefficient": 0.2  
+}
