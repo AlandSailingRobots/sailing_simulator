@@ -1,39 +1,42 @@
 import numpy as np
-from utils import wrapTo2Pi, apparentWindCoordinatesToMWCoordinates, apparentWindCoordinatesToBoatCoordinates
+from utils import wrapTo2Pi, apparentWindCoordinatesToMWCoordinates, apparentWindCoordinatesToBoatCoordinates, loadConfigFile
+
 
 RHO = 1
 
 class WingSail():
-	def __init__(self,xboat = 0, yboat = 0,hboat = 0 , MWAngle = 0, tailAngle = 0, distanceToSailCOE = 0):
+	def __init__(self,xboat = 0, yboat = 0,hboat = 0 , MWAngle = 0, tailAngle = 0, distanceToSailCOE = 0, configPath = 'wingsail_config.json'):
 		self._MWAngle                          = wrapTo2Pi(np.float64(MWAngle))
 		self._MWRotationSpeed                  = np.float64(0)
 		self._tailAngle                        = np.float64(tailAngle)
 		self._distanceToSailCoE                = distanceToSailCOE
 		self._x                                = np.float64(xboat + distanceToSailCOE*np.cos(hboat))
 		self._y                                = np.float64(yboat + distanceToSailCOE*np.sin(hboat))
-		
+
+		config = loadConfigFile(configPath)
 		# Main Wing parameters
-		self._MWChord                          = 0.74
-		self._MWSpan                           = 2.785
+		self._MWChord                          = config["mainWingChord"] # m
+		self._MWSpan                           = config["mainWingSpan"] # m
 		self._MWAspectRatio                    = self._MWChord/self._MWSpan
-		self._MWArea                           = 0.1184*self._MWSpan
+		self._MWThickness                      = config["mainWingThickness"] # m
+		self._MWArea                           = self._MWThickness*self._MWSpan
 		self._MWConstPartWindForce             = (1/2)*RHO*self._MWArea
 		self._MWDesignedLiftCoefficient        = 2*np.pi*self._MWAspectRatio/(self._MWAspectRatio+2)
 		self._dontKnowHowToName                = (self._MWAspectRatio+1)/(self._MWAspectRatio+2)		
 		self._MWAngleDot                       = 0      # rad
-		self._MWDistanceCOP                    = -0.10  # m
+		self._MWDistanceCOP                    = config["distanceCenterOfPressureToMast"] # m
 		
 		# Tail parameters
 		self._tailAngle                        = 0
-		self._tailChord                        = 0.3    # m
-		self._tailSpan                         = 0.8    # m
+		self._tailChord                        = config["tailChord"]    # m
+		self._tailSpan                         = config["tailSpan"]    # m
 		self._tailAspectRatio                  = self._tailChord/self._tailSpan
-		self._tailThickness                    = 0.055  # m
+		self._tailThickness                    = config["tailThickness"]  # m
 		self._tailArea                         = self._tailThickness*self._tailSpan
-		self._tailDistanceToMast               = -0.812 #m
+		self._tailDistanceToMast               = config["tailDistanceToMast"] #m
 		self._tailConstPartWindForce           = 1/2*RHO*self._tailArea
 		self._tailDesignedLiftCoefficient      = 2*np.pi*self._tailAspectRatio/(self._tailAspectRatio+2)
-		self._tailMass                         = 2      # kg
+		self._tailMass                         = config["tailMass"]      # kg
 		
 		self._momentOfInertiaWingSailOnMast    = self._tailMass*self._tailDistanceToMast**2
 		print('MWAngleWingsailClass:',self._MWAngle)
