@@ -50,9 +50,9 @@ def draw_SailBoat(h, s, x, y, a_b, a_r, a_s):
 		
 
 def draw_WingBoat(h,s,x,y,a_b,a_r,MWAngle=0,tailAngle=0):
-	distance_rudder = -11
-	distance_MW     = 3
-	distance_tail   = -6
+	distance_rudder   = -11
+	distance_MW       = 3
+	distance_tail     = -6
 
 		
 	hull              = np.array([[13, 3,-12,-12, 3,13],
@@ -83,9 +83,9 @@ def draw_WingBoat(h,s,x,y,a_b,a_r,MWAngle=0,tailAngle=0):
 								  [np.sin(a_b+MWAngle),  np.cos(a_b+MWAngle), y+distance_MW*sin(a_b)],
 								  [                  0,                    0,                      1]])
 
-	rotation_tailWing = np.array([[np.cos(a_b+MWAngle+tailAngle), -np.sin(a_b+MWAngle+tailAngle), x+distance_MW*cos(a_b)+distance_tail*cos(MWAngle)],
-								  [np.sin(a_b+MWAngle+tailAngle),  np.cos(a_b+MWAngle+tailAngle), y+distance_MW*sin(a_b)+distance_tail*sin(MWAngle)],
-								  [                            0,                              0,                              1]])
+	rotation_tailWing = np.array([[np.cos(a_b+MWAngle+tailAngle), -np.sin(a_b+MWAngle+tailAngle), x+distance_MW*cos(a_b)+distance_tail*cos(a_b+MWAngle)],
+								  [np.sin(a_b+MWAngle+tailAngle),  np.cos(a_b+MWAngle+tailAngle), y+distance_MW*sin(a_b)+distance_tail*sin(a_b+MWAngle)],
+								  [                            0,                              0,                                                     1]])
 
 	hull              = s*rotation_hull.dot(hull)
 	MW                = s*rotation_MW.dot(MW)
@@ -96,7 +96,7 @@ def draw_WingBoat(h,s,x,y,a_b,a_r,MWAngle=0,tailAngle=0):
 	plt.plot(MW[0,:],MW[1,:],'r')
 	plt.plot(x+distance_MW*cos(a_b),y+distance_MW*sin(a_b),'r+')
 	plt.plot(tailWing[0,:],tailWing[1,:],'g')
-	plt.plot( x+distance_MW*cos(a_b)+distance_tail*cos(MWAngle), y+distance_MW*sin(a_b)+distance_tail*sin(MWAngle),'g+')
+	plt.plot( x+distance_MW*cos(a_b)+distance_tail*cos(a_b+MWAngle), y+distance_MW*sin(a_b)+distance_tail*sin(a_b+MWAngle),'g+')
 	plt.plot(rudder[0,:],rudder[1,:],'b')
 
 
