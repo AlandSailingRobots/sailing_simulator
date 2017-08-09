@@ -1,0 +1,12 @@
+{
+	"mainWingChord":0.74,
+	"mainWingSpan": 2.785,
+	"mainWingThickness": 0.1184,
+	"distanceCenterOfPressureToMast": -0.10,
+
+	"tailChord": 0.3,
+	"tailSpan": 0.8,
+	"tailThickness": 0.055,
+	"tailDistanceToMast": -0.812,
+	"tailMass": 2
+}
