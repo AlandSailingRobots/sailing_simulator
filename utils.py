@@ -5,6 +5,7 @@ Created on Wed Jun 21 11:02:38 2017
 @author: jazicoan
 """
 import numpy as np
+import json
 
 
 
@@ -54,9 +55,13 @@ def apparentWindCoordinatesToBoatCoordinates(FxW,FyW,alpha,MWAngle):
 def euler(x,xdot,dt):
 	return(x+xdot*dt)
 
+    # ===== loading a boat configuration ===== #
 
-	
-
+def loadConfigFile(configPath):
+	with open (configPath) as data_file:
+		config = json.load(data_file)
+	data_file.close()
+	return(config)
 
     # Add new functions or sections if necessary
 
