@@ -8,7 +8,7 @@ import time
 import copy
 import atexit
 from struct import *
-from utils import wrapTo2Pi,wrapAngle,radTodeg, degTorad
+from utils import wrapTo2Pi,wrapAngle,radTodeg, degTorad, loadConfigFile
 import numpy as np
 import core_draw_sim as cds
 from simulator import Simulator
@@ -111,7 +111,7 @@ lat %.5f long %.5f MWAngle %.5f' %
 		print("Stopping Draw Thread")
 		plt.close()
 
-
+""" va degager"""
 def order_to_deg(command_rudder, command_sheet):
 	if command_rudder > 8000 or command_rudder < 3000:
 		command_sheet = 4215
@@ -131,6 +131,7 @@ def get_to_socket_value( sailBoat ):
 	windsensor = ( sailBoat.apparentWind().speed(), sailBoat.apparentWind().direction() )
 	return (heading, gps, windsensor)
 
+
 def get_graph_values( sailBoat,boat_type ):
 	(sail, rudder) = sailBoat.sailAndRudder() # if boat_type == 1 : sail == tailWing
 	phi_ap = sailBoat.apparentWind().direction()
@@ -141,11 +142,11 @@ def get_graph_values( sailBoat,boat_type ):
 		return( rudder, tailAngle, phi_ap, lat, lon, MWAngle )
 	else:
 	
-		sigma = cos( phi_ap ) + cos( sail_max )
+		sigma = cos( phi_ap ) + cos( sail )
 		if (sigma < 0):
 			sail = np.pi - phi_ap
 		else:
-			sail = np.sign( sin(phi_ap) ) * abs( sail_max )
+			sail = np.sign( sin(phi_ap) ) * abs( sail )
 		return ( rudder, sail, phi_ap, lat, lon )
 
 
@@ -189,16 +190,18 @@ def boatInVisualRange( asv, vessel):
 		return True
 	return False
 
-def loadConfiguration(configPath):
+def initialization(configPath):
 	global AIS_UPDATE_MS
 	global BOAT_UPDATE_MS
 	
-	with open(configPath) as data_file:    
-		config = json.load(data_file)
+	config = loadConfigFile(configPath)    
 	print(config)
-	boat_type = config["boat_type"]
-	latOrigin = config["lat_origin"]
-	lonOrigin = config["lon_origin"]
+	
+	boat_type   = config["boat_type"]
+	boat_config = config["boat_config"]
+	sim_step    = config["simulation_step"]
+	latOrigin   = config["lat_origin"]
+	lonOrigin   = config["lon_origin"]
 
 	if config.get("boat_update_ms"):
 		BOAT_UPDATE_MS = config["boat_update_ms"];
@@ -214,12 +217,12 @@ def loadConfiguration(configPath):
 	print ("True Wind:" + str(trueWindDir))
 	trueWindSpeed = config["wind_speed"]
 	if boat_type == 0:
-		vessels.append(SailBoat( SailingPhysicsModel(), latOrigin, lonOrigin, 0, 0 ))
+		vessels.append(SailBoat( SailingPhysicsModel( 0, 0, 0, boat_config), latOrigin, lonOrigin, 0, 0 ))
 	else:
 		#print(trueWindDir)
 		#mainBoat = SailBoat( ASPirePhysicsModel( 0,0,0,wrapTo2Pi(trueWindDir)) , latOrigin, lonOrigin, 0, 0 )
 		#print('MWAnglePhysicsClass:',mainBoat.physicsModel().MWAngle())
-		vessels.append(SailBoat( ASPirePhysicsModel( 0,0,0,wrapTo2Pi(trueWindDir+degTorad(185))) , latOrigin, lonOrigin, 0, 0 ))
+		vessels.append(SailBoat( ASPirePhysicsModel( 0, 0, 0, boat_config, wrapTo2Pi(trueWindDir+degTorad(185))) , latOrigin, lonOrigin, 0, 0 ))
 	# Load Marine Traffic
 	for marineVessel in config["traffic"]:
 		id = marineVessel["mmsi"];
@@ -229,7 +232,7 @@ def loadConfiguration(configPath):
 		speed = marineVessel["speed"]
 		vessels.append(MarineTraffic(SimplePhysicsModel(heading, speed), lat, lon, heading, speed, id))
 
-	return ( boat_type ,vessels, WindState( trueWindDir, trueWindSpeed ) )
+	return ( boat_type , sim_step,vessels, WindState( trueWindDir, trueWindSpeed ) )
 
 
 
@@ -241,7 +244,7 @@ if __name__ == '__main__':
 	if len(sys.argv) == 2:
 		configPath = sys.argv[1]
 
-	( boat_type,vessels, trueWind ) = loadConfiguration(configPath)
+	( boat_type, sim_step, vessels, trueWind ) = initialization(configPath)
 	simulatedBoat = vessels[0]
 	print(simulatedBoat);
 	if boat_type == 0:
@@ -283,25 +286,31 @@ if __name__ == '__main__':
 		while( net.connected() ):
 
 			deb = time.time()
+
+			""" Collecting the orders and process them for the actuators """
 			if boat_type == 0:
 				(command_rudder, command_sheet) = net.readActuatorData()
 				(delta_r, delta_s) = order_to_deg(command_rudder, command_sheet)
 			else :
-				(delta_r,delta_s) = (0,0)
+				(command_rudder, command_sheet) = net.readActuatorData()
+				(delta_r,delta_s) = order_to_deg(command_rudder, command_sheet)
+				(delta_r,delta_s) = (delta_r,0)
 
+			""" setting the actuator to the order """
 			simulatedBoat.physicsModel().setActuators( delta_s, delta_r )
 
 			# TODO - Jordan: Make this a variable step, so we aren't at a fixed rate of simulation
-			simulator.step( 0.01 )
+			
+			simulator.step( sim_step ) # 0.01 = max Step size for ASPire  
 
 			millis = getMillis();
 
-			# Send the boat data
+			""" Sending boat data """
 			if millis > lastSentBoatData + BOAT_UPDATE_MS:
 				net.sendBoatData( simulatedBoat,message_type )
 				lastSentBoatData = millis
 
-			# Send AIS data
+			""" Sending AIS data """
 			if millis > lastAISSent + AIS_UPDATE_MS:
 				for i in range( 1, len(vessels) ):
 					if vessels[i].id() < 100000000 and boatInVisualRange(vessels[0], vessels[i]):
@@ -310,7 +319,7 @@ if __name__ == '__main__':
 						net.sendAISContact( vessels[i] )
 				lastAISSent = millis
 
-
+			""" Getting boat data """
 			(head, gps, wind) = get_to_socket_value( simulatedBoat )
 			(x, y) = simulatedBoat.physicsModel().utmCoordinate()
 			theta = simulatedBoat.physicsModel().heading()
@@ -322,7 +331,7 @@ if __name__ == '__main__':
 	
 			threadLock.acquire()
 		
-
+			""" filling a temporary set of data to return to hardware """ 
 			if boat_type == 0:
 				temp_data.set_value(x, y, theta, delta_s, delta_r, trueWind.direction(),latitude, longitude, simulatedBoat.speed())
 			else:
