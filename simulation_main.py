@@ -8,14 +8,16 @@ import time
 import copy
 import atexit
 from struct import *
+from utils import wrapTo2Pi,wrapAngle,radTodeg, degTorad
 import numpy as np
 import core_draw_sim as cds
-from data_handler import data_handler, waypoint_handler
 from simulator import Simulator
-from physics_models import SimplePhysicsModel,SailingPhysicsModel, WindState
+from physics_models import SimplePhysicsModel,SailingPhysicsModel, WindState, ASPirePhysicsModel
 from vessel import Vessel,SailBoat, MarineTraffic
 from network import Network
 from mathFcns import Functions as fcn
+from data_handler import data_handler, waypoint_handler, sailBoatData, wingBoatData
+
 # from drawThread import drawThread
 from math import cos, sin, atan2, hypot
 from matplotlib.widgets import Button
@@ -31,6 +33,10 @@ import json
 
 import LatLonMath
 
+MESSAGE_TYPE_SAILBOAT_DATA = 0
+MESSAGE_TYPE_WINGBOAT_DATA = 1
+MESSAGE_TYPE_AIS_CONTACT   = 2
+MESSAGE_TYPE_TIS_CONTACT   = 3
 
 # Returns the milliseconds
 getMillis = lambda: int(round(time.time() * 1000))
@@ -123,6 +129,7 @@ class drawThread (threading.Thread):
         self.threadID = 1
         self.name = "Draw thread"
         self.counter = 1
+        self.boat_type = boat_type
 
     def run(self):
         zoom_ = zoom()
@@ -136,11 +143,15 @@ class drawThread (threading.Thread):
         ais_list = copy.deepcopy(vessels)
         for i in range(1, len(ais_list)):
             prevPos.append(ais_list[i].position())
-        fig = figure_pz(figsize=(9, 9))
+        fig = figure_pz(figsize=(18, 9))
         fig.patch.set_facecolor('teal')
         fig.subplots_adjust(top=0.8)
-        ax2 = fig.add_axes([0.1, 0.1, 0.7, 0.8])
+        ax2 = fig.add_axes([0.45, 0.1, 0.35, 0.8])
         ax2.patch.set_facecolor('lightblue')
+
+        axboat = fig.add_axes([0.05, 0.1, 0.35, 0.8])
+        (axboat_min_x, axboat_min_y, axisboat_len) = (-20, -20, 40)
+        axboat.patch.set_facecolor('lightblue')
 
         th_data = copy.deepcopy(temp_data)
         latprev = th_data.latitude
@@ -148,14 +159,14 @@ class drawThread (threading.Thread):
         prevWPlongitude = lonprev
         prevWPlatitude = latprev
 
-        textbox = fig.text(0.7, 0.7, '')
-        ax_bcenter = fig.add_axes([0.812, 0.43, 0.08, 0.05])
+        textbox = fig.text(0.8, 0.7, '')
+        ax_bcenter = fig.add_axes([0.862, 0.43, 0.08, 0.05])
 
         bcenter = Button(ax_bcenter, 'Center', color='white')
         bcenter.on_clicked(zoom_.boatInCenter)
-        windtext = fig.text(0.815, 0.6, 'Wind Direction')
+        windtext = fig.text(0.865, 0.6, 'Wind Direction')
         windtext.set_color('white')
-        wind_ax = fig.add_axes([0.82,0.49,0.1,0.1])
+        wind_ax = fig.add_axes([0.87,0.49,0.05,0.1])
         wind_ax.set_axis_off()
         cds.draw_wind_direction(wind_ax, (0, -0.5), 1, 0.3, th_data.phi)
 
@@ -163,6 +174,8 @@ class drawThread (threading.Thread):
 
         centerx = lonprev
         centery = latprev
+
+        ax2.set_axis_off()
         print(centerx, centery)
         axis_length = zoom_.length
         objgraph.show_most_common_types()
@@ -182,6 +195,7 @@ class drawThread (threading.Thread):
             ais_list = copy.deepcopy(vessels)
             self.lock.release()
             self.run_th = th_data.run
+
             (ax_min_x, ax_min_y, axis_len) = (centerx-axis_length/2, centery-axis_length/2, axis_length)
 
             btw = fcn.getBTW([th_data.longitude, th_data.latitude], [th_wp.lon, th_wp.lat])
@@ -196,7 +210,7 @@ class drawThread (threading.Thread):
             # plt.clf()   # Clear figure
 
             fig.subplots_adjust(top=0.8)
-            ax2 = fig.add_axes([0.1, 0.1, 0.7, 0.8])
+            ax2 = fig.add_axes([0.45, 0.1, 0.4, 0.8])
 
             if th_wp.lon != prevWPlongitude:
                 if th_wp.lon > 0.01 and th_wp.lon < 1e3:
@@ -206,20 +220,21 @@ class drawThread (threading.Thread):
                     cds.draw_wp(ax2, 1, th_wp.lon, th_wp.lat, th_wp.rad)
                     prevWPlongitude = th_wp.lon
                     prevWPlatitude = th_wp.lat
-            cds.draw_track(ax2, [th_data.longitude, th_data.latitude], [lonprev, latprev])
 
             # xlist.append(th_data.longitude)
-            linecol.append((th_data.longitude,th_data.latitude))
+            # linecol.append((th_data.longitude,th_data.latitude))
             # print(linecol)
             # xlist.append(None)
             # ylist.append(th_data.latitude)
             # ylist.append(None)
-
-            # for i in range(1, len(ais_list)):
-            #     cds.draw_track(ax2, ais_list[i].position(), ais_list[i].course())
+            dist = []
+            minDist = 1e5
             for i in range(1, len(ais_list)):
-                prevPos[i-1] = cds.draw_ais_track(ax2, ais_list[i].position(), prevPos[i-1], fcn.getDTW([th_data.longitude, th_data.latitude], ais_list[i].position()))
+                dist.append(fcn.getDTW([th_data.latitude, th_data.longitude], ais_list[i].position()))
+                prevPos[i-1] = cds.draw_ais_track(ax2, ais_list[i].position(), prevPos[i-1], dist[i-1])
                 cds.draw_ais(ax2, 0.0001, ais_list[i].position(), ais_list[i].course())
+                minDist = min(minDist, dist[i-1])
+            cds.draw_track(ax2, [th_data.longitude, th_data.latitude], [lonprev, latprev], minDist)
             cds.draw_boat(ax2, 0.00015, th_data.longitude, th_data.latitude,
                           th_data.theta, th_data.delta_r, th_data.delta_s)
             plt.axis([ax_min_x, ax_min_x+axis_len, ax_min_y, ax_min_y+axis_len])
@@ -227,12 +242,26 @@ class drawThread (threading.Thread):
             # linessss = LineCollection(linecol,alpha=0.1)
             # print(linessss)
             # ax2.add_collection(linessss)
+            axboat.clear()
+            plt.sca(axboat)
+            axboat_min_x = x-axisboat_len/2.0
+            axboat_min_y = y-axisboat_len/2.0
+            plt.axis([axboat_min_x, axboat_min_x+axisboat_len,
+                      axboat_min_y, axboat_min_y+axisboat_len])
+            if self.boat_type == 0:
+                print(th_data.longitude, th_data.latitude)
+                cds.draw_SailBoat(axboat, 1, th_data.x, th_data.y, th_data.theta, th_data.delta_r, th_data.delta_s)
+            else:
+                cds.draw_WingBoat(axboat, 1, th_data.x, th_data.y, th_data.theta, th_data.delta_r,th_data.MWAngle,th_data.delta_s)
+            # plt.draw()
+            plt.sca(ax2)
             plt.draw()
+            ax2.patch.set_facecolor('lightblue')
+            axboat.patch.set_facecolor('lightblue')
             fig.texts.remove(textbox)
-            textbox = fig.text(0.82, 0.63, textstr,bbox=dict(edgecolor='white', facecolor='teal'))
+            textbox = fig.text(0.87, 0.63, textstr,bbox=dict(edgecolor='white', facecolor='teal'))
             textbox.set_color('white')
-            # print(ax2.get_children())
-            # plt.show()
+
             plt.pause(0.001)
             lonprev = th_data.longitude
             latprev = th_data.latitude
@@ -244,13 +273,30 @@ class drawThread (threading.Thread):
         plt.close()
 
 
+def get_graph_values( sailBoat,boat_type ):
+	(sail, rudder) = sailBoat.sailAndRudder() # if boat_type == 1 : sail == tailWing
+	phi_ap = sailBoat.apparentWind().direction()
+	(lat, lon) = sailBoat.position()
+	if boat_type == 1:
+		MWAngle   = sailBoat.physicsModel().MWAngle()
+		tailAngle = sail
+		return( rudder, tailAngle, phi_ap, lat, lon, MWAngle )
+	else:
+
+		sigma = cos( phi_ap ) + cos( sail )
+		if (sigma < 0):
+			sail = np.pi - phi_ap
+		else:
+			sail = np.sign( sin(phi_ap) ) * abs( sail )
+		return( rudder, sail, phi_ap, lat, lon )
+
 def loadConfiguration(configPath):
     global AIS_UPDATE_MS
     global BOAT_UPDATE_MS
 
     with open(configPath) as data_file:
         config = json.load(data_file)
-
+    boat_type = config["boat_type"]
     latOrigin = config["lat_origin"]
     lonOrigin = config["lon_origin"]
 
@@ -267,8 +313,15 @@ def loadConfiguration(configPath):
     trueWindDir = wrapTo2Pi(np.deg2rad(config["wind_direction"] - 90))
     print ("True Wind:" + str(trueWindDir))
     trueWindSpeed = config["wind_speed"]
-
-    vessels.append(SailBoat( SailingPhysicsModel(), latOrigin, lonOrigin, 0, 0 ))
+    print(latOrigin, lonOrigin)
+    # vessels.append(SailBoat( SailingPhysicsModel(), latOrigin, lonOrigin, 0, 0 ))
+    if boat_type == 0:
+        vessels.append(SailBoat( SailingPhysicsModel(), latOrigin, lonOrigin, 0, 0 ))
+    else:
+        # print(trueWindDir)
+        # mainBoat = SailBoat( ASPirePhysicsModel( 0,0,0,wrapTo2Pi(trueWindDir)) , latOrigin, lonOrigin, 0, 0 )
+        # print('MWAnglePhysicsClass:',mainBoat.physicsModel().MWAngle())
+        vessels.append(SailBoat( ASPirePhysicsModel( 0,0,0,wrapTo2Pi(trueWindDir+degTorad(185))), latOrigin, lonOrigin, 0, 0 ))
 
     # Load Marine Traffic
     for marineVessel in config["traffic"]:
@@ -280,11 +333,11 @@ def loadConfiguration(configPath):
         length = marineVessel["length"]
         beam = marineVessel["beam"]
         vessels.append(MarineTraffic(SimplePhysicsModel(heading, speed), lat, lon, heading, speed, id, length, beam))
+    # print(vessels[0].position())
+    return ( boat_type, vessels, WindState( trueWindDir, trueWindSpeed ) )
 
-    return ( vessels, WindState( trueWindDir, trueWindSpeed ) )
 
-
-temp_data = data_handler()
+# temp_data = data_handler()
 temp_wp = waypoint_handler()
 
 if __name__ == '__main__':
@@ -298,10 +351,15 @@ if __name__ == '__main__':
     if len(sys.argv) == 2:
         configPath = sys.argv[1]
 
-    ( vessels, trueWind ) = loadConfiguration(configPath)
+    ( boat_type, vessels, trueWind ) = loadConfiguration(configPath)
     simulatedBoat = vessels[0]
     print(simulatedBoat)
-
+    if boat_type == 0:
+        message_type = MESSAGE_TYPE_SAILBOAT_DATA
+        temp_data = sailBoatData()
+    else:
+        message_type = MESSAGE_TYPE_WINGBOAT_DATA
+        temp_data = wingBoatData()
     simulator = Simulator( trueWind, 1 )
 
     files = []
@@ -336,8 +394,18 @@ if __name__ == '__main__':
 
             deb = time.time()
 
-            (command_rudder, command_sheet) = net.readActuatorData()
-            (delta_r, delta_s) = fcn.order_to_deg(command_rudder, command_sheet)
+            # (command_rudder, command_sheet) = net.readActuatorData()
+            # (delta_r, delta_s) = fcn.order_to_deg(command_rudder, command_sheet)
+            if boat_type == 0:
+                (command_rudder, command_sheet) = net.readActuatorData()
+                (delta_r, delta_s) = fcn.order_to_deg(command_rudder, command_sheet)
+            else:
+                # Only one line here previously
+                # (delta_r,delta_s) = (0,0)
+                #
+                # (command_rudder, command_sheet) = net.readActuatorData()
+                (delta_r,delta_s) = (0,0)
+                # (delta_r, delta_s) = fcn.order_to_deg(command_rudder, command_sheet)
 
             (wp_lon, wp_lat, wp_dec, wp_radius, wp_prevLon,
              wp_prevLat, wp_prevDec, wp_prevRad) = net.receiveWaypoint()
@@ -366,11 +434,20 @@ if __name__ == '__main__':
             (head, gps, wind) = fcn.get_to_socket_value( simulatedBoat )
             (x, y) = simulatedBoat.physicsModel().utmCoordinate()
             theta = simulatedBoat.physicsModel().heading()
-            (delta_r, delta_s, phi, latitude, longitude) = fcn.get_graph_values( simulatedBoat )
-
+            # (delta_r, delta_s, phi, latitude, longitude) = fcn.get_graph_values( simulatedBoat )
+            if boat_type == 0:
+                # (delta_r, delta_s, phi, latitude, longitude) = fcn.get_graph_values( simulatedBoat, boat_type )
+                (delta_r, delta_s, phi, latitude, longitude) = get_graph_values(simulatedBoat, boat_type)
+            else:
+                # (delta_r, delta_s, phi, latitude, longitude, MWAngle) = fcn.get_graph_values( simulatedBoat, boat_type )
+                (delta_r, delta_s, phi, latitude, longitude, MWAngle) = get_graph_values(simulatedBoat, boat_type)
             threadLock.acquire()
-            temp_data.set_value(x, y, theta, delta_s, delta_r, trueWind.direction(),
-                                latitude, longitude, simulatedBoat.speed())
+            # temp_data.set_value(x, y, theta, delta_s, delta_r, trueWind.direction(),
+            #                     latitude, longitude, simulatedBoat.speed())
+            if boat_type == 0:
+                temp_data.set_value(x, y, theta, delta_s, delta_r, trueWind.direction(),latitude, longitude, simulatedBoat.speed())
+            else:
+                temp_data.set_value(x, y, theta, delta_s, delta_r, trueWind.direction(),latitude, longitude, simulatedBoat.speed(), MWAngle)
             temp_wp.set_value(wp_lon, wp_lat, wp_dec, wp_radius, wp_prevLon,
                               wp_prevLat, wp_prevDec, wp_prevRad)
             threadLock.release()

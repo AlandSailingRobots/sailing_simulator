@@ -1,6 +1,7 @@
 import numpy as np
 from math import cos, sin, atan2, hypot
-
+from utils import wrapTo2Pi
+from class_wingsail import WingSail
 
 def wrapTo2Pi(theta):
     if theta < 0:
@@ -43,6 +44,44 @@ class PhysicsModel:
         raise NotImplementedError("Must override simulate method!")
 
 
+class mainBoatPhysicsModel(PhysicsModel):
+	def __init__(self, x = 0, y = 0, heading = 0):
+		self._x             = x
+		self._y             = y
+		self._heading       = heading
+		self._rotationSpeed = 0
+		self._speed         = 0
+		self._apparentWind  = WindState(0, 0)
+
+	def apparentWind(self):
+		return self._apparentWind
+
+	def updateApparentWind(self, trueWind ):
+		apparentWindVector = [trueWind.speed() * cos( trueWind.direction() - self._heading ) - self._speed, trueWind.speed() * sin( trueWind.direction() - self._heading )]
+		apparentWindAngle  = atan2(apparentWindVector[1], apparentWindVector[0])
+		apparentWindSpeed  = hypot(apparentWindVector[0], apparentWindVector[1])
+		self._apparentWind = WindState( apparentWindAngle, apparentWindSpeed )
+
+
+
+	def forceOnRudder(self):
+		return self._rudderLift * self._speed * sin( self._rudderAngle )
+
+
+
+	def calculateDrift(self, trueWind ):
+		x_boatVelocity = self._speed * cos(self._heading)
+		y_boatVelocity = self._speed * sin(self._heading)
+
+		x_windDrift    = self._driftCoefficient * trueWind.speed() * cos( trueWind.direction() )
+		y_windDrift    = self._driftCoefficient * trueWind.speed() * sin( trueWind.direction() )
+
+		x_dot          = x_boatVelocity + x_windDrift
+		y_dot          = y_boatVelocity + y_windDrift
+
+		return (x_dot, y_dot)
+
+
 class SailingPhysicsModel(PhysicsModel):
     # X and y are in UTM coordinates, the heading is in radians
     def __init__(self, x=0, y=0, heading=0):
@@ -75,6 +114,9 @@ class SailingPhysicsModel(PhysicsModel):
 
     def apparentWind(self):
         return self._apparentWind
+
+    def speed(self):
+        return self._speed
 
     def simulate(self, timeDelta, trueWind):
         (x_dot, y_dot) = self.calculateDrift( trueWind )
@@ -139,6 +181,87 @@ class SailingPhysicsModel(PhysicsModel):
 
     def forceOnRudder(self):
         return self._rudderLift * self._speed * sin( self._rudderAngle )
+
+
+class ASPirePhysicsModel(mainBoatPhysicsModel):
+
+	def __init__(self,x = 0, y = 0, heading = 0 , MWAngleStart = 0):
+		self._x                                = np.float64(x)
+		self._y                                = np.float64(y)
+		self._heading                          = np.float64(heading)
+		self._rotationSpeed                    = np.float64(0)
+		self._speed                            = 0
+
+		# rudder parameters
+		self._rudderAngle                      = 0
+		self._rudderLift                       = 2000   # kg s^-1
+		self._distanceToRudder                 = 2      # m
+		self._rudderBreakCoefficient           = 0.2
+		# Wind parameters
+		self._apparentWind                     = WindState(0, 0)
+		#TO DO check if changes needed
+		self._driftCoefficient                 = 0.03
+		self._tangentialFriction               = 40    # kg s^-1
+		self._angularFriction                  = 6000  # kg m
+		self._distanceToSailCoE                = 0.5   # m
+		self._distanceToMast                   = 0.5   # m
+		self._boatMass                         = 300   # kg
+		self._momentOfInertia                  = 400   # kg m^2
+		self._MWAngleStart                     = MWAngleStart
+		# creation wingsail
+		self._wingSail                         = WingSail(self._x,self._y,self._heading,self._MWAngleStart,0,self._distanceToSailCoE)
+		print('MWAngleStart:',self._MWAngleStart)
+		#self._state                            = np.array([[self._x,self._y,self.heading,self._speed,self._rotationSpeed]])
+		#self._state                            = self._state.reshape((5,1))
+
+	def setActuators(self, tail, rudder):
+		self._wingSail.setTailAngle(tail)
+		self._rudderAngle = rudder
+
+	def getActuators(self):
+		return ( self._wingSail.getTailAngle(), self._rudderAngle )
+
+	def apparentWind(self):
+		return self._apparentWind
+
+	def MWAngle(self):
+		return self._wingSail.getMWAngle()
+
+	def utmCoordinate(self):
+		return (self._x, self._y)
+
+	def heading(self):
+		return self._heading
+
+	def simulate(self,timeDelta,trueWind):
+		(x_dot, y_dot) = self.calculateDrift( trueWind )
+
+		self.updateApparentWind( trueWind )
+
+		# The acceleration of the boat is affected by three forces, the wind on the sail, a braking force
+		# from the water on the rudder, and a tangential friction force
+		wingSailForce                  = self._wingSail.rk2Step(self._apparentWind,timeDelta)
+		#Forces due to wind in the wind coordinate system
+		rudderForce                    = self.forceOnRudder()
+		#TO DO Check acceleration due to the main wing
+		wingSailAccelerationForce      = wingSailForce * sin( self._wingSail.getMWAngle() )
+		rudderBrakeForce               = self._rudderBreakCoefficient * rudderForce * sin( self._wingSail.getMWAngle() )
+		tangentialFictionForce         = np.sign(self._speed) * (self._tangentialFriction * (self._speed)**2)
+		speed_dot                      = ( (wingSailAccelerationForce - rudderBrakeForce) - tangentialFictionForce) / self._boatMass
+
+		#TO DO check wingsail rotation force formula
+		wingSailRotationForce          = wingSailForce * ( self._distanceToSailCoE - self._distanceToMast * cos( self._wingSail.getMWAngle() ) )
+		rudderRotationForce            = self._distanceToRudder * rudderForce * cos( self._rudderAngle )
+		rotationForce                  = self._angularFriction * self._rotationSpeed * abs( self._speed )
+
+		rotationSpeed_dot              = (wingSailRotationForce - rudderRotationForce - rotationForce) / self._momentOfInertia
+
+		self._x += x_dot * timeDelta
+		self._y += y_dot * timeDelta
+		self._heading += self._rotationSpeed * timeDelta
+		self._speed += speed_dot * timeDelta
+		self._rotationSpeed += rotationSpeed_dot * timeDelta
+		self._heading = wrapTo2Pi(self._heading)
 
 
 class SimplePhysicsModel(PhysicsModel):

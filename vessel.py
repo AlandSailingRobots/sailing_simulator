@@ -99,6 +99,6 @@ class SailBoat(Vessel):
         return self._physicsModel.getActuators()
 
     def getGraphValues( self ):
-        (x, y) = self._physicsModel.utmCoordinates()
+        (x, y) = self._physicsModel.utmCoordinate()
         heading = self._physicsModel.heading()
         return ( x, y, heading )

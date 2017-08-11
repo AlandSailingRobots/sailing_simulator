@@ -78,18 +78,7 @@ class Network:
                 # print("HEJ")
                 (length, self._nextId, self._longitude, self._latitude, self._declination, self._radius,
                  self._staytime, self._prevId, self._prevLon, self._prevLat, self._prevDec, self._prevRad) = unpack(receiveFormat, data)
-        # return (self._nextId, self._longitude, self._latitude, self._declination, self._radius,
-        #         self._staytime, self._prevId, self._prevLon, self._prevLat, self._prevDec, self._prevRad)
-                # print(self._longitude)
-                # print(self._latitude)
-                # print(self._declination)
-                # print(self._radius)
-                # print(self._prevLon)
-                # print(self._prevLat)
-                # print(self._prevDec)
-                # print(self._prevRad)
-                # print()
-
+        # print(self._longitude, self._latitude)
         return (self._longitude, self._latitude, self._declination, self._radius,
                 self._prevLon, self._prevLat, self._prevDec, self._prevRad)
 
