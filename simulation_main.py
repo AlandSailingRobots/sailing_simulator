@@ -36,11 +36,11 @@ MESSAGE_TYPE_TIS_CONTACT   = 3
 getMillis = lambda: int(round(time.time() * 1000))
 
 def exit_function_py():
-	if init_prog:
-		threadLock.acquire()
-		temp_data.set_run(0)
-		threadLock.release()
-		thread_draw.join()
+    if init_prog:
+        threadLock.acquire()
+        temp_data.set_run(0)
+        threadLock.release()
+        thread_draw.join()
 
 atexit.register(exit_function_py)
 init_prog = 0
@@ -51,315 +51,315 @@ BOAT_UPDATE_MS = 100
 AIS_UPDATE_MS = 500
 CAMERA_ANGLE = 24
 
-	
+    
 class drawThread (threading.Thread):
-	def __init__(self, lock_,boat_type):
-		threading.Thread.__init__(self)
-		self.lock = lock_
-		self.run_th = 1
-		self.threadID = 1
-		self.name = "Draw thread"
-		self.counter = 1
-		self.boat_type = boat_type
+    def __init__(self, lock_,boat_type):
+        threading.Thread.__init__(self)
+        self.lock = lock_
+        self.run_th = 1
+        self.threadID = 1
+        self.name = "Draw thread"
+        self.counter = 1
+        self.boat_type = boat_type
 
-	def run(self):
-		fig = plt.figure()
-		fig.subplots_adjust(top=0.8)
-		ax2 = fig.add_axes([0.1, 0.1, 0.8, 0.8])
-		ax2.set_xlabel('Simulation of boat')
-		(ax_min_x, ax_min_y, axis_len) = (-20, -20, 40)
-		while(self.run_th):
+    def run(self):
+        fig = plt.figure()
+        fig.subplots_adjust(top=0.8)
+        ax2 = fig.add_axes([0.1, 0.1, 0.8, 0.8])
+        ax2.set_xlabel('Simulation of boat')
+        (ax_min_x, ax_min_y, axis_len) = (-20, -20, 40)
+        while(self.run_th):
 
-			self.lock.acquire()
-			th_data = copy.deepcopy(temp_data)
-			self.lock.release()
-			self.run_th = th_data.run
+            self.lock.acquire()
+            th_data = copy.deepcopy(temp_data)
+            self.lock.release()
+            self.run_th = th_data.run
 
-			plt.cla()   # Clear axis
-			plt.clf()   # Clear figure
-			fig.subplots_adjust(top=0.8)
-			ax2 = fig.add_axes([0.1, 0.1, 0.8, 0.8])
-			
-			if self.boat_type == 0:
-				ax2.set_xlabel('Simulation of boat heading:%0.1f %0.1f speed:%0.1f m/s rudder:%0.3f\
+            plt.cla()   # Clear axis
+            plt.clf()   # Clear figure
+            fig.subplots_adjust(top=0.8)
+            ax2 = fig.add_axes([0.1, 0.1, 0.8, 0.8])
+            
+            if self.boat_type == 0:
+                ax2.set_xlabel('Simulation of boat heading:%0.1f %0.1f speed:%0.1f m/s rudder:%0.3f\
 lat %.5f long %.5f' %
-						   (radTodeg( wrapTo2Pi(th_data.theta) ),
-							radTodeg( wrapTo2Pi(th_data.phi) ),
-							th_data.speed,
-							th_data.delta_r,
-							th_data.latitude, th_data.longitude))
-				cds.draw_SailBoat(ax2, 1, th_data.x, th_data.y,
-								  th_data.theta, th_data.delta_r, th_data.delta_s)
-			else:
-				ax2.set_xlabel('Simulation of boat heading:%0.1f %0.1f speed:%0.1f m/s rudder:%0.3f\
+                           (radTodeg( wrapTo2Pi(th_data.theta) ),
+                            radTodeg( wrapTo2Pi(th_data.phi) ),
+                            th_data.speed,
+                            th_data.delta_r,
+                            th_data.latitude, th_data.longitude))
+                cds.draw_SailBoat(ax2, 1, th_data.x, th_data.y,
+                                  th_data.theta, th_data.delta_r, th_data.delta_s)
+            else:
+                ax2.set_xlabel('Simulation of boat heading:%0.1f %0.1f speed:%0.1f m/s rudder:%0.3f\
 lat %.5f long %.5f MWAngle %.5f' %
-						   (radTodeg( wrapTo2Pi(th_data.theta) ),
-							radTodeg( wrapTo2Pi(th_data.phi) ),
-							th_data.speed,
-							th_data.delta_r,
-							th_data.latitude, th_data.longitude, th_data.MWAngle))
-				cds.draw_WingBoat(ax2,1, th_data.x, th_data.y,
-								   th_data.theta, th_data.delta_r,th_data.MWAngle,th_data.delta_s)
-			ax_min_x = x-axis_len/2.0
-			ax_min_y = y-axis_len/2.0
-			cds.draw_wind_direction(ax2, (ax_min_x+1, ax_min_y+1), axis_len, 1, th_data.phi)
-			plt.axis([ax_min_x, ax_min_x+axis_len,
-					  ax_min_y, ax_min_y+axis_len])
-			plt.draw()
-			plt.pause(0.001)
+                           (radTodeg( wrapTo2Pi(th_data.theta) ),
+                            radTodeg( wrapTo2Pi(th_data.phi) ),
+                            th_data.speed,
+                            th_data.delta_r,
+                            th_data.latitude, th_data.longitude, th_data.MWAngle))
+                cds.draw_WingBoat(ax2,1, th_data.x, th_data.y,
+                                   th_data.theta, th_data.delta_r,th_data.MWAngle,th_data.delta_s)
+            ax_min_x = x-axis_len/2.0
+            ax_min_y = y-axis_len/2.0
+            cds.draw_wind_direction(ax2, (ax_min_x+1, ax_min_y+1), axis_len, 1, th_data.phi)
+            plt.axis([ax_min_x, ax_min_x+axis_len,
+                      ax_min_y, ax_min_y+axis_len])
+            plt.draw()
+            plt.pause(0.001)
 
-		print("Stopping Draw Thread")
-		plt.close()
+        print("Stopping Draw Thread")
+        plt.close()
 
 """ va degager"""
 def order_to_deg(command_rudder, command_sheet):
-	if command_rudder > 8000 or command_rudder < 3000:
-		command_sheet = 4215
-		command_rudder = 5520
-	return ((command_rudder-5520)*(np.pi/6.0)/1500.0,
-			(command_sheet-4215)*(np.pi/-6.165)/900.0)
+    if command_rudder > 8000 or command_rudder < 3000:
+        command_sheet = 4215
+        command_rudder = 5520
+    return ((command_rudder-5520)*(np.pi/6.0)/1500.0,
+            (command_sheet-4215)*(np.pi/-6.165)/900.0)
 
 
 def get_to_socket_value( sailBoat ):
-	heading = sailBoat.heading()
-	(lat, lon) = sailBoat.position()
-	course = sailBoat.course()
-	speed =  sailBoat.speed()
+    heading = sailBoat.heading()
+    (lat, lon) = sailBoat.position()
+    course = sailBoat.course()
+    speed =  sailBoat.speed()
 
-	gps = (lat, lon, course, heading, speed)
+    gps = (lat, lon, course, heading, speed)
 
-	windsensor = ( sailBoat.apparentWind().speed(), sailBoat.apparentWind().direction() )
-	return (heading, gps, windsensor)
+    windsensor = ( sailBoat.apparentWind().speed(), sailBoat.apparentWind().direction() )
+    return (heading, gps, windsensor)
 
 
 def get_graph_values( sailBoat,boat_type ):
-	(sail, rudder) = sailBoat.sailAndRudder() # if boat_type == 1 : sail == tailWing
-	phi_ap = sailBoat.apparentWind().direction()
-	(lat, lon) = sailBoat.position()
-	if boat_type == 1:
-		MWAngle   = sailBoat.physicsModel().MWAngle()
-		tailAngle = sail
-		return( rudder, tailAngle, phi_ap, lat, lon, MWAngle )
-	else:
-	
-		sigma = cos( phi_ap ) + cos( sail )
-		if (sigma < 0):
-			sail = np.pi - phi_ap
-		else:
-			sail = np.sign( sin(phi_ap) ) * abs( sail )
-		return ( rudder, sail, phi_ap, lat, lon )
+    (sail, rudder) = sailBoat.sailAndRudder() # if boat_type == 1 : sail == tailWing
+    phi_ap = sailBoat.apparentWind().direction()
+    (lat, lon) = sailBoat.position()
+    if boat_type == 1:
+        MWAngle   = sailBoat.physicsModel().MWAngle()
+        tailAngle = sail
+        return( rudder, tailAngle, phi_ap, lat, lon, MWAngle )
+    else:
+    
+        sigma = cos( phi_ap ) + cos( sail )
+        if (sigma < 0):
+            sail = np.pi - phi_ap
+        else:
+            sail = np.sign( sin(phi_ap) ) * abs( sail )
+        return ( rudder, sail, phi_ap, lat, lon )
 
 
 
 def getBearing( asv, vessel ):
-	(asvLat, asvLon) = asv.position()
-	(vesselLat, vesslLon) = asv.position()
+    (asvLat, asvLon) = asv.position()
+    (vesselLat, vesslLon) = asv.position()
 
-	boatLatitudeInRadian = np.deg2rad(asvLat)
-	waypointLatitudeInRadian = np.deg2rad(vesselLat)
-	deltaLongitudeRadian = np.deg2rad(vesslLon - asvLon)
+    boatLatitudeInRadian = np.deg2rad(asvLat)
+    waypointLatitudeInRadian = np.deg2rad(vesselLat)
+    deltaLongitudeRadian = np.deg2rad(vesslLon - asvLon)
 
-	y_coordinate = sin(deltaLongitudeRadian) * cos(waypointLatitudeInRadian)
-	x_coordinate = cos(boatLatitudeInRadian)* sin(waypointLatitudeInRadian) - sin(boatLatitudeInRadian) * cos(waypointLatitudeInRadian) * cos(deltaLongitudeRadian)
+    y_coordinate = sin(deltaLongitudeRadian) * cos(waypointLatitudeInRadian)
+    x_coordinate = cos(boatLatitudeInRadian)* sin(waypointLatitudeInRadian) - sin(boatLatitudeInRadian) * cos(waypointLatitudeInRadian) * cos(deltaLongitudeRadian)
 
-	bearingToWaypointInRadian = atan2(y_coordinate, x_coordinate)
-	bearingToWaypoint = np.rad2deg(bearingToWaypointInRadian)
-	return wrapAngle(bearingToWaypoint)
+    bearingToWaypointInRadian = atan2(y_coordinate, x_coordinate)
+    bearingToWaypoint = np.rad2deg(bearingToWaypointInRadian)
+    return wrapAngle(bearingToWaypoint)
 
 def getBearingDiff( h1, h2 ):
-	diff = h2 - h1
-	absDiff = abs( diff )
+    diff = h2 - h1
+    absDiff = abs( diff )
 
-	if (absDiff <= 180):
-		if absDiff == 180:
-			return absdiff
-		else:
-			return diff
+    if (absDiff <= 180):
+        if absDiff == 180:
+            return absdiff
+        else:
+            return diff
 
-	elif (h2 > h1):
-		return absDiff - 360
-	else:
-		return 360 - absDiff
+    elif (h2 > h1):
+        return absDiff - 360
+    else:
+        return 360 - absDiff
 
 def boatInVisualRange( asv, vessel):
-	bearing = getBearing(asv, vessel)
+    bearing = getBearing(asv, vessel)
 
-	bearingDiff = abs( getBearingDiff(asv.heading(), bearing) )
+    bearingDiff = abs( getBearingDiff(asv.heading(), bearing) )
 
-	if bearingDiff < CAMERA_ANGLE:
-		return True
-	return False
+    if bearingDiff < CAMERA_ANGLE:
+        return True
+    return False
 
 def initialization(configPath):
-	global AIS_UPDATE_MS
-	global BOAT_UPDATE_MS
-	
-	config = loadConfigFile(configPath)    
-	print(config)
-	
-	boat_type   = config["boat_type"]
-	boat_config = config["boat_config"]
-	sim_step    = config["simulation_step"]
-	latOrigin   = config["lat_origin"]
-	lonOrigin   = config["lon_origin"]
+    global AIS_UPDATE_MS
+    global BOAT_UPDATE_MS
+    
+    config = loadConfigFile(configPath)    
+    print(config)
+    
+    boat_type   = config["boat_type"]
+    boat_config = config["boat_config"]
+    sim_step    = config["simulation_step"]
+    latOrigin   = config["lat_origin"]
+    lonOrigin   = config["lon_origin"]
 
-	if config.get("boat_update_ms"):
-		BOAT_UPDATE_MS = config["boat_update_ms"];
+    if config.get("boat_update_ms"):
+        BOAT_UPDATE_MS = config["boat_update_ms"];
 
-	if config.get("ais_update_ms"):
-		AIS_UPDATE_MS = config["ais_update_ms"];
+    if config.get("ais_update_ms"):
+        AIS_UPDATE_MS = config["ais_update_ms"];
 
-	print("Boat Update ms: " + str(BOAT_UPDATE_MS) + " AIS Update ms: " + str(AIS_UPDATE_MS))
+    print("Boat Update ms: " + str(BOAT_UPDATE_MS) + " AIS Update ms: " + str(AIS_UPDATE_MS))
 
-	vessels = []
+    vessels = []
 
-	trueWindDir = wrapTo2Pi(np.deg2rad(config["wind_direction"]))
-	print ("True Wind:" + str(trueWindDir))
-	trueWindSpeed = config["wind_speed"]
-	if boat_type == 0:
-		vessels.append(SailBoat( SailingPhysicsModel( 0, 0, 0, boat_config), latOrigin, lonOrigin, 0, 0 ))
-	else:
-		#print(trueWindDir)
-		#mainBoat = SailBoat( ASPirePhysicsModel( 0,0,0,wrapTo2Pi(trueWindDir)) , latOrigin, lonOrigin, 0, 0 )
-		#print('MWAnglePhysicsClass:',mainBoat.physicsModel().MWAngle())
-		vessels.append(SailBoat( ASPirePhysicsModel( 0, 0, 0, boat_config, wrapTo2Pi(trueWindDir+degTorad(185))) , latOrigin, lonOrigin, 0, 0 ))
-	# Load Marine Traffic
-	for marineVessel in config["traffic"]:
-		id = marineVessel["mmsi"];
-		lat = marineVessel["lat_origin"]
-		lon = marineVessel["lon_origin"]
-		heading = wrapTo2Pi(np.deg2rad(marineVessel["heading"]))
-		speed = marineVessel["speed"]
-		vessels.append(MarineTraffic(SimplePhysicsModel(heading, speed), lat, lon, heading, speed, id))
+    trueWindDir = wrapTo2Pi(np.deg2rad(config["wind_direction"]))
+    print ("True Wind:" + str(trueWindDir))
+    trueWindSpeed = config["wind_speed"]
+    if boat_type == 0:
+        vessels.append(SailBoat( SailingPhysicsModel( 0, 0, 0, boat_config), latOrigin, lonOrigin, 0, 0 ))
+    else:
+        #print(trueWindDir)
+        #mainBoat = SailBoat( ASPirePhysicsModel( 0,0,0,wrapTo2Pi(trueWindDir)) , latOrigin, lonOrigin, 0, 0 )
+        #print('MWAnglePhysicsClass:',mainBoat.physicsModel().MWAngle())
+        vessels.append(SailBoat( ASPirePhysicsModel( 0, 0, 0, boat_config, wrapTo2Pi(trueWindDir+degTorad(185))) , latOrigin, lonOrigin, 0, 0 ))
+    # Load Marine Traffic
+    for marineVessel in config["traffic"]:
+        id = marineVessel["mmsi"];
+        lat = marineVessel["lat_origin"]
+        lon = marineVessel["lon_origin"]
+        heading = wrapTo2Pi(np.deg2rad(marineVessel["heading"]))
+        speed = marineVessel["speed"]
+        vessels.append(MarineTraffic(SimplePhysicsModel(heading, speed), lat, lon, heading, speed, id))
 
-	return ( boat_type , sim_step,vessels, WindState( trueWindDir, trueWindSpeed ) )
+    return ( boat_type , sim_step,vessels, WindState( trueWindDir, trueWindSpeed ) )
 
 
 
 if __name__ == '__main__':
-	net = Network( "localhost", 6900 )
+    net = Network( "localhost", 6900 )
 
-	configPath = "config.json"
+    configPath = "config.json"
 
-	if len(sys.argv) == 2:
-		configPath = sys.argv[1]
+    if len(sys.argv) == 2:
+        configPath = sys.argv[1]
 
-	( boat_type, sim_step, vessels, trueWind ) = initialization(configPath)
-	simulatedBoat = vessels[0]
-	print(simulatedBoat);
-	if boat_type == 0:
-		message_type = MESSAGE_TYPE_SAILBOAT_DATA
-		temp_data    = sailBoatData() 
-	else :
-		message_type = MESSAGE_TYPE_WINGBOAT_DATA
-		temp_data    = wingBoatData()
-	simulator = Simulator( trueWind, 1 )
+    ( boat_type, sim_step, vessels, trueWind ) = initialization(configPath)
+    simulatedBoat = vessels[0]
+    print(simulatedBoat);
+    if boat_type == 0:
+        message_type = MESSAGE_TYPE_SAILBOAT_DATA
+        temp_data    = sailBoatData() 
+    else :
+        message_type = MESSAGE_TYPE_WINGBOAT_DATA
+        temp_data    = wingBoatData()
+    simulator = Simulator( trueWind, 1 )
 
-	files = []
-	for i in range(0, len(vessels)):
-		files.append(open("GPS_Track_" + str(i) + ".track", 'w'))
-		files[i].write("id,latitudes,longitude,distance\n")
-		simulator.addPhysicsModel( vessels[i].physicsModel() )
+    files = []
+    for i in range(0, len(vessels)):
+        files.append(open("GPS_Track_" + str(i) + ".track", 'w'))
+        files[i].write("id,latitudes,longitude,distance\n")
+        simulator.addPhysicsModel( vessels[i].physicsModel() )
 
-	# multithreading management:
-	threadLock = threading.Lock()
-	thread_draw = drawThread(threadLock,boat_type)
-	init_prog = 1
+    # multithreading management:
+    threadLock = threading.Lock()
+    thread_draw = drawThread(threadLock,boat_type)
+    init_prog = 1
 
-	dt = 0.1
+    dt = 0.1
 
-	bytes_received = 0
-	data = bytearray()
+    bytes_received = 0
+    data = bytearray()
 
-	time.sleep(0.01)
-	delta_t = 0.01
+    time.sleep(0.01)
+    delta_t = 0.01
 
-	print("Start drawing thread")
-	thread_draw.start()
-	delta_r = 0
-	delta_s = 0  
+    print("Start drawing thread")
+    thread_draw.start()
+    delta_r = 0
+    delta_s = 0  
 
-	lastSentBoatData = 0
-	lastAISSent = 0
+    lastSentBoatData = 0
+    lastAISSent = 0
 
-	try:
-		while( net.connected() ):
+    try:
+        while( net.connected() ):
 
-			deb = time.time()
+            deb = time.time()
 
-			""" Collecting the orders and process them for the actuators """
-			if boat_type == 0:
-				(command_rudder, command_sheet) = net.readActuatorData()
-				(delta_r, delta_s) = order_to_deg(command_rudder, command_sheet)
-			else :
-				(command_rudder, command_sheet) = net.readActuatorData()
-				(delta_r,delta_s) = order_to_deg(command_rudder, command_sheet)
-				(delta_r,delta_s) = (delta_r,0)
+            """ Collecting the orders and process them for the actuators """
+            if boat_type == 0:
+                (command_rudder, command_sheet) = net.readActuatorData()
+                (delta_r, delta_s) = order_to_deg(command_rudder, command_sheet)
+            else :
+                (command_rudder, command_sheet) = net.readActuatorData()
+                (delta_r,delta_s) = order_to_deg(command_rudder, command_sheet)
+                (delta_r,delta_s) = (delta_r,0)
 
-			""" setting the actuator to the order """
-			simulatedBoat.physicsModel().setActuators( delta_s, delta_r )
+            """ setting the actuator to the order """
+            simulatedBoat.physicsModel().setActuators( delta_s, delta_r )
 
-			# TODO - Jordan: Make this a variable step, so we aren't at a fixed rate of simulation
-			
-			simulator.step( sim_step ) # 0.01 = max Step size for ASPire  
+            # TODO - Jordan: Make this a variable step, so we aren't at a fixed rate of simulation
+            
+            simulator.step( sim_step ) # 0.01 = max Step size for ASPire  
 
-			millis = getMillis();
+            millis = getMillis();
 
-			""" Sending boat data """
-			if millis > lastSentBoatData + BOAT_UPDATE_MS:
-				net.sendBoatData( simulatedBoat,message_type )
-				lastSentBoatData = millis
+            """ Sending boat data """
+            if millis > lastSentBoatData + BOAT_UPDATE_MS:
+                net.sendBoatData( simulatedBoat,message_type )
+                lastSentBoatData = millis
 
-			""" Sending AIS data """
-			if millis > lastAISSent + AIS_UPDATE_MS:
-				for i in range( 1, len(vessels) ):
-					if vessels[i].id() < 100000000 and boatInVisualRange(vessels[0], vessels[i]):
-						net.sendVisualContact( vessels[i] )
-					else:
-						net.sendAISContact( vessels[i] )
-				lastAISSent = millis
+            """ Sending AIS data """
+            if millis > lastAISSent + AIS_UPDATE_MS:
+                for i in range( 1, len(vessels) ):
+                    if vessels[i].id() < 100000000 and boatInVisualRange(vessels[0], vessels[i]):
+                        net.sendVisualContact( vessels[i] )
+                    else:
+                        net.sendAISContact( vessels[i] )
+                lastAISSent = millis
 
-			""" Getting boat data """
-			(head, gps, wind) = get_to_socket_value( simulatedBoat )
-			(x, y) = simulatedBoat.physicsModel().utmCoordinate()
-			theta = simulatedBoat.physicsModel().heading()
-			if boat_type == 0:
-				(delta_r, delta_s, phi, latitude, longitude) = get_graph_values( simulatedBoat, boat_type )
-			else:
-				(delta_r, delta_s, phi, latitude, longitude, MWAngle) = get_graph_values( simulatedBoat, boat_type )
+            """ Getting boat data """
+            (head, gps, wind) = get_to_socket_value( simulatedBoat )
+            (x, y) = simulatedBoat.physicsModel().utmCoordinate()
+            theta = simulatedBoat.physicsModel().heading()
+            if boat_type == 0:
+                (delta_r, delta_s, phi, latitude, longitude) = get_graph_values( simulatedBoat, boat_type )
+            else:
+                (delta_r, delta_s, phi, latitude, longitude, MWAngle) = get_graph_values( simulatedBoat, boat_type )
 
-	
-			threadLock.acquire()
-		
-			""" filling a temporary set of data to return to hardware """ 
-			if boat_type == 0:
-				temp_data.set_value(x, y, theta, delta_s, delta_r, trueWind.direction(),latitude, longitude, simulatedBoat.speed())
-			else:
-				temp_data.set_value(x, y, theta, delta_s, delta_r, trueWind.direction(),latitude, longitude, simulatedBoat.speed(), MWAngle)
+    
+            threadLock.acquire()
+        
+            """ filling a temporary set of data to return to hardware """ 
+            if boat_type == 0:
+                temp_data.set_value(x, y, theta, delta_s, delta_r, trueWind.direction(),latitude, longitude, simulatedBoat.speed())
+            else:
+                temp_data.set_value(x, y, theta, delta_s, delta_r, trueWind.direction(),latitude, longitude, simulatedBoat.speed(), MWAngle)
 
-				
-			threadLock.release()
+                
+            threadLock.release()
 
-			
-			(asvLat, asvLon) = vessels[0].position()
-			# Log marine traffic
-			for i in range( 0, len(vessels) ):
-				(lat, lon) = vessels[i].position()
-				distance = LatLonMath.distanceKM(lat, lon, asvLat, asvLon)
-				files[i].write("0," + str(lat) + "," + str(lon) + "," + str(distance) + "\n")
+            
+            (asvLat, asvLon) = vessels[0].position()
+            # Log marine traffic
+            for i in range( 0, len(vessels) ):
+                (lat, lon) = vessels[i].position()
+                distance = LatLonMath.distanceKM(lat, lon, asvLat, asvLon)
+                files[i].write("0," + str(lat) + "," + str(lon) + "," + str(distance) + "\n")
 
-			dt_sleep = 0.01-(time.time()-deb)
-			if dt_sleep < 0:
-				dt_sleep = 0.01
-			time.sleep(dt_sleep)
+            dt_sleep = 0.01-(time.time()-deb)
+            if dt_sleep < 0:
+                dt_sleep = 0.01
+            time.sleep(dt_sleep)
 
-	except socket.error as msg:
-		print("Error :", msg)
+    except socket.error as msg:
+        print("Error :", msg)
 
-	for filePtr in files:
-		filePtr.close()
+    for filePtr in files:
+        filePtr.close()
 
-	threadLock.acquire()
-	temp_data.set_run(0)
-	threadLock.release()
-	thread_draw.join()
+    threadLock.acquire()
+    temp_data.set_run(0)
+    threadLock.release()
+    thread_draw.join()
