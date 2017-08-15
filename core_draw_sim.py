@@ -170,7 +170,6 @@ def draw_WingBoat(h,s,x,y,a_b,a_r,MWAngle=0,tailAngle=0):
 	distance_rudder   = -11
 	distance_MW       = 3
 	distance_tail     = -6
-	print(a_b)
 
 	plt.sca(h)
 

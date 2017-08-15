@@ -69,7 +69,6 @@ class Network:
 
     def receiveWaypoint(self):
         readReady, writeReady, errors = select.select( [self._sock], [self._sock], [self._sock], 0.01 )
-
         receiveFormat = '=Hi2d4i2d2i'  # H=uint16_t, i=int, f=float, B = Byte
 
         if len(readReady):
@@ -78,7 +77,6 @@ class Network:
                 # print("HEJ")
                 (length, self._nextId, self._longitude, self._latitude, self._declination, self._radius,
                  self._staytime, self._prevId, self._prevLon, self._prevLat, self._prevDec, self._prevRad) = unpack(receiveFormat, data)
-        # print(self._longitude, self._latitude)
         return (self._longitude, self._latitude, self._declination, self._radius,
                 self._prevLon, self._prevLat, self._prevDec, self._prevRad)
 
