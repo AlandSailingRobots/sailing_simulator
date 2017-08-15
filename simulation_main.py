@@ -293,8 +293,9 @@ if __name__ == '__main__':
                 (delta_r, delta_s) = order_to_deg(command_rudder, command_sheet)
             else :
                 (command_rudder, command_sheet) = net.readActuatorData()
+                print(command_sheet)
                 (delta_r,delta_s) = order_to_deg(command_rudder, command_sheet)
-                (delta_r,delta_s) = (delta_r,0)
+                (delta_r,delta_s) = (delta_r,-26)
 
             """ setting the actuator to the order """
             simulatedBoat.physicsModel().setActuators( delta_s, delta_r )

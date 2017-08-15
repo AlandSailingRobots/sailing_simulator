@@ -73,7 +73,7 @@ class WingSail():
     def forceOnTail(self,alpha, apparentWind):
         liftForceTail = self._tailConstPartWindForce*(apparentWind.speed()**2)*self._tailDesignedLiftCoefficient*abs(wrapTo2Pi(self._dontKnowHowToName*alpha-self._tailAngle))*5.91
         dragForceTail = self._tailConstPartWindForce*(apparentWind.speed()**2)*self._tailDesignedLiftCoefficient*abs(wrapTo2Pi(self._dontKnowHowToName*alpha-self._tailAngle))**2*5.91/2
-        if wrapTo2Pi(alpha+self._tailAngle) > 0:
+        if wrapTo2Pi(alpha-self._tailAngle) > 0:
             liftForceTail  = -liftForceTail
         return  (liftForceTail, dragForceTail)
    
