@@ -268,7 +268,7 @@ class drawThread (threading.Thread):
             fig.texts.remove(textbox)
             textbox = fig.text(0.9, 0.55, textstr,bbox=dict(edgecolor='white', facecolor='teal'))
             textbox.set_color('white')
->>>>>>> victor_branch
+
 
             plt.pause(0.001)
             lonprev = th_data.longitude
@@ -287,7 +287,7 @@ class drawThread (threading.Thread):
         print("Stopping Draw Thread")
         plt.close()
 
-<<<<<<< HEAD
+
 """ va degager"""
 def order_to_deg(command_rudder, command_sheet):
     if command_rudder > 8000 or command_rudder < 3000:

@@ -28,7 +28,6 @@ class waypoint_handler(object):
 
 class data_handler(object):
     def __init__(self):
-<<<<<<< HEAD
         self.x         = 0
         self.y         = 0
         self.theta     = 0
@@ -56,7 +55,7 @@ class data_handler(object):
         self.run = run_
 
 
-<<<<<<< HEAD
+
 
 class sailBoatData(data_handler):
     def __init__(self):

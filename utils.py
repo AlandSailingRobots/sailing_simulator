@@ -41,7 +41,7 @@ def radTodeg(angle):
 
 def wrapTo2Pi(theta):
 	theta = 2.0*np.arctan(np.tan(theta/2.0))
-	return(float(theta)
+	return(float(theta))
 
 # ===== Switch between Coordinate System ===== #
 

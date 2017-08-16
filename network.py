@@ -135,7 +135,7 @@ class Network:
         beam = boat.beam()
         # print("Sent AIS data")
         data = pack( sendFormat, int(dataLength), MESSAGE_TYPE_AIS_CONTACT,
-                     int(id), latitude, longtitude, speed, int(course), length, beam )
+                     int(id), latitude, longitude, speed, int(course), length, beam )
         self.sendData( data )
 
     def sendVisualContact( self, boat ):
@@ -146,7 +146,7 @@ class Network:
         (latitude, longtitude) = boat.position()
         # print("Sent Visual data")
         data = pack( sendFormat, int(dataLength), MESSAGE_TYPE_TIS_CONTACT,
-                     int(id), latitude, longtitude )
+                     int(id), latitude, longitude )
         self.sendData( data )
 
     def sendData( self, data ):

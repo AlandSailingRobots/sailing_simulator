@@ -6,7 +6,25 @@ from math import cos, sin, pi
 from utils import wrapTo2Pi
 
 
+def draw_boat(h, s, x, y, a_b, a_r, a_s):
 
+    # s - scale of boat, equals width
+    # x - coordinate
+    # y - coordinate
+    # a_b - boats heading
+    # a_r - rudder angle in b-frame
+    # a_s - sail angle in b-frame
+    # Calculate corners
+    p1 = [x+s*cos(a_b), y+s*sin(a_b)]
+    p2 = [x-s*cos(a_b)+s/2*cos(pi/2-a_b), y-s*sin(a_b)-s/2*sin(pi/2-a_b)]
+    p3 = [x-s*cos(a_b)-s/2*cos(pi/2-a_b), y-s*sin(a_b)+s/2*sin(pi/2-a_b)]
+    pr1 = [x-s*cos(a_b), y-s*sin(a_b)]
+    pr2 = [x-s*cos(a_b)-s*cos(a_b+a_r), y-s*sin(a_b)-s*sin(a_b+a_r)]
+    ps = [x-s*cos(a_b+a_s), y-s*sin(a_b+a_s)]
+    # draw lines
+    points = [p1,p2,[x, y],p3]
+    poly = plt.Polygon(points, fill=None, edgecolor='k', linewidth=0.5)
+    h.add_patch(poly)
 
 
 def draw_track(h, a, b, d, width_=0.5):
