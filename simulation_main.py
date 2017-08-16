@@ -242,26 +242,26 @@ class drawThread (threading.Thread):
             plt.axis([ax_min_x, ax_min_x+axis_len, ax_min_y, ax_min_y+axis_len])
             textstr += "\n____________________\n\nTRAFFIC\nDistance:  %.2f" % (minDist)
             tmid2 = time.time()
-            # ax2.plot(xlist,ylist,'r-',alpha=0.5)
-            # linessss = LineCollection(linecol,alpha=0.1)
+            #ax2.plot(xlist,ylist,'r-',alpha=0.5)
+            #linessss = LineCollection(linecol,alpha=0.1)
             # print(linessss)
             # ax2.add_collection(linessss)
-            # axboat.clear()
-            # plt.sca(axboat)
+            axboat.clear()
+            plt.sca(axboat)
             # print("x:",x)
             # print("x:",th_data.x)
-            # axboat_min_x = x-axisboat_len/2.0
-            # axboat_min_y = y-axisboat_len/2.0
-            # plt.axis([axboat_min_x, axboat_min_x+axisboat_len,
-            #           axboat_min_y, axboat_min_y+axisboat_len])
-            # if self.boat_type == 0:
-            #     cds.draw_SailBoat(axboat, 1, th_data.x, th_data.y, th_data.theta, th_data.delta_r, th_data.delta_s)
-            # else:
-            #     cds.draw_WingBoat(axboat, 1, th_data.x, th_data.y, th_data.theta, th_data.delta_r,th_data.MWAngle,th_data.delta_s)
-            # # plt.draw()
+            axboat_min_x = x-axisboat_len/2.0
+            axboat_min_y = y-axisboat_len/2.0
+            plt.axis([axboat_min_x, axboat_min_x+axisboat_len,
+                       axboat_min_y, axboat_min_y+axisboat_len])
+            if self.boat_type == 0:
+                cds.draw_SailBoat(axboat, 1, th_data.x, th_data.y, th_data.theta, th_data.delta_r, th_data.delta_s)
+            else:
+                cds.draw_WingBoat(axboat, 1, th_data.x, th_data.y, th_data.theta, th_data.delta_r,th_data.MWAngle,th_data.delta_s)
+            ## plt.draw()
             # plt.sca(ax2)
             tmid3 = time.time()
-            # plt.draw()
+            plt.draw()
             tdraw = time.time()
             ax2.patch.set_facecolor('lightblue')
             axboat.patch.set_facecolor('lightblue')
@@ -494,7 +494,7 @@ if __name__ == '__main__':
                 (command_rudder, command_sheet) = net.readActuatorData()
                 print(command_sheet)
                 (delta_r,delta_s) = order_to_deg(command_rudder, command_sheet)
-                (delta_r,delta_s) = (delta_r,-26)
+                (delta_r,delta_s) = (delta_r,0)
             
             (wp_lon, wp_lat, wp_dec, wp_radius, wp_prevLon,
              wp_prevLat, wp_prevDec, wp_prevRad) = net.receiveWaypoint()
