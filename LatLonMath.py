@@ -14,7 +14,7 @@ def distanceKM(lat, lon, lat1, lon1):
     return great_circle(latLon, latLon1).m
 
 
-#def distanceKM(lat, lon, lat1, lon1):
+# def distanceKM(lat, lon, lat1, lon1):
 #    print("Lat: " + str(lat) + " Lon: " + str(lon) + " Lat: " + str(lat1) + " Lon: " + str(lon1))
 #    deltaLatRadians = math.radians(lat1 - lat)
 #    deltaLonRadians = math.radians(lon1 - lon)
@@ -25,5 +25,3 @@ def distanceKM(lat, lon, lat1, lon1):
 #    b = 2 * atan2( math.sqrt(a), math.sqrt(1 - a) )
 #    print("Distance: " + str(RADIUS_OF_EARTH_KM * b))
 #    return RADIUS_OF_EARTH_KM * b
-
-    

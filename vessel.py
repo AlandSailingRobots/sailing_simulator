@@ -5,13 +5,15 @@ from utils import wrapTo2Pi, radTodeg
 
 # MOVE TO UTIL FILE
 class Vessel:
-    def __init__(self, physicsModel, lat, lon, course, speed):
+    def __init__(self, physicsModel, lat, lon, course, speed, length, beam):
         self._physicsModel = physicsModel
         self._course       = course
         # SET INITIAL MODEL COURSE
         self._elipseRef    = 23
         (self._utmZone, self._utmOriginX, self._utmOriginY) = LLUTM.LLtoUTM( self._elipseRef, lat, lon)
-        self._speed        = 0
+        self._speed = 0
+        self._length = 0
+        self._beam = 0
 
     def physicsModel(self):
         return self._physicsModel
@@ -27,15 +29,24 @@ class Vessel:
     def speed(self):
         return self._speed
 
+    def length(self):
+        return self._length
+
+    def beam(self):
+        return self._beam
+
+
 class MarineTraffic(Vessel):
-    def __init__(self, physicsModel, lat, lon, course, speed, id):
+    def __init__(self, physicsModel, lat, lon, course, speed, id, length, beam):
         self._physicsModel = physicsModel
         self._course       = course
         # SET INITIAL MODEL COURSE
         self._elipseRef    = 23
         (self._utmZone, self._utmOriginX, self._utmOriginY) = LLUTM.LLtoUTM( self._elipseRef, lat, lon)
-        self._speed        = 0
-        self._id           = id
+        self._speed = 0
+        self._id = id
+        self._length = length
+        self._beam = beam
 
     def course(self):
         return radTodeg( wrapTo2Pi( self._physicsModel.heading() ) )
@@ -44,7 +55,14 @@ class MarineTraffic(Vessel):
         return self._physicsModel.speed()
 
     def id(self):
-        return self._id;
+        return self._id
+
+    def length(self):
+        return self._length
+
+    def beam(self):
+        return self._beam
+
 
 class SailBoat(Vessel):
     def __init__(self, physicsModel, lat, lon, course, speed):
@@ -75,6 +93,6 @@ class SailBoat(Vessel):
 
     def getGraphValues( self ):
         (x, y)  = self._physicsModel.utmCoordinates()
+
         heading = self._physicsModel.heading()
         return ( x, y, heading )
-

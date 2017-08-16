@@ -30,10 +30,20 @@ def wrapAngle(theta):
         theta = theta%360
     return(theta) 
 
+	# ===== Angle-related functions ===== #
 
-    # Add new functions or sections if necessary
+def degTorad(angle):
+	return((angle*np.pi/180))
 
-    # ===== Switch between Coordinate System ===== #
+	
+def radTodeg(angle):
+	return(angle*180/np.pi)
+
+def wrapTo2Pi(theta):
+	theta = 2.0*np.arctan(np.tan(theta/2.0))
+	return(float(theta)
+
+# ===== Switch between Coordinate System ===== #
 
 def apparentWindCoordinatesToMWCoordinates(FxW,FyW,alpha):
     Fy = FyW*np.cos(alpha)-FxW*np.sin(alpha)
@@ -50,6 +60,7 @@ def apparentWindCoordinatesToBoatCoordinates(FxW,FyW,alpha,MWAngle):
     return(MWCoordinatesToBoatCoordinates(FxMW,FyMW,MWAngle))
 
 
+
     # ===== Integration Schemes ===== #
 
 def euler(x,xdot,dt):
@@ -62,6 +73,7 @@ def loadConfigFile(configPath):
         config = json.load(data_file)
     data_file.close()
     return(config)
+
 
     # Add new functions or sections if necessary
 

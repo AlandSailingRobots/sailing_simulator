@@ -1,7 +1,34 @@
 
+class waypoint_handler(object):
+    def __init__(self):
+        self.lon = 0
+        self.lat = 0
+        self.dec = 0
+        self.rad = 0
+        self.prevlon = 0
+        self.prevlat = 0
+        self.prevdec = 0
+        self.prevrad = 0
+        self.run = 1
+
+    def set_value(self, lon, lat, dec, rad, prevlon,
+                  prevlat, prevdec, prevrad):
+        self.lon = lon
+        self.lat = lat
+        self.dec = dec
+        self.rad = rad
+        self.prevlon = prevlon
+        self.prevlat = prevlat
+        self.prevdec = prevdec
+        self.prevrad = prevrad
+
+    def set_run(self, run_):
+        self.run = run_
+
 
 class data_handler(object):
     def __init__(self):
+<<<<<<< HEAD
         self.x         = 0
         self.y         = 0
         self.theta     = 0
@@ -29,6 +56,7 @@ class data_handler(object):
         self.run = run_
 
 
+<<<<<<< HEAD
 
 class sailBoatData(data_handler):
     def __init__(self):
@@ -81,3 +109,4 @@ class wingBoatData(data_handler):
         self.longitude = longitude_
         self.speed     = speed_
         self.MWAngle   = MWAngle_
+

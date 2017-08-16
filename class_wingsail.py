@@ -2,9 +2,11 @@ import numpy as np
 from utils import wrapTo2Pi, apparentWindCoordinatesToMWCoordinates, apparentWindCoordinatesToBoatCoordinates, loadConfigFile
 
 
+
 RHO = 1
 
 class WingSail():
+
     def __init__(self,xboat = 0, yboat = 0,hboat = 0 , MWAngle = 0, tailAngle = 0, distanceToSailCOE = 0, configPath = 'wingsail_config.json'):
         self._MWAngle                          = wrapTo2Pi(np.float64(MWAngle))
         self._MWRotationSpeed                  = np.float64(0)
@@ -108,3 +110,4 @@ class WingSail():
         self._MWRotationSpeed = wrapTo2Pi(self._MWRotationSpeed + timeDelta*k2)
         #print('K2 MWAngle:', self._MWAngle, 'K2 Speed:', self._MWRotationSpeed)
         return(wingSailForce)
+

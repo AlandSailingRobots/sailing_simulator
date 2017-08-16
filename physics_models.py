@@ -16,9 +16,10 @@ class WindState(object):
     def speed(self):
         return self._spd
 
+
 class PhysicsModel:
     # X and y are in UTM coordinates, the heading is in radians
-    def __init__(self, x = 0, y = 0, heading = 0):
+    def __init__(self, x=0, y=0, heading=0):
         self._x = x
         self._y = y
         self._heading = heading
@@ -129,6 +130,8 @@ class SailingPhysicsModel(mainBoatPhysicsModel):
     def apparentWind(self):
         return self._apparentWind
 
+    def speed(self):
+        return self._speed
 
     def simulate(self, timeDelta, trueWind):
         (x_dot, y_dot) = self.calculateDrift( trueWind )
@@ -151,14 +154,13 @@ class SailingPhysicsModel(mainBoatPhysicsModel):
         rotationForce = self._angularFriction * self._rotationSpeed * abs( self._speed )
 
         rotationSpeed_dot = (sailRotationForce - rudderRotationForce - rotationForce) / self._momentOfInertia
-        
+
         self._x += x_dot * timeDelta
         self._y += y_dot * timeDelta
         self._heading += self._rotationSpeed * timeDelta
         self._speed += acceleration_dot * timeDelta
         self._rotationSpeed += rotationSpeed_dot * timeDelta
         self._heading = wrapTo2Pi(self._heading)
-
 
     # Ensures the sail is on the correct side of the boat
     def calculateCorrectSailAngle(self):
@@ -171,7 +173,6 @@ class SailingPhysicsModel(mainBoatPhysicsModel):
 
     def forceOnSails(self):
         return self._sailLift * self._apparentWind.speed() * sin( self._sailAngle - self._apparentWind.direction() )
-
 
         
 class ASPirePhysicsModel(mainBoatPhysicsModel):
@@ -260,10 +261,9 @@ class ASPirePhysicsModel(mainBoatPhysicsModel):
 
 
 
-    
 class SimplePhysicsModel(PhysicsModel):
-     # X and y are in UTM coordinates, the heading is in radians
-    def __init__(self, heading = 0, speed = 0, x = 0, y = 0):
+    # X and y are in UTM coordinates, the heading is in radians
+    def __init__(self, heading=0, speed=0, x=0, y=0):
         self._x = x
         self._y = y
         self._heading = heading
@@ -275,6 +275,4 @@ class SimplePhysicsModel(PhysicsModel):
         velocityY = self._speed * sin(self._heading)
         self._x += velocityX * timeDelta
         self._y += velocityY * timeDelta
-
-
 
