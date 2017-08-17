@@ -36,20 +36,26 @@ There is now two way to use the simulator:
 
 In repository [sailingrobot](https://github.com/AlandSailingRobots/sailingrobot):
 
-    $ make USE_SIM=1 (add -j for faster compilation)
+    $ make [target] USE_SIM=1 (add -j for faster compilation)
     $ ./sr
+
+Target is one of the boats:
+
+  * target = ASPire/Janet
 
 Here you will use the database in sailingrobot.
 You may need to clean the build before making the executable:
 
     $ make clean
 
-Then launch the python code [SIMSIDE/python/simulation_main.py](SIMSIDE/python/simulation_main.py):
+Then launch the python code [sailing_simulator/simulation_main.py](sailing_simulator/simulation_main.py):
 
-    $ ./simulation_main.py [ip_address]
+    $ ./simulation_main.py [Boat] [AIS traffic]
 
-If on the same computer the IP address is optionnal (default is localhost).
+The two arguments only accept 0 or 1 as its value:
 
+  * Boat: 0 = simulating with Janet (Sail), 1 = ASPire (Wingsail)
+  * AIS traffic: 0 = simulating without traffic, 1 = with traffic
 
 ## Post Compile time simulation
 
@@ -61,30 +67,15 @@ Download it as a submodule in sailingrobot repository:
 
 ### Build the program side:
 
-    $ cd PROGSIDE && make
-    $ cd ..
+    $ cd NavigationSystem && make [target] USE_SIM=1
+    $ cd ../sailing_simulator
 
-### Create the simulation database
-
-    $ ./simu_installdb.sh
-
-You may want to change some value:
-
-    $ ./simu_updateDB.sh
-
-or (ie To change between waypoint following and line following):
-
-    $ sqlite3 simu_asr.db
-    $ update sailing_robot_config set line_follow=1;
-
-    (*or 0 for waypoint routing*)
 
 ### Launch the simulation (in *sailingrobot/sailing_simulator*)
 
-    $ ./simu_run.sh
+    $ ./simulation_main.py [Boat] [AIS traffic]
 
-You may want to launch the simulation on another computer than where the code is running,
-you will need to comment the line 33 in *simu_run.sh* and change the ip address when launching the python:
+The two arguments only accept 0 or 1 as its value:
 
-    $ cd SIMSIDE/python
-    $ ./simulation_main.py ip_address
+  * Boat: 0 = simulating with Janet (Sail), 1 = ASPire (Wingsail)
+  * AIS traffic: 0 = simulating without traffic, 1 = with traffic

@@ -1,6 +1,6 @@
 import numpy as np
 from math import cos, sin, atan2, hypot
-from utils import wrapTo2Pi
+# from utils import wrapTo2Pi
 from class_wingsail import WingSail
 
 def wrapTo2Pi(theta):

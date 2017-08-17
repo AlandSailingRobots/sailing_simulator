@@ -424,7 +424,7 @@ def display(name, q):
         # p1.plot(len(track_x),count,symbol='t')
         p2.plot(track_x,track_y)
         # print(th_data.longitude, th_data.latitude)
-        p1.setTitle('Count: %d' % count)
+        p2.setTitle('Count: %d' % count)
     timer = QtCore.QTimer()
     timer.timeout.connect(update)  # p2,q,t_x,t_y))
     timer.start()
