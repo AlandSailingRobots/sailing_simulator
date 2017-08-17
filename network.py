@@ -67,7 +67,7 @@ class Network:
             data = self._sock.recv(10)  # 2 bytes for packet length, 8 bytes for rudder, and 8 bytes for sail
             if len(data) is 10:
                 (length, self._rudderCmd, self._sailCmd) = unpack(receiveFormat, data)
-                print("length: ",length, " rudderCommand: ",self._rudderCmd, " tailCommand: ", self._sailCmd) 
+                #print("length: ",length, " rudderCommand: ",self._rudderCmd, " tailCommand: ", self._sailCmd) 
         return (self._rudderCmd, self._sailCmd)
 
     def receiveWaypoint(self):

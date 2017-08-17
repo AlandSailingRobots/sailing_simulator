@@ -492,7 +492,9 @@ if __name__ == '__main__':
                 (delta_r, delta_s) = fcn.order_to_deg(command_rudder, command_sheet)
             else :
                 (delta_r, delta_s) = net.readActuatorData()
-                #print("rudderCommand: ", delta_r, " tailCommand: ", delta_s)
+                (delta_r, delta_s) = (-delta_r,-delta_s) # convention transformation
+                print("rudderCommand: ", delta_r, " tailCommand: ", delta_s)
+                
 
             (wp_lon, wp_lat, wp_dec, wp_radius, wp_prevLon,
              wp_prevLat, wp_prevDec, wp_prevRad) = net.receiveWaypoint()
