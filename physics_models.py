@@ -1,13 +1,7 @@
 import numpy as np
 from math import cos, sin, atan2, hypot
-# from utils import wrapTo2Pi
+import utils
 from class_wingsail import WingSail
-
-def wrapTo2Pi(theta):
-    if theta < 0:
-        theta += 2*np.pi
-    theta = theta % (2*np.pi)
-    return theta
 
 
 class WindState(object):
@@ -145,7 +139,7 @@ class SailingPhysicsModel(PhysicsModel):
         self._heading += self._rotationSpeed * timeDelta
         self._speed += acceleration_dot * timeDelta
         self._rotationSpeed += rotationSpeed_dot * timeDelta
-        self._heading = wrapTo2Pi(self._heading)
+        self._heading = utils.wrapTo2Pi(self._heading)
 
     # Calculate the drift of and change in position from the boat's current velocity and the force of
     # the wind on the sails
@@ -261,7 +255,7 @@ class ASPirePhysicsModel(mainBoatPhysicsModel):
 		self._heading += self._rotationSpeed * timeDelta
 		self._speed += speed_dot * timeDelta
 		self._rotationSpeed += rotationSpeed_dot * timeDelta
-		self._heading = wrapTo2Pi(self._heading)
+		self._heading = utils.wrapTo2Pi(self._heading)
 
 
 class SimplePhysicsModel(PhysicsModel):

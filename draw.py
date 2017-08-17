@@ -1,8 +1,10 @@
+# Python standard packages
 import threading
 import copy
 import queue
 import time
 
+# Our packages
 import utils
 import numpy as np
 from utils import Functions as fcn
@@ -15,10 +17,9 @@ from matplotlib import pylab as plt
 from matplotlib import lines
 import matplotlib.patches as patches
 
-# Memory profiler
+# Memory profiler package
 import objgraph
 
-vessels = []
 
 def zoom_factory(ax, zoom, base_scale=0.99):
     def zoom_fun(event):
@@ -43,10 +44,6 @@ def zoom_factory(ax, zoom, base_scale=0.99):
             # deal with something that should never happen
             scale_factor = 1
             print (event.button)
-        # set new limits
-        # ax.set_xlim([xdata - cur_xrange*scale_factor# xdata + cur_xrange*scale_factor])
-        #  ax.set_ylim([ydata - cur_yrange*scale_factor,# ydata + cur_yrange*scale_factor])
-        #  plt.draw()  # force re-draw
 
     fig = ax.get_figure()  # get the figure of interest
     # attach the call back
@@ -84,9 +81,9 @@ class drawThread (threading.Thread):
 
         prevPos = []
         ais_list = self.ves_queue.get()
-        # ais_list = copy.deepcopy(vessels)
         for i in range(1, len(ais_list)):
             prevPos.append(ais_list[i].position())
+
         fig = figure_pz(figsize=(18, 9))
         fig.patch.set_facecolor('teal')
         fig.subplots_adjust(top=0.8)
@@ -101,32 +98,38 @@ class drawThread (threading.Thread):
         th_data = self.data_queue.get()
         latprev = th_data.latitude
         lonprev = th_data.longitude
+
+        # This is to draw from the starting point to the first waypoint
         prevWPlongitude = lonprev
         prevWPlatitude = latprev
 
         textbox = fig.text(0.8, 0.7, '')
         ax_bcenter = fig.add_axes([0.892, 0.33, 0.08, 0.05])
 
+        # Button for center around the boat
         bcenter = Button(ax_bcenter, 'Center', color='white')
         bcenter.on_clicked(zoom_.boatInCenter)
+
+        # Box that draws the wind direction
         windtext = fig.text(0.895, 0.51, 'Wind Direction')
         windtext.set_color('white')
         wind_ax = fig.add_axes([0.9,0.39,0.05,0.1])
         wind_ax.set_axis_off()
         cds.draw_wind_direction(wind_ax, (0, -0.5), 1, 0.3, th_data.phi)
 
+        # Adds zoom functionality
         f = zoom_factory(ax2, zoom_)
 
         centerx = lonprev
         centery = latprev
 
         ax2.set_axis_off()
-        print(centerx, centery)
+        print("Starting coordinates:", centerx, centery)
+
         axis_length = zoom_.length
         objgraph.show_most_common_types()
         (ax_min_x, ax_min_y, axis_len) = (centerx-axis_length/2, centery-axis_length/2, axis_length)
         while(self.run_th):
-            tstart = time.time()
             if (ax_min_x-ax2.get_xlim()[0] != 0 or ax_min_y-ax2.get_ylim()[0] != 0) and ax2.get_xlim()[0] != 0:
                 centerx = ax2.get_xlim()[0]+axis_length/2
                 centery = ax2.get_ylim()[0]+axis_length/2
@@ -163,7 +166,6 @@ class drawThread (threading.Thread):
                     cds.draw_wp(ax2, 1, th_wp.lon, th_wp.lat, th_wp.rad)
                     prevWPlongitude = th_wp.lon
                     prevWPlatitude = th_wp.lat
-            tmid = time.time()
 
             dist = []
             minDist = 1e5
@@ -177,7 +179,6 @@ class drawThread (threading.Thread):
                           th_data.theta, th_data.delta_r, th_data.delta_s)
             plt.axis([ax_min_x, ax_min_x+axis_len, ax_min_y, ax_min_y+axis_len])
             textstr += "\n____________________\n\nTRAFFIC\nDistance:  %.2f" % (minDist)
-            tmid2 = time.time()
 
             #  Draws the vessel state (left side of the fig)
             axboat.clear()
@@ -193,7 +194,6 @@ class drawThread (threading.Thread):
             #  ---------------------------------------------
 
             plt.sca(ax2)
-            tdraw = time.time()
             ax2.patch.set_facecolor('lightblue')
             axboat.patch.set_facecolor('lightblue')
             fig.texts.remove(textbox)
@@ -207,13 +207,7 @@ class drawThread (threading.Thread):
 
             ax2.patches = []  # Clear out all the boats
 
-            objgraph.show_most_common_types()  # Displays memory usage
-
+            objgraph.show_growth(limit=5)  # Shows memory growth
             print()
-            tend = time.time()
-            print("Mid:", tmid - tstart)
-            print("Mid2:", tmid2 - tstart)
-            print("Draw->End:", tend-tdraw)
-            print("End:", tend - tstart)
         print("Stopping Draw Thread")
         plt.close()

@@ -63,7 +63,6 @@ CAMERA_ANGLE = 24
 temp_wp = waypoint_handler()
 
 if __name__ == '__main__':
-    # Change so we can have a variable with an ip address
     net = Network( "localhost", 6900 )
 
     configPath = "config.json"
@@ -72,9 +71,6 @@ if __name__ == '__main__':
     data_queue = queue.Queue()
     wp_queue = queue.Queue()
     ves_queue = queue.Queue()
-
-    # if len(sys.argv) == 2:
-    #     configPath = sys.argv[1]
 
     if len(sys.argv) == 3:
         boat_type = int(sys.argv[1])
@@ -138,7 +134,6 @@ if __name__ == '__main__':
              wp_prevLat, wp_prevDec, wp_prevRad) = net.receiveWaypoint()
             simulatedBoat.physicsModel().setActuators( delta_s, delta_r )
 
-            # TODO - Jordan: Make this a variable step, so we aren't at a fixed rate of simulation
             # 0.05 is probably a good value, smaller value is to quick for us to receive and unpack the waypoint data
             simulator.step( 0.05 )
 
@@ -195,8 +190,4 @@ if __name__ == '__main__':
     for filePtr in files:
         filePtr.close()
 
-    threadLock.acquire()
-    temp_data.set_run(0)
-    temp_wp.set_run(0)
-    threadLock.release()
-    thread_draw.join()
+    exit_function_py()

@@ -1,26 +1,6 @@
 import numpy as np
-# from utils import apparentWindCoordinatesToMWCoordinates, apparentWindCoordinatesToBoatCoordinates
-# from utils import wrapTo2Pi,
+from utils import *
 RHO = 1
-
-def wrapTo2Pi(theta):
-	theta = 2.0*np.arctan(np.tan(theta/2.0))
-	return(float(theta))
-
-def apparentWindCoordinatesToMWCoordinates(FxW,FyW,alpha):
-	Fy = FyW*np.cos(alpha)-FxW*np.sin(alpha)
-	Fx = FyW*np.sin(alpha)+FxW*np.cos(alpha)
-	return (Fx,Fy)
-
-
-def apparentWindCoordinatesToBoatCoordinates(FxW,FyW,alpha,MWAngle):
-	FxMW,FyMW = apparentWindCoordinatesToMWCoordinates(FxW,FyW,alpha)
-	return(MWCoordinatesToBoatCoordinates(FxMW,FyMW,MWAngle))
-
-def MWCoordinatesToBoatCoordinates(FxMW,FyMW,MWAngle):
-	Fx = FxMW*np.cos(MWAngle)+FyMW*np.sin(MWAngle)
-	Fy = FyMW*np.cos(MWAngle)-FxMW*np.sin(MWAngle)
-	return (Fx,Fy)
 
 
 class WingSail():

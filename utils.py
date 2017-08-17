@@ -11,12 +11,6 @@ from physics_models import SimplePhysicsModel,SailingPhysicsModel, WindState, AS
 from vessel import Vessel,SailBoat, MarineTraffic
 
 
-# def wrapTo2Pi(theta):
-#     if theta < 0:
-#         theta += 2*np.pi
-#     theta = theta % (2*np.pi)
-#     return theta
-
 	# ===== Angle-related functions ===== #
 
 def degTorad(angle):
