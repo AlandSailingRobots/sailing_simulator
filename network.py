@@ -61,13 +61,13 @@ class Network:
     def readActuatorData(self):
         readReady, writeReady, errors = select.select([self._sock], [self._sock], [self._sock], 0.01)
 
-        receiveFormat = '=H2d'
+        receiveFormat = '=H2f'
 
         if len(readReady):
-            data = self._sock.recv(18)  # 2 bytes for packet length, 2 bytes for rudder, and 2 bytes for sail
-            if len(data) is 18:
+            data = self._sock.recv(10)  # 2 bytes for packet length, 8 bytes for rudder, and 8 bytes for sail
+            if len(data) is 10:
                 (length, self._rudderCmd, self._sailCmd) = unpack(receiveFormat, data)
-            print("length: ",length, " rudderCommand: ",self._rudderCmd, " tailCommand: ", self._sailCmd) 
+                print("length: ",length, " rudderCommand: ",self._rudderCmd, " tailCommand: ", self._sailCmd) 
         return (self._rudderCmd, self._sailCmd)
 
     def receiveWaypoint(self):
@@ -120,7 +120,7 @@ class Network:
                          int(windDir), windSpeed,
                          int(heading),
                          int(rudder), int(tail) )   
-        print("Sent boat data")
+        #print("Sent boat data")
         self.sendData( data )
 
     def sendAISContact( self, boat ):
@@ -131,7 +131,7 @@ class Network:
         (latitude, longitude) = boat.position()
         course = wrapAngle(boat.course())
         speed = boat.speed()
-        print("Sent AIS data")
+        #print("Sent AIS data")
         length = boat.length()
         beam = boat.beam()
         # print("Sent AIS data")
