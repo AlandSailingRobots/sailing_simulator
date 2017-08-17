@@ -491,11 +491,9 @@ if __name__ == '__main__':
                 (command_rudder, command_sheet) = net.readActuatorData()
                 (delta_r, delta_s) = fcn.order_to_deg(command_rudder, command_sheet)
             else :
-                (command_rudder, command_sheet) = net.readActuatorData()
-                print(command_sheet)
-                (delta_r,delta_s) = order_to_deg(command_rudder, command_sheet)
-                (delta_r,delta_s) = (delta_r,0)
-            
+                (delta_r, delta_s) = net.readActuatorData()
+                #print("rudderCommand: ", delta_r, " tailCommand: ", delta_s)
+
             (wp_lon, wp_lat, wp_dec, wp_radius, wp_prevLon,
              wp_prevLat, wp_prevDec, wp_prevRad) = net.receiveWaypoint()
             """ setting the actuator to the order """

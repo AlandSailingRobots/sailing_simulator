@@ -61,12 +61,13 @@ class Network:
     def readActuatorData(self):
         readReady, writeReady, errors = select.select([self._sock], [self._sock], [self._sock], 0.01)
 
-        receiveFormat = '=HHH'
+        receiveFormat = '=H2d'
 
         if len(readReady):
-            data = self._sock.recv(6)  # 2 bytes for packet length, 2 bytes for rudder, and 2 bytes for sail
-            if len(data) is 6:
-                (length, self._rudderCmd, self._sailCmd) = unpack(receiveFormat, data)
+            data = self._sock.recv(18)  # 2 bytes for packet length, 8 bytes for rudder, and 8 bytes for sail
+            if len(data) is 18:
+                (length,self._rudderCmd, self._sailCmd) = unpack(receiveFormat, data)
+            print("length: ",length,"received ruddder command: ",self._rudderCmd, " received sail command: ",self._sailCmd)
         return (self._rudderCmd, self._sailCmd)
 
     def receiveWaypoint(self):
