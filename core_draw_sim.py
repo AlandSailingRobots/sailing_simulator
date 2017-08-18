@@ -162,7 +162,6 @@ def draw_WingBoat(h,s,x,y,a_b,a_r,MWAngle=0,tailAngle=0):
     distance_MW       = 3
     distance_tail     = -6
     plt.sca(h)
-    print("heading dessiné: ", a_b)
 
     hull              = np.array([[13, 3,-12,-12, 3,13],
                                   [ 0,-2, -1,  1, 2, 0],

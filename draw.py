@@ -191,7 +191,7 @@ class drawThread (threading.Thread):
                 cds.draw_SailBoat(axboat, 1, th_data.x, th_data.y, th_data.theta, th_data.delta_r, th_data.delta_s)
             else:
                 cds.draw_WingBoat(axboat, 1, th_data.x, th_data.y, th_data.theta, th_data.delta_r,th_data.MWAngle,th_data.delta_s)
-                print("dessin theta envoyé: ", th_data.theta)
+                
             #  ---------------------------------------------
 
             plt.sca(ax2)

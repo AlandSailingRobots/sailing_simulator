@@ -248,7 +248,6 @@ class ASPirePhysicsModel(mainBoatPhysicsModel):
         self._speed += speed_dot * timeDelta
         self._rotationSpeed += rotationSpeed_dot * timeDelta
         self._heading = wrapTo2Pi(self._heading)
-        print("heading actuel calculé: ", self._heading)
 
 
 class SimplePhysicsModel(PhysicsModel):
