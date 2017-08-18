@@ -1,9 +1,8 @@
 import numpy as np
-from utils import wrapTo2Pi, apparentWindCoordinatesToMWCoordinates, apparentWindCoordinatesToBoatCoordinates, loadConfigFile
-
-
+from utils import *
 
 RHO = 1
+
 
 class WingSail():
 

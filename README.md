@@ -49,6 +49,28 @@ On Ubuntu:
 
 The Aland control system's simulator node creates a TCP server which the simulator connects to, this means the control system (Built in simulation mode) needs to be started first. Then the simulator can be started, it will automatically connect to the control system, at which point the simulation will begin.
 
+    $ make [target] USE_SIM=1 (add -j for faster compilation)
+    $ ./sr
+
+Target is one of the boats:
+
+  * target = ASPire/Janet
+
+Here you will use the database in sailingrobot.
+You may need to clean the build before making the executable:
+
+    $ make clean
+
+Then launch the python code [sailing_simulator/simulation_main.py](sailing_simulator/simulation_main.py):
+
+    $ ./simulation_main.py [Boat] [AIS traffic]
+
+The two arguments only accept 0 or 1 as its value:
+
+  * Boat: 0 = simulating with Janet (Sail), 1 = ASPire (Wingsail)
+  * AIS traffic: 0 = simulating without traffic, 1 = with traffic
+
+
 ## Simulator Configuration
 
 The configuration file controls the starting position of the ASV, as well as how often the simulator will send update messages and simulated traffic.
@@ -110,3 +132,11 @@ A single marine vehicle is defined as:
         ]
     }
 '''
+
+    $ ./simulation_main.py [Boat] [AIS traffic]
+
+The two arguments only accept 0 or 1 as its value:
+
+  * Boat: 0 = simulating with Janet (Sail), 1 = ASPire (Wingsail)
+  * AIS traffic: 0 = simulating without traffic, 1 = with traffic
+

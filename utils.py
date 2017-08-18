@@ -5,6 +5,7 @@ Created on Wed Jun 21 11:02:38 2017
 @author: jazicoan
 """
 import numpy as np
+from math import cos, sin, atan2, hypot
 import json
 
 
@@ -30,20 +31,9 @@ def wrapAngle(theta):
         theta = theta%360
     return(theta) 
 
-	# ===== Angle-related functions ===== #
-
-def degTorad(angle):
-	return((angle*np.pi/180))
-
-	
-def radTodeg(angle):
-	return(angle*180/np.pi)
-
-def wrapTo2Pi(theta):
-	theta = 2.0*np.arctan(np.tan(theta/2.0))
-	return(float(theta))
 
 # ===== Switch between Coordinate System ===== #
+
 
 def apparentWindCoordinatesToMWCoordinates(FxW,FyW,alpha):
     Fy = FyW*np.cos(alpha)-FxW*np.sin(alpha)
@@ -75,5 +65,5 @@ def loadConfigFile(configPath):
     return(config)
 
 
-    # Add new functions or sections if necessary
 
+    # Add new functions or sections if necessary
