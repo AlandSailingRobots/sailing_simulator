@@ -96,30 +96,28 @@ class Network:
         # The sending format is:
             #   Msg Type(B), Lat(f), Lon(f), Speed(f), Course(h), WindDir(h), WindSpeed(f), heading(h), rudder(h), sail(h)
             sail, rudder = sailboat.physicsModel().getActuators()
-            dataLength = 27
-            sendFormat = '=HB3f2H1f3H'
+            dataLength = 23
+            sendFormat = '=HB3f2H1fH'
             
             #print('latitude:',latitude,'longitude:',longitude,'speed:',speed, 'course:',course, 'windDir:',windDir,'windSpeed:',windSpeed,'heading:',heading,'rudder:',rudder,'sail:', sail)
             data = pack( sendFormat, int(dataLength), MESSAGE_TYPE,
                          latitude, longitude, speed, int(course),
                          int(windDir), windSpeed,
-                         int(heading),
-                         int(rudder), int(sail) )
+                         int(heading) )
 
         elif MESSAGE_TYPE == MESSAGE_TYPE_WINGBOAT_DATA:
         # The sending format is:
             #   Msg Type(B), Lat(f), Lon(f), Speed(f), Course(h), WindDir(h), WindSpeed(f), heading(h), rudder(h), sail(h)
             tail, rudder = sailboat.physicsModel().getActuators()
-            dataLength = 27
+            dataLength = 23
             tail = 0 # while the command is not implmented
-            sendFormat = '=HB3f2H1f3H'
+            sendFormat = '=HB3f2H1fH'
 
             #print('latitude:',latitude,'longitude:',longitude,'speed:',speed, 'course:',course, 'windDir:',windDir,'windSpeed:',windSpeed,'heading:',heading,'rudder:',rudder,'tail:', tail)
             data = pack( sendFormat, int(dataLength), MESSAGE_TYPE,
                          latitude, longitude, speed, int(course),
                          int(windDir), windSpeed,
-                         int(heading),
-                         int(rudder), int(tail) )   
+                         int(heading) )   
         #print("Sent boat data")
         self.sendData( data )
 
