@@ -1,9 +1,6 @@
 #!/usr/bin/python3
 
 # Command line arguments:
-# boat_type: 0 or 1
-# 0, simulating with Janet
-# 1, simulatiing with ASPire
 # traffic: 0 or 1
 # 0, simulating without traffic
 # 1, simulating with traffic

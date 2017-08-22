@@ -12,6 +12,9 @@ MESSAGE_TYPE_WINGBOAT_DATA = 1
 MESSAGE_TYPE_AIS_CONTACT   = 2
 MESSAGE_TYPE_TIS_CONTACT   = 3
 
+MESSAGE_TYPE_WINGBOAT_CMD  = 4
+MESSAGE_TYPE_SAILBOAT_CMD  = 5
+MESSAGE_TYPE_WAYPOINT_DATA = 6
 
 
 class BoatData:
@@ -61,25 +64,25 @@ class Network:
     def readActuatorData(self):
         readReady, writeReady, errors = select.select([self._sock], [self._sock], [self._sock], 0.01)
 
-        receiveFormat = '=H2f'
+        receiveFormat = '=HB2f'
 
         if len(readReady):
-            data = self._sock.recv(10)  # 2 bytes for packet length, 8 bytes for rudder, and 8 bytes for sail
-            if len(data) is 10:
-                (length, self._rudderCmd, self._sailCmd) = unpack(receiveFormat, data)
-                #print("length: ",length, " rudderCommand: ",self._rudderCmd, " tailCommand: ", self._sailCmd) 
+            data = self._sock.recv(11)  # 2 bytes for packet length, 1 byte for the message type, 4 bytes for rudder, and 4 bytes for sail
+            if len(data) is 11:
+                (length, MESSAGE_TYPE, self._rudderCmd, self._sailCmd) = unpack(receiveFormat, data)
+                print("length: ",length, " MESSAGE_TYPE: ",MESSAGE_TYPE," rudderCommand: ",self._rudderCmd, " tailCommand: ", self._sailCmd) 
         return (self._rudderCmd, self._sailCmd)
 
     def receiveWaypoint(self):
         readReady, writeReady, errors = select.select( [self._sock], [self._sock], [self._sock], 0.01 )
-        receiveFormat = '=Hi2d4i2d2i'  # H=uint16_t, i=int, f=float, B = Byte
+        receiveFormat = '=HBi2d4i2d2i'  # H=uint16_t, i=int, f=float, B = Byte
 
         if len(readReady):
-            data = self._sock.recv(62)
-            if len(data) is 62:
-                # print("HEJ")
-                (length, self._nextId, self._longitude, self._latitude, self._declination, self._radius,
+            data = self._sock.recv(63)
+            if len(data) is 63:
+                (length, MESSAGE_TYPE, self._nextId, self._longitude, self._latitude, self._declination, self._radius,
                  self._staytime, self._prevId, self._prevLon, self._prevLat, self._prevDec, self._prevRad) = unpack(receiveFormat, data)
+                print("length: ",length," MESSAGE_TYPE: ",MESSAGE_TYPE, " nextId: ",self._nextId)
         return (self._longitude, self._latitude, self._declination, self._radius,
                 self._prevLon, self._prevLat, self._prevDec, self._prevRad)
 

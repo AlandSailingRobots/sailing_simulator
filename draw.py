@@ -127,7 +127,7 @@ class drawThread (threading.Thread):
         print("Starting coordinates:", centerx, centery)
 
         axis_length = zoom_.length
-        objgraph.show_most_common_types()
+        #objgraph.show_most_common_types()
         (ax_min_x, ax_min_y, axis_len) = (centerx-axis_length/2, centery-axis_length/2, axis_length)
         while(self.run_th):
             if (ax_min_x-ax2.get_xlim()[0] != 0 or ax_min_y-ax2.get_ylim()[0] != 0) and ax2.get_xlim()[0] != 0:
@@ -208,7 +208,7 @@ class drawThread (threading.Thread):
 
             ax2.patches = []  # Clear out all the boats
 
-            objgraph.show_growth(limit=5)  # Shows memory growth
-            print()
+            #objgraph.show_growth(limit=5)  # Shows memory growth
+            #print()
         print("Stopping Draw Thread")
         plt.close()
