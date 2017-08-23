@@ -54,7 +54,7 @@ class Network:
         try:
             self._sock.connect((serverAddr, serverPort))
             print("Connected to control system!")
-            self._sock.setblocking(0)
+            #self._sock.setblocking(0)
         except socket.error as e:
             print('Socket error:', e)
             self._connected = False
