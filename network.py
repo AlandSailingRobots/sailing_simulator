@@ -67,7 +67,7 @@ class Network:
 
         if len(data) is 9:
             (MESSAGE_TYPE, rudderCmd, sailCmd) = unpack('=B2f', data)
-            print(" MESSAGE_TYPE: ",MESSAGE_TYPE," rudderCommand: ",rudderCmd, " tailCommand: ", sailCmd)
+            #print(" MESSAGE_TYPE: ",MESSAGE_TYPE," rudderCommand: ",rudderCmd, " tailCommand: ", sailCmd)
 
         return (rudderCmd, sailCmd)
 
@@ -79,7 +79,7 @@ class Network:
         if len(data) is 61:
             (MESSAGE_TYPE, nextId, longitude, latitude, declination, radius,
              staytime, prevId, prevLon, prevLat, prevDec, prevRad) = unpack(receiveFormat, data)
-            print(" MESSAGE_TYPE: ",MESSAGE_TYPE, " nextId: ", nextId, "longitude: ", longitude, "declination: ", declination)
+            #print(" MESSAGE_TYPE: ",MESSAGE_TYPE, " nextId: ", nextId, "longitude: ", longitude, "declination: ", declination)
 
         return (longitude, latitude, declination, radius, prevLon, prevLat, prevDec, prevRad)
 
@@ -87,17 +87,17 @@ class Network:
     def sendBoatData( self, sailboat,MESSAGE_TYPE ):
         # latitude, longitude, course, speed      # GPS
         (latitude, longitude) = sailboat.position()
-        course = wrapAngle(sailboat.course())
+        course = sailboat.course() # [-180, 180] degree east north up
         speed = sailboat.speed()
-        windDir = wrapAngle(sailboat.apparentWind().direction())
+        windDir = sailboat.apparentWind().direction() # [-180, 180] degree, trigo
         windSpeed = sailboat.apparentWind().speed()
-        heading = wrapAngle(sailboat.heading())
+        heading = sailboat.heading() # [-180, 180] degree east north up
         if MESSAGE_TYPE == MESSAGE_TYPE_SAILBOAT_DATA:
         # The sending format is:
             #   Msg Type(B), Lat(f), Lon(f), Speed(f), Course(h), WindDir(h), WindSpeed(f), heading(h), rudder(h), sail(h)
             sail, rudder = sailboat.physicsModel().getActuators()
             dataLength = 23
-            sendFormat = '=HB3f2H1fH'
+            sendFormat = '=HB3f2h1fh'
             
             #print('latitude:',latitude,'longitude:',longitude,'speed:',speed, 'course:',course, 'windDir:',windDir,'windSpeed:',windSpeed,'heading:',heading,'rudder:',rudder,'sail:', sail)
             data = pack( sendFormat, int(dataLength), MESSAGE_TYPE,
@@ -111,12 +111,11 @@ class Network:
             tail, rudder = sailboat.physicsModel().getActuators()
             dataLength = 23
             tail = 0 # while the command is not implmented
-            sendFormat = '=HB3f2H1fH'
-
-            #print('latitude:',latitude,'longitude:',longitude,'speed:',speed, 'course:',course, 'windDir:',windDir,'windSpeed:',windSpeed,'heading:',heading,'rudder:',rudder,'tail:', tail)
+            sendFormat = '=HB3f2h1fh'
+            print('latitude:',latitude,'longitude:',longitude,'speed:',speed, 'course:',course, 'windDir:',windDir,'windSpeed:',windSpeed,'heading:',heading,'rudder:',rudder,'tail:', tail)
             data = pack( sendFormat, int(dataLength), MESSAGE_TYPE,
                          latitude, longitude, speed, int(course),
-                         int(windDir), windSpeed,
+                         int(windDir), windSpeed, 
                          int(heading) )   
         #print("Sent boat data")
         self.sendData( data )

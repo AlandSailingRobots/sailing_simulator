@@ -76,7 +76,7 @@ class SailBoat(Vessel):
         return self.heading()
 
     def heading(self):
-        heading = radTodeg( wrapTo2Pi( self._physicsModel.heading() ) )
+        heading = radTodeg( wrapTo2Pi( self._physicsModel.heading() ) ) # [-180, 180] degree east north up
         return heading
 
     def speed(self):
@@ -84,7 +84,7 @@ class SailBoat(Vessel):
 
     def apparentWind( self ):
         apparentWind = self._physicsModel.apparentWind()
-        windDir      = radTodeg( wrapTo2Pi( apparentWind.direction() ) )
+        windDir      = radTodeg( wrapTo2Pi( apparentWind.direction() ) ) # [-180, 180] degree east north up
         windSpeed    = apparentWind.speed()
         return WindState( windDir, windSpeed )
 

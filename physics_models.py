@@ -7,8 +7,8 @@ import json
 
 class WindState(object):
     def __init__(self, windDirection, windSpeed):
-        self._dir = windDirection
-        self._spd = windSpeed
+        self._dir = windDirection # radian, east north up
+        self._spd = windSpeed # m/s
 
     def direction(self):
         return self._dir
