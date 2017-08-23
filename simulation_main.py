@@ -51,6 +51,10 @@ MESSAGE_TYPE_WINGBOAT_DATA = 1
 MESSAGE_TYPE_AIS_CONTACT   = 2
 MESSAGE_TYPE_TIS_CONTACT   = 3
 
+MESSAGE_TYPE_WINGBOAT_CMD  = 4
+MESSAGE_TYPE_SAILBOAT_CMD  = 5
+MESSAGE_TYPE_WAYPOINT_DATA = 6
+
 # Returns the milliseconds
 getMillis = lambda: int(round(time.time() * 1000))
 
@@ -130,6 +134,9 @@ if __name__ == '__main__':
     delta_r = 0
     delta_s = 0
 
+    (wp_lon, wp_lat, wp_dec, wp_radius, wp_prevLon,
+             wp_prevLat, wp_prevDec, wp_prevRad) = (0,0,0,0,0,0,0,0)
+
     lastSentBoatData = 0
     lastAISSent = 0
 
@@ -138,20 +145,31 @@ if __name__ == '__main__':
 
             deb = time.time()
 
-
             """ Collecting the orders and process them for the actuators """
-            if boat_type == 0:
-                (command_rudder, command_sheet) = net.readActuatorData()
-                (delta_r, delta_s) = fcn.order_to_deg(command_rudder, command_sheet)
-            else :
-                (delta_r, delta_s) = net.readActuatorData()
-                (delta_r, delta_s) = (-delta_r,-delta_s) # convention transformation
-                (delta_r, delta_s) = (wrapTo2Pi(degTorad(delta_r)), wrapTo2Pi(degTorad(delta_s))) # degrees to radians 
-                #print("rudderCommand: ", delta_r, " tailCommand: ", delta_s)
+            data = net.receiveData()
+            # print ("length data: ",len(data))
+            if len(data) > 0:
+                # print ("message type: ",data[0])
+
+                if data[0] == MESSAGE_TYPE_WINGBOAT_CMD:
+                    (delta_r, delta_s) = net.readActuatorData(data)
+
+                elif data[0] == MESSAGE_TYPE_SAILBOAT_CMD:
+                    (command_rudder, command_sheet) = net.readActuatorData(data)
+                    (delta_r, delta_s) = fcn.order_to_deg(command_rudder, command_sheet)
+
+                elif data[0] == MESSAGE_TYPE_WAYPOINT_DATA:
+                    (wp_lon, wp_lat, wp_dec, wp_radius, wp_prevLon,
+                     wp_prevLat, wp_prevDec, wp_prevRad) = net.receiveWaypoint(data)
+
+            # if boat_type == 0:
+                
+            #     (delta_r, delta_s) = fcn.order_to_deg(command_rudder, command_sheet)
+            # else :
+            #     (delta_r, delta_s) = net.readActuatorData()
                 
 
-            (wp_lon, wp_lat, wp_dec, wp_radius, wp_prevLon,
-             wp_prevLat, wp_prevDec, wp_prevRad) = net.receiveWaypoint()
+
             """ setting the actuator to the order """
             simulatedBoat.physicsModel().setActuators( delta_s, delta_r )
 

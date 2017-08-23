@@ -43,6 +43,7 @@ class Network:
         self._prevLat = 0
         self._prevDec = 0
         self._prevRad = 0
+
         # Setup the TCP socket
         self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -61,30 +62,26 @@ class Network:
     def connected(self):
         return self._connected
 
-    def readActuatorData(self):
-        readReady, writeReady, errors = select.select([self._sock], [self._sock], [self._sock], 0.01)
+    def readActuatorData(self, data):
+        (rudderCmd, sailCmd) = (0,0)
 
-        receiveFormat = '=HB2f'
+        if len(data) is 9:
+            (MESSAGE_TYPE, rudderCmd, sailCmd) = unpack('=B2f', data)
+            print(" MESSAGE_TYPE: ",MESSAGE_TYPE," rudderCommand: ",rudderCmd, " tailCommand: ", sailCmd)
 
-        if len(readReady):
-            data = self._sock.recv(11)  # 2 bytes for packet length, 1 byte for the message type, 4 bytes for rudder, and 4 bytes for sail
-            if len(data) is 11:
-                (length, MESSAGE_TYPE, self._rudderCmd, self._sailCmd) = unpack(receiveFormat, data)
-                print("length: ",length, " MESSAGE_TYPE: ",MESSAGE_TYPE," rudderCommand: ",self._rudderCmd, " tailCommand: ", self._sailCmd) 
-        return (self._rudderCmd, self._sailCmd)
+        return (rudderCmd, sailCmd)
 
-    def receiveWaypoint(self):
-        readReady, writeReady, errors = select.select( [self._sock], [self._sock], [self._sock], 0.01 )
-        receiveFormat = '=HBi2d4i2d2i'  # H=uint16_t, i=int, f=float, B = Byte
 
-        if len(readReady):
-            data = self._sock.recv(63)
-            if len(data) is 63:
-                (length, MESSAGE_TYPE, self._nextId, self._longitude, self._latitude, self._declination, self._radius,
-                 self._staytime, self._prevId, self._prevLon, self._prevLat, self._prevDec, self._prevRad) = unpack(receiveFormat, data)
-                print("length: ",length," MESSAGE_TYPE: ",MESSAGE_TYPE, " nextId: ",self._nextId)
-        return (self._longitude, self._latitude, self._declination, self._radius,
-                self._prevLon, self._prevLat, self._prevDec, self._prevRad)
+    def receiveWaypoint(self, data):
+        (longitude, latitude, declination, radius, prevLon, prevLat, prevDec, prevRad) = (0,0,0,0,0,0,0,0)
+        receiveFormat = '=Bi2d4i2d2i'  # H=uint16_t, i=int, f=float, B = Byte
+
+        if len(data) is 61:
+            (MESSAGE_TYPE, nextId, longitude, latitude, declination, radius,
+             staytime, prevId, prevLon, prevLat, prevDec, prevRad) = unpack(receiveFormat, data)
+            print(" MESSAGE_TYPE: ",MESSAGE_TYPE, " nextId: ", nextId, "longitude: ", longitude, "declination: ", declination)
+
+        return (longitude, latitude, declination, radius, prevLon, prevLat, prevDec, prevRad)
 
     # Packets up and sends the boat data across TCP
     def sendBoatData( self, sailboat,MESSAGE_TYPE ):
@@ -156,3 +153,13 @@ class Network:
 
         if( len(writeReady) ):
             self._sock.sendall( data )
+
+    def receiveData( self ):
+        readReady, writeReady, errors = select.select([self._sock], [self._sock], [self._sock], 0.01)
+
+        if len(readReady):
+            (data_length,) = unpack('=H', self._sock.recv(2))
+            data = self._sock.recv(data_length)
+            return data
+        else:
+            return ""
