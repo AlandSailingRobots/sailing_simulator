@@ -89,7 +89,7 @@ class Network:
         (latitude, longitude) = sailboat.position()
         course = sailboat.course() # [-180, 180] degree east north up
         speed = sailboat.speed()
-        windDir = sailboat.apparentWind().direction() # [-180, 180] degree, trigo
+        windDir = sailboat.apparentWind().direction() # [-180, 180] degree, trigo, wind vector
         windSpeed = sailboat.apparentWind().speed()
         heading = sailboat.heading() # [-180, 180] degree east north up
         if MESSAGE_TYPE == MESSAGE_TYPE_SAILBOAT_DATA:
