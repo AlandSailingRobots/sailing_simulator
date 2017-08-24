@@ -46,7 +46,7 @@ def loadConfiguration(configPath, traffic):
 
     vessels = []
 
-    trueWindDir = wrapTo2Pi(np.deg2rad(config["wind_direction"] - 90))
+    trueWindDir = wrapTo2Pi(np.deg2rad(90 - config["wind_direction"])) # [-pi, pi] east north up
     print ("True Wind:" + str(trueWindDir))
     trueWindSpeed = config["wind_speed"]
     print(latOrigin, lonOrigin)
@@ -62,7 +62,7 @@ def loadConfiguration(configPath, traffic):
             id = marineVessel["mmsi"]
             lat = marineVessel["lat_origin"]
             lon = marineVessel["lon_origin"]
-            heading = wrapTo2Pi(np.deg2rad(marineVessel["heading"] - 90))
+            heading = wrapTo2Pi(np.deg2rad(90 - marineVessel["heading"] )) # [-pi, pi] east north up
             speed = marineVessel["speed"]
             length = marineVessel["length"]
             beam = marineVessel["beam"]
