@@ -14,6 +14,7 @@ def draw_boat(h, s, x, y, a_b, a_r, a_s):
     # a_r - rudder angle in b-frame
     # a_s - sail angle in b-frame
     # Calculate corners
+
     p1 = [x+s*cos(a_b), y+s*sin(a_b)]
     p2 = [x-s*cos(a_b)+s/2*cos(pi/2-a_b), y-s*sin(a_b)-s/2*sin(pi/2-a_b)]
     p3 = [x-s*cos(a_b)-s/2*cos(pi/2-a_b), y-s*sin(a_b)+s/2*sin(pi/2-a_b)]
@@ -54,19 +55,19 @@ def draw_ais(h, s, pos, d, color_='b', width_=0.5):
     # x  -  longitude
     # y  -  latitude
     # d  -  direction
-    # d = 0
-    # d = np.pi
-    
-    d = np.deg2rad(d+90)
+    #d = 0
+    #d = -np.pi/2
+    print(d)
+    #d = np.deg2rad(d+90)
     (y, x) = pos
     p1 = [x+s*cos(d), y+s*sin(d)]
     p2 = [x-s*cos(d)*2+s/2*cos(pi/2-d), y-s*sin(d)*2-s/2*sin(pi/2-d)]
     p3 = [x-s*cos(d)*2-s/2*cos(pi/2-d), y-s*sin(d)*2+s/2*sin(pi/2-d)]
-    p = [p1, p2, p3]
+    p = [p2, p1, p3]
+    #print("former p ", p)
+    
     poly = plt.Polygon(p, fill=None, edgecolor='b', linewidth=width_)
     h.add_patch(poly)
-
-
 
 
 def draw_wind_direction(h, axis_min, axis_max_l, s, psi):

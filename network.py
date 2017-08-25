@@ -112,7 +112,7 @@ class Network:
             dataLength = 23
             tail = 0 # while the command is not implmented
             sendFormat = '=HB3f2h1fh'
-            print('latitude:',latitude,'longitude:',longitude,'speed:',speed, 'course:',course, 'windDir:',windDir,'windSpeed:',windSpeed,'heading:',heading,'rudder:',rudder,'tail:', tail)
+            #print('latitude:',latitude,'longitude:',longitude,'speed:',speed, 'course:',course, 'windDir:',windDir,'windSpeed:',windSpeed,'heading:',heading,'rudder:',rudder,'tail:', tail)
             data = pack( sendFormat, int(dataLength), MESSAGE_TYPE,
                          latitude, longitude, speed, int(course),
                          int(windDir), windSpeed, 
