@@ -172,10 +172,10 @@ class drawThread (threading.Thread):
             for i in range(1, len(ais_list)):
                 dist.append(fcn.getDTW([th_data.latitude, th_data.longitude], ais_list[i].position()))
                 prevPos[i-1] = cds.draw_ais_track(ax2, ais_list[i].position(), prevPos[i-1], dist[i-1])
-                cds.draw_ais(ax2, 0.0001, ais_list[i].position(), ais_list[i].physicsModel().heading())
+                cds.draw_ais(ax2, 0.00015, ais_list[i].position(), ais_list[i].physicsModel().heading())
                 self._heading = heading
                 minDist = min(minDist, dist[i-1])
-            cds.draw_track(ax2, [th_data.longitude, th_data.latitude], [lonprev, latprev], minDist)
+            cds.draw_track(ax2, [th_data.latitude, th_data.longitude], [latprev, lonprev], minDist)
             cds.draw_boat(ax2, 0.00015, th_data.longitude, th_data.latitude,
                           th_data.theta, th_data.delta_r, th_data.delta_s)
             plt.axis([ax_min_x, ax_min_x+axis_len, ax_min_y, ax_min_y+axis_len])

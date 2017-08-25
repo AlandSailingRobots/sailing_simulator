@@ -18,26 +18,29 @@ def draw_boat(h, s, x, y, a_b, a_r, a_s):
     p1 = [x+s*cos(a_b), y+s*sin(a_b)]
     p2 = [x-s*cos(a_b)+s/2*cos(pi/2-a_b), y-s*sin(a_b)-s/2*sin(pi/2-a_b)]
     p3 = [x-s*cos(a_b)-s/2*cos(pi/2-a_b), y-s*sin(a_b)+s/2*sin(pi/2-a_b)]
-    pr1 = [x-s*cos(a_b), y-s*sin(a_b)]
-    pr2 = [x-s*cos(a_b)-s*cos(a_b+a_r), y-s*sin(a_b)-s*sin(a_b+a_r)]
-    ps = [x-s*cos(a_b+a_s), y-s*sin(a_b+a_s)]
+    #pr1 = [x-s*cos(a_b), y-s*sin(a_b)]
+    #pr2 = [x-s*cos(a_b)-s*cos(a_b+a_r), y-s*sin(a_b)-s*sin(a_b+a_r)]
+    #ps = [x-s*cos(a_b+a_s), y-s*sin(a_b+a_s)]
     points = [p1,p2,[x, y],p3]
     poly = plt.Polygon(points, fill=None, edgecolor='k', linewidth=0.5)
     h.add_patch(poly)
 
 
-def draw_track(h, a, b, d, width_=0.5):
+def draw_track(h, a, b, d, width_=1):
+  # these comments are wrong !!!!!!
     # h  - actual fig add_axes
     # a  - longitude
     # b  - latitude
     # d  - distance
     def_dist = 100
     cgrad = def_dist/d
-    l1 = lines.Line2D([a[0], b[0]], [a[1], b[1]], color=cm.jet(cgrad), linewidth=width_)
+    l1 = lines.Line2D([a[1], b[1]], [a[0], b[0]], color=cm.jet(cgrad), linewidth=width_)
     h.add_line(l1)
+    return a
 
 
 def draw_ais_track(h, a, b, d):
+  # these comments are wrong !!!!!!
     # h  - actual fig add_axes
     # a  - longitude
     # b  - latitude
@@ -57,14 +60,12 @@ def draw_ais(h, s, pos, d, color_='b', width_=0.5):
     # d  -  direction
     #d = 0
     #d = -np.pi/2
-    print(d)
-    #d = np.deg2rad(d+90)
+    
     (y, x) = pos
     p1 = [x+s*cos(d), y+s*sin(d)]
-    p2 = [x-s*cos(d)*2+s/2*cos(pi/2-d), y-s*sin(d)*2-s/2*sin(pi/2-d)]
-    p3 = [x-s*cos(d)*2-s/2*cos(pi/2-d), y-s*sin(d)*2+s/2*sin(pi/2-d)]
-    p = [p2, p1, p3]
-    #print("former p ", p)
+    p2 = [x-s*cos(d)+(s/2)*cos(pi/2-d), y-s*sin(d)-(s/2)*sin(pi/2-d)]
+    p3 = [x-s*cos(d)-(s/2)*cos(pi/2-d), y-s*sin(d)+(s/2)*sin(pi/2-d)]
+    p = [p1, p2, p3]
     
     poly = plt.Polygon(p, fill=None, edgecolor='b', linewidth=width_)
     h.add_patch(poly)
