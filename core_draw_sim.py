@@ -56,6 +56,7 @@ def draw_ais(h, s, pos, d, color_='b', width_=0.5):
     # d  -  direction
     # d = 0
     # d = np.pi
+    
     d = np.deg2rad(d+90)
     (y, x) = pos
     p1 = [x+s*cos(d), y+s*sin(d)]
@@ -64,6 +65,7 @@ def draw_ais(h, s, pos, d, color_='b', width_=0.5):
     p = [p1, p2, p3]
     poly = plt.Polygon(p, fill=None, edgecolor='b', linewidth=width_)
     h.add_patch(poly)
+
 
 
 

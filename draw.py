@@ -149,7 +149,7 @@ class drawThread (threading.Thread):
 
             btw = fcn.getBTW([th_data.longitude, th_data.latitude], [th_wp.lon, th_wp.lat])
             dtw = fcn.getDTW([th_data.longitude, th_data.latitude], [th_wp.lon, th_wp.lat])
-            heading = wrapTo2Pi(-th_data.theta+np.pi/2)*180/np.pi
+            heading = wrapAngle(90 - radTodeg(th_data.theta)) # [0, 360] north east down
             textstr = "ASV STATE\nLon:          %.5f\nLat:           %.5f\nHeading:  %.2f\nSpeed:       %.2f" % (th_data.longitude, th_data.latitude, heading, th_data.speed)
             textstr += "\n____________________\n\nRudder:   %.2f\nWingsail:  %.2f" % (th_data.delta_r, th_data.delta_s)
             textstr += "\n____________________\n\nWAYPOINT\nBearing:   %.2f\nDistance:  %.2f\nRadius:    %d" % (btw, dtw, th_wp.rad)
@@ -173,6 +173,7 @@ class drawThread (threading.Thread):
                 dist.append(fcn.getDTW([th_data.latitude, th_data.longitude], ais_list[i].position()))
                 prevPos[i-1] = cds.draw_ais_track(ax2, ais_list[i].position(), prevPos[i-1], dist[i-1])
                 cds.draw_ais(ax2, 0.0001, ais_list[i].position(), ais_list[i].course())
+                self._heading = heading
                 minDist = min(minDist, dist[i-1])
             cds.draw_track(ax2, [th_data.longitude, th_data.latitude], [lonprev, latprev], minDist)
             cds.draw_boat(ax2, 0.00015, th_data.longitude, th_data.latitude,

@@ -50,7 +50,7 @@ class MarineTraffic(Vessel):
         self._beam = beam
 
     def course(self):
-        return radTodeg( wrapTo2Pi( self._physicsModel.heading() ) )
+        return radTodeg( wrapTo2Pi( self._physicsModel.heading() ) ) # [-180, 180] east north up
     
     def speed(self):
         return self._physicsModel.speed()

@@ -22,7 +22,7 @@ class PhysicsModel:
     def __init__(self, x=0, y=0, heading=0):
         self._x = x
         self._y = y
-        self._heading = heading
+        self._heading = heading # [-pi, pi] east north up
         self._rotationSpeed = 0
         self._speed = 0
 

@@ -54,7 +54,7 @@ def loadConfiguration(configPath, traffic):
     if boat_type == 0:
         vessels.append(SailBoat( SailingPhysicsModel(0,0,0,boat_config),latOrigin,lonOrigin,0,0))
     else:
-        vessels.append(SailBoat( ASPirePhysicsModel( 0,0,0,boat_config,trueWindDir+5),latOrigin,lonOrigin,0,0))
+        vessels.append(SailBoat( ASPirePhysicsModel( 0,0,0,boat_config,trueWindDir + np.pi),latOrigin,lonOrigin,0,0))
 
     # Load Marine Traffic
     if traffic == 1:

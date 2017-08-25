@@ -121,12 +121,12 @@ class Network:
         self.sendData( data )
 
     def sendAISContact( self, boat ):
-        sendFormat = '=HBI3fH2f'
+        sendFormat = '=HBI3fh2f'
 
         dataLength = 27
         id = boat.id()
         (latitude, longitude) = boat.position()
-        course = wrapAngle(boat.course())
+        course = boat.course() # [-180, 180] east north up
         speed = boat.speed()
         #print("Sent AIS data")
         length = boat.length()
