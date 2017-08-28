@@ -173,7 +173,7 @@ if __name__ == '__main__':
             """ setting the actuator to the order """
             simulatedBoat.physicsModel().setActuators( delta_s, delta_r )
 
-            # 0.05 is probably a good value, smaller value is to quick for us to receive and unpack the waypoint data
+            # 0.05 is probably a good value, smaller value is to quick for us to receive and unpack the waypoint data (this comment is probably wrong now)
             simulator.step( sim_step ) # 0.01 = max Step size for ASPire  
 
 
@@ -197,7 +197,7 @@ if __name__ == '__main__':
             (head, gps, wind) = fcn.get_to_socket_value( simulatedBoat )
             (x, y) = simulatedBoat.physicsModel().utmCoordinate()
             theta = simulatedBoat.physicsModel().heading()
-    
+            
             threadLock.acquire()
             # temp_data.set_value(x, y, theta, delta_s, delta_r, trueWind.direction(),
             #                     latitude, longitude, simulatedBoat.speed())
@@ -216,9 +216,14 @@ if __name__ == '__main__':
             threadLock.release()
 
             # queues are thread safe so no need to lock
-            data_queue.put(temp_data)
-            wp_queue.put(temp_wp)
-            ves_queue.put(vessels)
+            # avoid the queues to become bigger and bigger
+            if data_queue.empty():
+                data_queue.put(temp_data)
+            if wp_queue.empty():
+                wp_queue.put(temp_wp)
+            if ves_queue.empty():
+                ves_queue.put(vessels)
+
             
             (asvLat, asvLon) = vessels[0].position()
 
