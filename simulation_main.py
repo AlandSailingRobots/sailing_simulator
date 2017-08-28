@@ -173,7 +173,7 @@ if __name__ == '__main__':
             """ setting the actuator to the order """
             simulatedBoat.physicsModel().setActuators( delta_s, delta_r )
 
-            # 0.05 is probably a good value, smaller value is to quick for us to receive and unpack the waypoint data
+            # 0.05 is probably a good value, smaller value is to quick for us to receive and unpack the waypoint data (this comment is probably wrong now)
             simulator.step( sim_step ) # 0.01 = max Step size for ASPire  
 
 
