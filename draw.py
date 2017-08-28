@@ -80,7 +80,7 @@ class drawThread (threading.Thread):
         axis_length = 0.008
 
         prevPos = []
-        ais_list = self.ves_queue.get()
+        ais_list = self.ves_queue.get(True)
         for i in range(1, len(ais_list)):
             prevPos.append(ais_list[i].position())
 
@@ -95,7 +95,7 @@ class drawThread (threading.Thread):
         axboat.patch.set_facecolor('lightblue')
 
         # th_data = copy.deepcopy(temp_data)
-        th_data = self.data_queue.get()
+        th_data = self.data_queue.get(True)
         latprev = th_data.latitude
         lonprev = th_data.longitude
 
@@ -139,9 +139,9 @@ class drawThread (threading.Thread):
                 centery = th_data.latitude
             axis_length = zoom_.length
 
-            th_data = self.data_queue.get()
-            th_wp = self.wp_queue.get()
-            ais_list = self.ves_queue.get()
+            th_data = self.data_queue.get(True)
+            th_wp = self.wp_queue.get(True)
+            ais_list = self.ves_queue.get(True)
 
             self.run_th = th_data.run
 
