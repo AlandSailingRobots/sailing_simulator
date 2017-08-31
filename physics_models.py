@@ -230,7 +230,8 @@ class ASPirePhysicsModel(mainBoatPhysicsModel):
         #Forces due to wind in the wind coordinate system
         rudderForce                    = self.forceOnRudder()
         #TO DO Check acceleration due to the main wing
-        wingSailAccelerationForce      = wingSailForce * sin( self._wingSail.getMWAngle() )
+        wingSailAccelerationForce      = wingSailForce * sin( self._wingSail.getMWAngle() + self._wingSail.angleOfAttackMW(self.apparentWind()))
+        print(wingSailAccelerationForce)
         rudderBrakeForce               = self._rudderBreakCoefficient * rudderForce * sin( wrapTo2Pi(self._wingSail.getMWAngle() ) )
         tangentialFictionForce         = np.sign(self._speed) * (self._tangentialFriction * (self._speed)**2)
         speed_dot                      = ( (wingSailAccelerationForce - rudderBrakeForce) - tangentialFictionForce) / self._boatMass
