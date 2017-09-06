@@ -153,7 +153,7 @@ class SailingPhysicsModel(mainBoatPhysicsModel):
         self._heading += self._rotationSpeed * timeDelta
         self._speed += acceleration_dot * timeDelta
         self._rotationSpeed += rotationSpeed_dot * timeDelta
-        self._heading = utils.wrapTo2Pi(self._heading)
+        self._heading = wrapTo2Pi(self._heading)
 
     # Ensures the sail is on the correct side of the boat
     def calculateCorrectSailAngle(self):
