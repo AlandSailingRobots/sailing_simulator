@@ -59,14 +59,20 @@ def loadConfiguration(configPath, traffic):
     # Load Marine Traffic
     if traffic == 1:
         for marineVessel in config["traffic"]:
-            id = marineVessel["mmsi"]
-            lat = marineVessel["lat_origin"]
-            lon = marineVessel["lon_origin"]
-            heading = wrapTo2Pi(np.deg2rad(90 - marineVessel["heading"] )) # [-pi, pi] east north up
-            speed = marineVessel["speed"]
-            length = marineVessel["length"]
-            beam = marineVessel["beam"]
-            vessels.append(MarineTraffic(SimplePhysicsModel(heading, speed), lat, lon, heading, speed, id, length, beam))
+            if marineVessel["mmsi"] >= 100000000:
+                id = marineVessel["mmsi"]
+                lat = marineVessel["lat_origin"]
+                lon = marineVessel["lon_origin"]
+                heading = wrapTo2Pi(np.deg2rad(90 - marineVessel["heading"] )) # [-pi, pi] east north up
+                speed = marineVessel["speed"]
+                length = marineVessel["length"]
+                beam = marineVessel["beam"]
+                vessels.append(MarineTraffic(SimplePhysicsModel(heading, speed), lat, lon, heading, speed, id, length, beam))
+            elif marineVessel["mmsi"] < 100000000:
+                id = marineVessel["mmsi"]
+                lat = marineVessel["lat_origin"]
+                lon = marineVessel["lon_origin"]
+                vessels.append(MarineTraffic(SimplePhysicsModel(0, 0), lat, lon, 0, 0, id, 0, 0))
 
     return ( boat_type, sim_step,vessels, WindState( trueWindDir, trueWindSpeed ) )
 
