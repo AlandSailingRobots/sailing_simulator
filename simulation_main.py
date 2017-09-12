@@ -55,6 +55,7 @@ MESSAGE_TYPE_WINGBOAT_CMD  = 4
 MESSAGE_TYPE_SAILBOAT_CMD  = 5
 MESSAGE_TYPE_WAYPOINT_DATA = 6
 
+
 # Returns the milliseconds
 getMillis = lambda: int(round(time.time() * 1000))
 
@@ -187,7 +188,7 @@ if __name__ == '__main__':
             """ Sending AIS data """
             if millis > lastAISSent + AIS_UPDATE_MS:
                 for i in range( 1, len(vessels) ):
-                    if vessels[i].id() < 100000000 and boatInVisualRange(vessels[0], vessels[i]):
+                    if vessels[i].id() < 100000000 and fcn.boatInVisualRange(vessels[0], vessels[i]):
                         net.sendVisualContact( vessels[i] )
                     else:
                         net.sendAISContact( vessels[i] )

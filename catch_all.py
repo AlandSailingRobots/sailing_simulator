@@ -6,6 +6,8 @@ from vessel import Vessel,SailBoat, MarineTraffic
 import json
 from utils import *
 
+CAMERA_ANGLE = 20. # Camera field of view in degrees
+
 def get_graph_values( sailBoat,boat_type ):
 	(sail, rudder) = sailBoat.sailAndRudder() # if boat_type == 1 : sail == tailWing
 	phi_ap = sailBoat.apparentWind().direction()
@@ -78,6 +80,7 @@ def loadConfiguration(configPath, traffic):
 
 
 class Functions:
+
 
     def get_to_socket_value( sailBoat ):
         heading = sailBoat.heading()
@@ -167,12 +170,12 @@ class Functions:
         else:
             return 360 - absDiff
 
-    def boatInVisualRange( asv, vessel):
-        bearing = getBearing(asv, vessel)
+    def boatInVisualRange(asv, vessel):
+        bearing = Functions.getBearing(asv, vessel)
 
-        bearingDiff = abs( getBearingDiff(asv.heading(), bearing) )
+        bearingDiff = abs( Functions.getBearingDiff(asv.heading(), bearing) )
 
-        if bearingDiff < CAMERA_ANGLE:
+        if bearingDiff < (CAMERA_ANGLE/2):
             return True
         return False
 

@@ -141,7 +141,7 @@ class Network:
 
         dataLength = 19
         id = boat.id()
-        (latitude, longtitude) = boat.position()
+        (latitude, longitude) = boat.position()
         # print("Sent Visual data")
         data = pack( sendFormat, int(dataLength), MESSAGE_TYPE_TIS_CONTACT,
                      int(id), latitude, longitude )
