@@ -116,7 +116,7 @@ class SailingPhysicsModel(mainBoatPhysicsModel):
     def setActuators(self, sail, rudder):
         self._sailAngle = sail
         self._rudderAngle = rudder
-
+        
     def getActuators(self):
         return ( self._sailAngle, self._rudderAngle )
 
@@ -129,7 +129,9 @@ class SailingPhysicsModel(mainBoatPhysicsModel):
     def simulate(self, timeDelta, trueWind):
         (x_dot, y_dot) = self.calculateDrift( trueWind )
         self.updateApparentWind( trueWind )
+        # print("bef self._sailAngle: ", self._sailAngle)
         self.calculateCorrectSailAngle()
+        print("aft self._sailAngle: ", self._sailAngle)
 
         # The acceleration of the boat is affected by three forces, the wind on the sail, a braking force
         # from the water on the rudder, and a tangential friction force
@@ -157,12 +159,19 @@ class SailingPhysicsModel(mainBoatPhysicsModel):
 
     # Ensures the sail is on the correct side of the boat
     def calculateCorrectSailAngle(self):
-        sigma = cos( self._apparentWind.direction() ) + cos( wrapTo2Pi(self._sailAngle) )
-        if (sigma < 0):
-            self._sailAngle = np.pi + self._apparentWind.direction()
-        elif sin( self._apparentWind.direction() ) is not 0:
-            # Ensure the sail is on the right side of the boat
-            self._sailAngle = -np.sign( sin( self._apparentWind.direction() ) ) * abs( wrapTo2Pi(self._sailAngle) )
+        # sigma = cos( -self._apparentWind.direction() ) + cos( self._sailAngle )
+        # if (sigma < 0):
+        #     self._sailAngle = np.pi + self._apparentWind.direction()
+        #     print("sigma < 0")
+        # elif sin( self._apparentWind.direction() ) == 0:
+        #     self._sailAngle = self._sailAngle
+        #     print("sin (self._apparentWind.direction() )== 0")
+        # else:
+        #     self._sailAngle = -np.sign( sin( self._apparentWind.direction() ) ) * abs( self._sailAngle )
+        if sin( self._apparentWind.direction() ) == 0:
+            self._sailAngle = min( abs(wrapTo2Pi(np.pi - self._apparentWind.direction())), abs(wrapTo2Pi(self._sailAngle)) )
+        else:
+            self._sailAngle = - np.sign( sin( self._apparentWind.direction() ) ) * min( abs(wrapTo2Pi(np.pi - self._apparentWind.direction())), abs(wrapTo2Pi(self._sailAngle)) )
 
     def forceOnSails(self):
         return self._sailLift * self._apparentWind.speed() * sin( self._sailAngle - self._apparentWind.direction() )
