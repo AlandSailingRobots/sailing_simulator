@@ -18,11 +18,11 @@ def get_graph_values( sailBoat,boat_type ):
 		return( rudder, tailAngle, phi_ap, lat, lon, MWAngle )
 	else:
 
-		sigma = cos( phi_ap ) + cos( sail )
-		if (sigma < 0):
-			sail = np.pi - phi_ap
-		else:
-			sail = np.sign( sin(phi_ap) ) * abs( sail )
+		# sigma = cos( phi_ap ) + cos( sail )
+		# if (sigma < 0):
+		# 	sail = np.pi - phi_ap
+		# else:
+		# 	sail = np.sign( sin(phi_ap) ) * abs( sail )
 		return( rudder, sail, phi_ap, lat, lon )
 
 
@@ -181,7 +181,6 @@ class Functions:
 
     def order_to_deg(command_rudder, command_sheet):
         if command_rudder > 8000 or command_rudder < 3000:
-            command_sheet = 4215
             command_rudder = 5520
         return ((command_rudder-5520)*(np.pi/6.0)/1500.0,
                 (command_sheet-4215)*(np.pi/-6.165)/900.0)
