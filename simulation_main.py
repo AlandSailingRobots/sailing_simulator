@@ -111,10 +111,10 @@ if __name__ == '__main__':
         
     simulator = Simulator( trueWind, 1 )
 
-    files = []
+    # files = []
     for i in range(0, len(vessels)):
-        files.append(open("GPS_Track_" + str(i) + ".track", 'w'))
-        files[i].write("id,latitudes,longitude,distance\n")
+        # files.append(open("GPS_Track_" + str(i) + ".track", 'w'))
+        # files[i].write("id,latitudes,longitude,distance\n")
         simulator.addPhysicsModel( vessels[i].physicsModel() )
 
     # multithreading management:
@@ -128,7 +128,6 @@ if __name__ == '__main__':
     data = bytearray()
 
     time.sleep(0.01)
-    delta_t = 0.01
 
     print("Start drawing thread")
     thread_draw.start()
@@ -149,38 +148,26 @@ if __name__ == '__main__':
 
             """ Collecting the orders and process them for the actuators """
             data = net.receiveData()
-            # print ("length data: ",len(data))
             if len(data) > 0:
-                # print ("message type: ",data[0])
 
                 if data[0] == MESSAGE_TYPE_WINGBOAT_CMD:
                     (delta_r_cmd, delta_s_cmd) = net.readActuatorData(data)
-                    print("MESSAGE_TYPE_WINGBOAT_CMD")
 
                 elif data[0] == MESSAGE_TYPE_SAILBOAT_CMD:
                     (command_rudder, command_sheet) = net.readActuatorData(data)
                     (delta_r_cmd, delta_s_cmd) = fcn.order_to_deg(command_rudder, command_sheet)
                     delta_s_cmd = command_sheet
-                    # print("delta_r: ", delta_r_cmd, " delta_s: ", command_sheet)
 
                 elif data[0] == MESSAGE_TYPE_WAYPOINT_DATA:
                     (wp_lon, wp_lat, wp_dec, wp_radius, wp_prevLon,
-                     wp_prevLat, wp_prevDec, wp_prevRad) = net.receiveWaypoint(data)
-
-            # if boat_type == 0:
-                
-            #     (delta_r, delta_s) = fcn.order_to_deg(command_rudder, command_sheet)
-            # else :
-            #     (delta_r, delta_s) = net.readActuatorData()
-                
+                     wp_prevLat, wp_prevDec, wp_prevRad) = net.receiveWaypoint(data)               
 
 
             """ setting the actuator to the order """
             simulatedBoat.physicsModel().setActuators( delta_s_cmd, delta_r_cmd )
 
-            # 0.05 is probably a good value, smaller value is to quick for us to receive and unpack the waypoint data (this comment is probably wrong now)
-            simulator.step( sim_step ) # 0.01 = max Step size for ASPire  
-
+            """ simulating one step """
+            simulator.step( sim_step ) # 0.01 = max Step size. 0.05 doesn't work for both Janet and ASPire
 
             millis = getMillis()
 
@@ -202,15 +189,11 @@ if __name__ == '__main__':
             (head, gps, wind) = fcn.get_to_socket_value( simulatedBoat )
             (x, y) = simulatedBoat.physicsModel().utmCoordinate()
             theta = simulatedBoat.physicsModel().heading()
-            # print("x: ",x," y: ",y," theta: ",theta)
             threadLock.acquire()
-            # temp_data.set_value(x, y, theta, delta_s, delta_r, trueWind.direction(),
-            #                     latitude, longitude, simulatedBoat.speed())
-            """ filling a temporary set of data to return to hardware """ 
 
+            """ filling a temporary set of data in order to draw the current state of the boat """ 
             if boat_type == 0:
                 (delta_r, delta_s, phi, latitude, longitude) = get_graph_values(simulatedBoat, boat_type)
-                print("delta_s: ", delta_s)
                 temp_data.set_value(x, y, theta, delta_s, delta_r, trueWind.direction(),latitude, longitude, simulatedBoat.speed())
             else:
                 (delta_r, delta_s, phi, latitude, longitude, MWAngle) = get_graph_values(simulatedBoat, boat_type)
@@ -233,11 +216,11 @@ if __name__ == '__main__':
             
             (asvLat, asvLon) = vessels[0].position()
 
-            # Log marine traffic
-            for i in range( 0, len(vessels) ):
-                (lat, lon) = vessels[i].position()
-                distance = LatLonMath.distanceKM(lat, lon, asvLat, asvLon)
-                files[i].write("0," + str(lat) + "," + str(lon) + "," + str(distance) + "\n")
+            """ Log marine traffic """
+            # for i in range( 0, len(vessels) ):
+            #     (lat, lon) = vessels[i].position()
+            #     distance = LatLonMath.distanceKM(lat, lon, asvLat, asvLon)
+            #     files[i].write("0," + str(lat) + "," + str(lon) + "," + str(distance) + "\n")
 
             dt_sleep = sim_step -(time.time()-deb)
             if dt_sleep < 0:
@@ -247,7 +230,7 @@ if __name__ == '__main__':
     except socket.error as msg:
         print("Error :", msg)
 
-    for filePtr in files:
-        filePtr.close()
+    # for filePtr in files:
+    #     filePtr.close()
 
     exit_function_py()

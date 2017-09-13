@@ -116,7 +116,7 @@ class SailingPhysicsModel(mainBoatPhysicsModel):
     def setActuators(self, sail, rudder):
         self._sailAngle = sail
         self._rudderAngle = rudder
-        
+
     def getActuators(self):
         return ( self._sailAngle, self._rudderAngle )
 
@@ -129,23 +129,21 @@ class SailingPhysicsModel(mainBoatPhysicsModel):
     def simulate(self, timeDelta, trueWind):
         (x_dot, y_dot) = self.calculateDrift( trueWind )
         self.updateApparentWind( trueWind )
-        # print("bef self._sailAngle: ", self._sailAngle)
         self.calculateCorrectSailAngle()
-        print("aft self._sailAngle: ", self._sailAngle)
 
         # The acceleration of the boat is affected by three forces, the wind on the sail, a braking force
         # from the water on the rudder, and a tangential friction force
         sailForce = self.forceOnSails()
         rudderForce = self.forceOnRudder()
 
-        sailAccelerationForce = sailForce * sin( wrapTo2Pi(self._sailAngle))
-        rudderBrakeForce = self._rudderBreakCoefficient * rudderForce * sin( wrapTo2Pi(self._sailAngle ))
+        sailAccelerationForce = sailForce * sin(self._sailAngle)
+        rudderBrakeForce = self._rudderBreakCoefficient * rudderForce * sin(self._sailAngle)
         tangentialFictionForce = np.sign(self._speed) * (self._tangentialFriction * (self._speed)**2)
 
         acceleration_dot = ( (sailAccelerationForce - rudderBrakeForce) - tangentialFictionForce) / self._boatMass
 
-        sailRotationForce = sailForce * ( self._distanceToSailCoE - self._distanceToMast * cos( wrapTo2Pi(self._sailAngle )))
-        rudderRotationForce = self._distanceToRudder * rudderForce * cos( wrapTo2Pi(self._rudderAngle))
+        sailRotationForce = sailForce * ( self._distanceToSailCoE - self._distanceToMast * cos(self._sailAngle ))
+        rudderRotationForce = self._distanceToRudder * rudderForce * cos(self._rudderAngle)
         rotationForce = self._angularFriction * self._rotationSpeed * abs( self._speed )
 
         rotationSpeed_dot = (sailRotationForce - rudderRotationForce - rotationForce) / self._momentOfInertia
@@ -159,15 +157,6 @@ class SailingPhysicsModel(mainBoatPhysicsModel):
 
     # Ensures the sail is on the correct side of the boat
     def calculateCorrectSailAngle(self):
-        # sigma = cos( -self._apparentWind.direction() ) + cos( self._sailAngle )
-        # if (sigma < 0):
-        #     self._sailAngle = np.pi + self._apparentWind.direction()
-        #     print("sigma < 0")
-        # elif sin( self._apparentWind.direction() ) == 0:
-        #     self._sailAngle = self._sailAngle
-        #     print("sin (self._apparentWind.direction() )== 0")
-        # else:
-        #     self._sailAngle = -np.sign( sin( self._apparentWind.direction() ) ) * abs( self._sailAngle )
         if sin( self._apparentWind.direction() ) == 0:
             self._sailAngle = min( abs(wrapTo2Pi(np.pi - self._apparentWind.direction())), abs(wrapTo2Pi(self._sailAngle)) )
         else:
@@ -211,7 +200,6 @@ class ASPirePhysicsModel(mainBoatPhysicsModel):
             self._wingSail_config = config["wingSailConfigPath"]
         # creation wingsail 
         self._wingSail               = WingSail(self._x,self._y,self._heading,self._MWAngleStart,0,self._distanceToSailCoE, self._wingSail_config)
-        #print('MWAngleStart:',self._MWAngleStart)
 
 
         

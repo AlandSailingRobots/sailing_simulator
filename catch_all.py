@@ -17,12 +17,6 @@ def get_graph_values( sailBoat,boat_type ):
 		tailAngle = sail
 		return( rudder, tailAngle, phi_ap, lat, lon, MWAngle )
 	else:
-
-		# sigma = cos( phi_ap ) + cos( sail )
-		# if (sigma < 0):
-		# 	sail = np.pi - phi_ap
-		# else:
-		# 	sail = np.sign( sin(phi_ap) ) * abs( sail )
 		return( rudder, sail, phi_ap, lat, lon )
 
 
@@ -149,10 +143,6 @@ class Functions:
 
         bearingToWaypointInRadian = atan2(y_coordinate, x_coordinate)
         btw = np.rad2deg(bearingToWaypointInRadian)
-        # if btw < 0:
-        #     btw += 360
-        # else:
-        #     btw -= 360
         return wrapAngle(btw)
 
     def getBearingDiff( h1, h2 ):

@@ -79,7 +79,6 @@ class Network:
         if len(data) is 61:
             (MESSAGE_TYPE, nextId, longitude, latitude, declination, radius,
              staytime, prevId, prevLon, prevLat, prevDec, prevRad) = unpack(receiveFormat, data)
-            #print(" MESSAGE_TYPE: ",MESSAGE_TYPE, " nextId: ", nextId, "longitude: ", longitude, "declination: ", declination)
 
         return (longitude, latitude, declination, radius, prevLon, prevLat, prevDec, prevRad)
 
@@ -98,12 +97,10 @@ class Network:
             sail, rudder = sailboat.physicsModel().getActuators()
             dataLength = 23
             sendFormat = '=HB3f2h1fh'
-            
-            #print('latitude:',latitude,'longitude:',longitude,'speed:',speed, 'course:',course, 'windDir:',windDir,'windSpeed:',windSpeed,'heading:',heading,'rudder:',rudder,'sail:', sail)
             data = pack( sendFormat, int(dataLength), MESSAGE_TYPE,
-                         latitude, longitude, speed, int(course),
-                         int(windDir), windSpeed,
-                         int(heading) )
+                 latitude, longitude, speed, int(course),
+                 int(windDir), windSpeed,
+                 int(heading) )
 
         elif MESSAGE_TYPE == MESSAGE_TYPE_WINGBOAT_DATA:
         # The sending format is:
@@ -112,12 +109,11 @@ class Network:
             dataLength = 23
             tail = 0 # while the command is not implmented
             sendFormat = '=HB3f2h1fh'
-            #print('latitude:',latitude,'longitude:',longitude,'speed:',speed, 'course:',course, 'windDir:',windDir,'windSpeed:',windSpeed,'heading:',heading,'rudder:',rudder,'tail:', tail)
             data = pack( sendFormat, int(dataLength), MESSAGE_TYPE,
-                         latitude, longitude, speed, int(course),
-                         int(windDir), windSpeed, 
-                         int(heading) )   
-        #print("Sent boat data")
+                 latitude, longitude, speed, int(course),
+                 int(windDir), windSpeed, 
+                 int(heading) )   
+
         self.sendData( data )
 
     def sendAISContact( self, boat ):
@@ -128,10 +124,8 @@ class Network:
         (latitude, longitude) = boat.position()
         course = boat.course() # [-180, 180] east north up
         speed = boat.speed()
-        #print("Sent AIS data")
         length = boat.length()
         beam = boat.beam()
-        # print("Sent AIS data")
         data = pack( sendFormat, int(dataLength), MESSAGE_TYPE_AIS_CONTACT,
                      int(id), latitude, longitude, speed, int(course), length, beam )
         self.sendData( data )
@@ -142,7 +136,6 @@ class Network:
         dataLength = 19
         id = boat.id()
         (latitude, longitude) = boat.position()
-        # print("Sent Visual data")
         data = pack( sendFormat, int(dataLength), MESSAGE_TYPE_TIS_CONTACT,
                      int(id), latitude, longitude )
         self.sendData( data )
