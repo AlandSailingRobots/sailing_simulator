@@ -133,7 +133,6 @@ if __name__ == '__main__':
     thread_draw.start()
     delta_r_cmd = 0
     delta_s_cmd = 0
-    command_sheet = 0
 
     (wp_lon, wp_lat, wp_dec, wp_radius, wp_prevLon,
              wp_prevLat, wp_prevDec, wp_prevRad) = (0,0,0,0,0,0,0,0)
@@ -154,9 +153,8 @@ if __name__ == '__main__':
                     (delta_r_cmd, delta_s_cmd) = net.readActuatorData(data)
 
                 elif data[0] == MESSAGE_TYPE_SAILBOAT_CMD:
-                    (command_rudder, command_sheet) = net.readActuatorData(data)
-                    (delta_r_cmd, delta_s_cmd) = fcn.order_to_deg(command_rudder, command_sheet)
-                    delta_s_cmd = command_sheet
+                    (delta_r_cmd, delta_s_cmd) = net.readActuatorData(data)
+                    # (delta_r_cmd, delta_s_cmd) = fcn.order_to_deg(delta_s_cmd, delta_s_cmd)
 
                 elif data[0] == MESSAGE_TYPE_WAYPOINT_DATA:
                     (wp_lon, wp_lat, wp_dec, wp_radius, wp_prevLon,
