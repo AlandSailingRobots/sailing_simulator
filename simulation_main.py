@@ -50,7 +50,6 @@ MESSAGE_TYPE_SAILBOAT_DATA = 0
 MESSAGE_TYPE_WINGBOAT_DATA = 1
 MESSAGE_TYPE_AIS_CONTACT   = 2
 MESSAGE_TYPE_TIS_CONTACT   = 3
-
 MESSAGE_TYPE_WINGBOAT_CMD  = 4
 MESSAGE_TYPE_SAILBOAT_CMD  = 5
 MESSAGE_TYPE_WAYPOINT_DATA = 6
@@ -79,7 +78,7 @@ boatInCenter = False
 
 
 
-# temp_data = data_handler()
+temp_data = data_handler()
 
 temp_wp = waypoint_handler()
 
@@ -154,7 +153,6 @@ if __name__ == '__main__':
 
                 elif data[0] == MESSAGE_TYPE_SAILBOAT_CMD:
                     (delta_r_cmd, delta_s_cmd) = net.readActuatorData(data)
-                    # (delta_r_cmd, delta_s_cmd) = fcn.order_to_deg(delta_s_cmd, delta_s_cmd)
 
                 elif data[0] == MESSAGE_TYPE_WAYPOINT_DATA:
                     (wp_lon, wp_lat, wp_dec, wp_radius, wp_prevLon,

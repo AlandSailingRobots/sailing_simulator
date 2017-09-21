@@ -168,9 +168,3 @@ class Functions:
         if bearingDiff < (CAMERA_ANGLE/2):
             return True
         return False
-
-    def order_to_deg(command_rudder, command_sheet):
-        if command_rudder > 8000 or command_rudder < 3000:
-            command_rudder = 5520
-        return ((command_rudder-5520)*(np.pi/6.0)/1500.0,
-                (command_sheet-4215)*(np.pi/-6.165)/900.0)

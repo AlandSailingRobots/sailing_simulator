@@ -67,8 +67,7 @@ class Network:
 
         if len(data) is 9:
             (MESSAGE_TYPE, rudderCmd, sailCmd) = unpack('=B2f', data)
-            #print(" MESSAGE_TYPE: ",MESSAGE_TYPE," rudderCommand: ",rudderCmd, " tailCommand: ", sailCmd)
-
+            
         return (rudderCmd, sailCmd)
 
 
