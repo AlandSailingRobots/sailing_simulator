@@ -24,10 +24,14 @@ def loadConfiguration(configPath, traffic):
     global AIS_UPDATE_MS
     global BOAT_UPDATE_MS
 
-    with open(configPath) as data_file:
-        config = json.load(data_file)
-    boat_type   = config["boat_type"]
-    boat_config = config["boat_config"]
+    # with open(configPath) as data_file:
+    #     config = json.load(data_file)
+    config = loadConfigFile(configPath)
+    
+    boat_config_path = config["boat_config"]
+    boat_config = loadConfigFile(boat_config_path)
+    boat_type   = boat_config["boat_type"]
+
     latOrigin = config["lat_origin"]
     lonOrigin = config["lon_origin"]
     sim_step  = config["simulation_step"]
@@ -48,9 +52,9 @@ def loadConfiguration(configPath, traffic):
     print(latOrigin, lonOrigin)
     # vessels.append(SailBoat( SailingPhysicsModel(), latOrigin, lonOrigin, 0, 0 ))
     if boat_type == 0:
-        vessels.append(SailBoat( SailingPhysicsModel(0,0,0,boat_config),latOrigin,lonOrigin,0,0))
+        vessels.append(SailBoat( SailingPhysicsModel(0,0,0,boat_config_path),latOrigin,lonOrigin,0,0))
     else:
-        vessels.append(SailBoat( ASPirePhysicsModel( 0,0,0,boat_config,trueWindDir + np.pi),latOrigin,lonOrigin,0,0))
+        vessels.append(SailBoat( ASPirePhysicsModel( 0,0,0,boat_config_path,trueWindDir + np.pi),latOrigin,lonOrigin,0,0))
 
     # Load Marine Traffic
     if traffic == 1:

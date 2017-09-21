@@ -1,4 +1,6 @@
 {
+	"boat_type": 0,
+
 	"rudderLift": 2000,
 	"distanceToRudder": 2,
 	"rudderBreakCoefficient": 0.2,

@@ -1,9 +1,12 @@
 {
-    "boat_type": 0,
+    "boat_config": "Janet_config.json",
+
+    "simulation_step": 0.01,
+    
     "lat_origin": 60.100863,
     "lon_origin": 19.921260,
 
-    "wind_direction": 0,
+    "wind_direction": 93,
     "wind_speed": 3,
 
     "boat_update_ms":100,
@@ -15,7 +18,9 @@
             "heading": 178,
             "lat_origin": 60.097023,
             "lon_origin": 19.921217,
-            "speed": 1.5
+            "speed": 1.5,
+            "length": 100,
+            "beam": 40
         }
     ]
 }

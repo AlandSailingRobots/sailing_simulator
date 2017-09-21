@@ -4,7 +4,7 @@
 # traffic: 0 or 1
 # 0, simulating without traffic
 # 1, simulating with traffic
-# Example: simulation_main.py 0 1 (simulate Janet with traffic)
+# Example: simulation_main.py 1 (simulate with traffic)
 
 # Python packages
 import socket
@@ -85,15 +85,18 @@ temp_wp = waypoint_handler()
 if __name__ == '__main__':
     net = Network( "localhost", 6900 )
 
-    configPath = "config.json"
-
     ais_vessels = []
     data_queue = queue.Queue()
     wp_queue = queue.Queue()
     ves_queue = queue.Queue()
 
-    if len(sys.argv) == 2:
-        traffic = int(sys.argv[1])
+    if len(sys.argv) >= 2:
+        configPath = sys.argv[1]
+    else:
+        configPath = "Simu_config_0.json"
+
+    if len(sys.argv) == 3:
+        traffic = int(sys.argv[2])
     else:
         traffic = 1
 
