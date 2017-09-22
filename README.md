@@ -66,7 +66,7 @@ Then launch the python code [sailing_simulator/simulation_main.py](sailing_simul
     $ ./simulation_main.py [config] [AIS traffic]
 
 * `[config]` - Optional:  This is the path to the simulation config file, if no path is included, the simulator will default to Simu_config_0.json
-* `AIS traffic`: 0 = simulating without traffic, 1 = with traffic
+* `[AIS traffic]`: 0 = simulating without traffic, 1 = with traffic
 
 
 ## Simulator Configuration
@@ -75,11 +75,10 @@ The configuration file set the ASV configuration, the starting position of the A
 
 ### ASV Configuration file
 
-`"boat_config"`: Path to the boat configuration file.  
+* `"boat_config"`: Path to the boat configuration file.  
 The boat configuration file set the type and the physics parameters of the simulated boat.
-Inside the boat configuration file : 
- * `"boat_type"`: 0 = simulating with Janet (Sail), 1 = ASPire (Wingsail)
- * physics parameters
+  * `"boat_type"`: 0 = simulating with Janet (Sail), 1 = ASPire (Wingsail)
+  * ...
 
 ### ASV State
 
