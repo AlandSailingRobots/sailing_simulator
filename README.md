@@ -5,11 +5,11 @@ This repository Aland sailing robot's simulator. The simulator will simulate a s
 
 ## Usage
 
-    ./simulation_main.py [config]
+    ./simulation_main.py [config] [AIS traffic]
 
-    Arguements:
-
-        * [config] - Optional:  This is the path to the config file, if no path is included, the simulator will default to ./config.json
+Arguements:
+* `[config]` - Optional:  This is the path to the simulation config file, if no path is included, the simulator will default to `Simu_config_0.json`
+* `[AIS traffic]` - Optional : 0 = simulating without traffic, 1 = with traffic (default)
 
 ## Required Packages:
 
@@ -54,7 +54,7 @@ The Aland control system's simulator node creates a TCP server which the simulat
 
 Target is one of the boats:
 
-  * target = ASPire/Janet
+  * `target = ASPire/Janet`
 
 Here you will use the database in sailingrobot.
 You may need to clean the build before making the executable:
@@ -63,31 +63,37 @@ You may need to clean the build before making the executable:
 
 Then launch the python code [sailing_simulator/simulation_main.py](sailing_simulator/simulation_main.py):
 
-    $ ./simulation_main.py [Boat] [AIS traffic]
+    $ ./simulation_main.py [config] [AIS traffic]
 
-The two arguments only accept 0 or 1 as its value:
-
-  * Boat: 0 = simulating with Janet (Sail), 1 = ASPire (Wingsail)
-  * AIS traffic: 0 = simulating without traffic, 1 = with traffic
+* `[config]` - Optional:  This is the path to the simulation config file, if no path is included, the simulator will default to Simu_config_0.json
+* `AIS traffic`: 0 = simulating without traffic, 1 = with traffic
 
 
 ## Simulator Configuration
 
-The configuration file controls the starting position of the ASV, as well as how often the simulator will send update messages and simulated traffic.
+The configuration file set the ASV configuration, the starting position of the ASV, the simulator frequency, as well as the sending frequency of the messages and simulated traffic.
+
+### ASV Configuration file
+
+`"boat_config"`: Path to the boat configuration file.  
+The boat configuration file set the type and the physics parameters of the simulated boat.
+Inside the boat configuration file : 
+ * `"boat_type"`: 0 = simulating with Janet (Sail), 1 = ASPire (Wingsail)
+ * physics parameters
 
 ### ASV State
 
 The ASV's initial state is controlled by 4 configurable variables
 
-    * "lat_origin" : A double, controls the starting latitude
-    * "lon_origin": A double, controls the starting longitude
-    * "wind_direction": A integer in degrees, controls the wind direction
-    * "wind_speed": A integer in metres, controls the winds speed
+* `"lat_origin"` : A double, controls the starting latitude
+* `"lon_origin"`: A double, controls the starting longitude
+* `"wind_direction"`: A integer in degrees, controls the wind direction
+* `"wind_speed"`: A integer in metres, controls the winds speed
 
 ### Message Updates
 
-    * "boat_update_ms": A integer in milliseconds, controls how often boat state messages are sent out
-    * "ais_update_ms": A integer in milliseconds, controls how often AIS contact messages are sent out
+* `"boat_update_ms"`: A integer in milliseconds, controls how often boat state messages are sent out
+* `"ais_update_ms"`: A integer in milliseconds, controls how often AIS contact messages are sent out
 
 ### Simulated Marine traffic
 
@@ -95,24 +101,28 @@ Simulated marine traffic can be defined in the configuration message, with the j
 
 A single marine vehicle is defined as:
 
-        * "mmsi": The id of the vessel, an integer, used to uniquely id simulated traffic. An id below 100000000 will be regarded as a thermal imaging contact and not a AIS contact.
-        * "heading": An integer, in degress, the heading of the vessel
-        * "lat_origin": A double, controls the starting latitude of the marine vehicle
-        * "lon_origin": A double, controls the starting longitude of the marine vehicle
-        * "speed": 1.5: A double in metres, controls the speed of the marine vehicle
+* `"mmsi"`: The id of the vessel, an integer, used to uniquely id simulated traffic. An id below 100000000 will be regarded as a thermal imaging contact and not a AIS contact.
+* `"heading"`: An integer, in degress, the heading of the vessel
+* `"lat_origin"`: A double, controls the starting latitude of the marine vehicle
+* `"lon_origin"`: A double, controls the starting longitude of the marine vehicle
+* `"speed"`: 1.5: A double in metres, controls the speed of the marine vehicle
 
 ### Example configuration
 
-'''
+```
     {
-        "lat_origin": 60.100863,
-        "lon_origin": 19.921260,
+    "boat_config": "Janet_config.json",
 
-        "wind_direction": 0,
-        "wind_speed": 3,
+    "simulation_step": 0.01,
 
-        "boat_update_ms":100,
-        "ais_update_ms":1000,
+    "lat_origin": 60.107240,
+    "lon_origin": 19.922397,
+
+    "wind_direction": 90,
+    "wind_speed": 3,
+
+    "boat_update_ms":100,
+    "ais_update_ms":1000,
 
         "traffic": [
             {
@@ -131,12 +141,6 @@ A single marine vehicle is defined as:
             },
         ]
     }
-'''
+```
 
-    $ ./simulation_main.py [Boat] [AIS traffic]
-
-The two arguments only accept 0 or 1 as its value:
-
-  * Boat: 0 = simulating with Janet (Sail), 1 = ASPire (Wingsail)
-  * AIS traffic: 0 = simulating without traffic, 1 = with traffic
 
