@@ -1,5 +1,5 @@
 
-from physics_models import SailingPhysicsModel,mainBoatPhysicsModel, PhysicsModel, WindState
+from physics_models import SailingPhysicsModel,mainBoatPhysicsModel, PhysicsModel, WindState, ASPirePhysicsModel
 
 
 class Simulator:
