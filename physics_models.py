@@ -283,8 +283,8 @@ class ASPirePhysicsModel(mainBoatPhysicsModel):
         #print('app wind dir',self._apparentWind.direction())
         
         # forces on main wing, drag in direction of apparent wind, lift perpendicular to wind     
-        liftForceMW = self._MWConstPartWindForce*(self._apparentWind.speed()**2)*self._MWDesignedLiftCoefficient*abs(wrapTo2Pi(self._alpha))*5.91
-        dragForceMW = self._MWConstPartWindForce*(self._apparentWind.speed()**2)*self._MWDesignedLiftCoefficient*abs(wrapTo2Pi(self._alpha))**2*5.91/2
+        liftForceMW = self._MWConstPartWindForce*(self._apparentWind.speed()**2)*self._MWDesignedLiftCoefficient*abs(wrapTo2Pi(self._alpha))*5.91*10
+        dragForceMW = self._MWConstPartWindForce*(self._apparentWind.speed()**2)*self._MWDesignedLiftCoefficient*abs(wrapTo2Pi(self._alpha))**2*10*5.91/2
 
         # initial direction of mainwing, aka turned into the wind
         MWAngleGint = wrapTo2Pi(self._apparentWind.direction()+np.pi)
@@ -327,16 +327,16 @@ class ASPirePhysicsModel(mainBoatPhysicsModel):
         rudderForce                    = self.forceOnRudder()
        
       
-        rudderBrakeForce               = self._rudderBreakCoefficient * rudderForce * sin( wrapTo2Pi(self._rudderAngle) )
+        rudderBrakeForce               = np.sign(self._speed) * self._rudderBreakCoefficient * rudderForce * sin( wrapTo2Pi(self._rudderAngle) )
        
-        tangentialFictionForce         = self._tangentialFriction * (self._speed)**2
+        tangentialFictionForce         = np.sign(self._speed) * self._tangentialFriction * (self._speed)**2
       
         speed_dot                      = ( wingSailForce - rudderBrakeForce - tangentialFictionForce) / self._boatMass
 
        
        
-        rudderRotationForce            = self._distanceToRudder * rudderForce * cos( wrapTo2Pi(self._rudderAngle) )
-        rotationForce                  = self._angularFriction * self._rotationSpeed * abs( self._speed )
+        rudderRotationForce            =  self._distanceToRudder * rudderForce * cos( wrapTo2Pi(self._rudderAngle) )
+        rotationForce                  =  self._angularFriction * self._rotationSpeed * abs( self._speed )
 
         rotationSpeed_dot              = (- rudderRotationForce - rotationForce) / self._momentOfInertia
 
