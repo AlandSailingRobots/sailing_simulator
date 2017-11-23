@@ -3,6 +3,9 @@ from math import cos, sin, atan2, hypot
 from utils import wrapTo2Pi, loadConfigFile
 import json
 
+# modified ASPire physics model compared to develop branch
+
+
 
 class WindState(object):
     def __init__(self, windDirection, windSpeed):
@@ -14,6 +17,8 @@ class WindState(object):
 
     def speed(self):
         return self._spd
+
+
 
 
 class PhysicsModel:
@@ -39,6 +44,8 @@ class PhysicsModel:
 
 
 
+
+
 class mainBoatPhysicsModel(PhysicsModel):
     def __init__(self, x = 0, y = 0, heading = 0, configPath = 'Janet_config.json' ):
         self._x             = x
@@ -54,33 +61,9 @@ class mainBoatPhysicsModel(PhysicsModel):
         return self._apparentWind   
 
     def updateApparentWind(self, trueWind ):
-        
-        Xaw                = trueWind.speed()*cos(trueWind.direction()) - self.speed()*cos(self.heading())
-        Yaw                = trueWind.speed()*sin(trueWind.direction()) - self.speed()*sin(self.heading())
-
-        apparentWindVector = [Xaw,Yaw]
-        apparentWindSpeed  = np.sqrt(Xaw**2 + Yaw**2) 
-        
-
-        if Xaw > 0 :
-            apparentWindAngle  = wrapTo2Pi(np.arctan(Yaw/Xaw))
-
-        elif Xaw < 0 :
-            apparentWindAngle  = wrapTo2Pi(np.arctan(Yaw/Xaw) + np.pi)
-
-        elif Xaw == 0 :
-            if Yaw < 0 :
-                apparentWindAngle  = -np.pi/2
-            elif Yaw > 0 :
-                apparentWindAngle  = np.pi/2
-
-
-       
-        print('apparent wind speed',apparentWindSpeed)
-        print('apparentWindangle',apparentWindAngle)
-        
-        #apparentWindAngle = trueWind.direction()
-        #apparentWindSpeed = trueWind.speed()
+        apparentWindVector = [trueWind.speed() * cos( trueWind.direction() - self._heading ) - self._speed, trueWind.speed() * sin( trueWind.direction() - self._heading )]
+        apparentWindAngle  = atan2(apparentWindVector[1], apparentWindVector[0])
+        apparentWindSpeed  = hypot(apparentWindVector[0], apparentWindVector[1]) 
         self._apparentWind = WindState( apparentWindAngle, apparentWindSpeed )
 
 
@@ -103,7 +86,9 @@ class mainBoatPhysicsModel(PhysicsModel):
         return (x_dot, y_dot)
 
 
-    
+  
+
+
 
 class SailingPhysicsModel(mainBoatPhysicsModel):
     # X and y are in UTM coordinates, the heading is in radians
@@ -145,11 +130,6 @@ class SailingPhysicsModel(mainBoatPhysicsModel):
     def getActuators(self):
         return ( self._sailAngle, self._rudderAngle )
 
-    def apparentWind(self):
-        return self._apparentWind
-
-    def speed(self):
-        return self._speed
 
     def simulate(self, timeDelta, trueWind):
         (x_dot, y_dot) = self.calculateDrift( trueWind )
@@ -190,7 +170,12 @@ class SailingPhysicsModel(mainBoatPhysicsModel):
     def forceOnSails(self):
         return self._sailLift * self._apparentWind.speed() * sin( self._sailAngle - self._apparentWind.direction() )
 
-        
+
+
+
+# ASPire model has been modified, apparent wind is calculated in world coord., wingsail angle is set manually depending on tail angle. Only MW lift and drag considered, not tail.
+# MWAngle and apparentWind kept so as not to need changes in other parts of simulator.
+
 class ASPirePhysicsModel(mainBoatPhysicsModel):
 
     def __init__(self,x = 0, y = 0, heading = 0 , configPath = 'ASPire_config.json' , MWAngleStart = 0):
@@ -209,8 +194,10 @@ class ASPirePhysicsModel(mainBoatPhysicsModel):
         self._rudderLift             = config["rudderLift"]   # kg s^-1
         self._distanceToRudder       = config["distanceTorudder"]     # m
         self._rudderBreakCoefficient = config["rudderBreakCoefficient"] 
+        
         # Wind parameters
-        self._apparentWind           = WindState(0, 0)
+        self._apparentWind           = WindState(0, 0)  # apparent wind in boat coord
+        self._apparentWindASP        = WindState(0, 0)  # apparent wind in world coord.
 
         # parameters for dynamic
         self._driftCoefficient       = config["driftCoefficient"]
@@ -223,16 +210,17 @@ class ASPirePhysicsModel(mainBoatPhysicsModel):
 
         # wingsail angles
 
-        self._tailAngle              = 0
-        self._MWAngleG               = 0 
-        self._MWAngleB               = 0
-        self._alpha                  = 0.30
+        self._tailAngle              = 0    # angle of tail with regards to main wing center line, + to the right, rad
+        self._MWAngleG               = 0    # angle of main wing in with regards to world coord. syst., east=0 north=pi/2
+        self._MWAngleB               = 0    # angle of main wing with regards to boat centerline, + to the right
+        self._alpha                  = 0.30    # chosen angle of attack for simple simulation
 
         # wingsail parameters:
 
-        RHO                          = 1
+        RHO                          = 1   # density of air
 
         config = loadConfigFile('wingsail_config.json')
+       
         # Main Wing parameters
         self._MWChord                          = config["mainWingChord"] # m
         self._MWSpan                           = config["mainWingSpan"] # m
@@ -268,9 +256,35 @@ class ASPirePhysicsModel(mainBoatPhysicsModel):
     def getActuators(self):
         return ( self._tailAngle, self._rudderAngle )
 
-    def apparentWind(self):
-        return self._apparentWind
+        # updates apparent wind ASP (aka apparent wind in world coord)
+    def updateApparentWindASP(self, trueWind ):
+        
+        Xaw                = trueWind.speed()*cos(trueWind.direction()) - self.speed()*cos(self.heading())
+        Yaw                = trueWind.speed()*sin(trueWind.direction()) - self.speed()*sin(self.heading())
 
+        apparentWindVector = [Xaw,Yaw]
+        apparentWindSpeed  = np.sqrt(Xaw**2 + Yaw**2) 
+
+
+        
+
+        if Xaw > 0 :                                                        #necessary since arctan maps to -pi/2 ; pi/2
+            apparentWindAngle  = wrapTo2Pi(np.arctan(Yaw/Xaw))
+
+        elif Xaw < 0 :
+            apparentWindAngle  = wrapTo2Pi(np.arctan(Yaw/Xaw) + np.pi)
+
+        elif Xaw == 0 :
+            if Yaw < 0 :
+                apparentWindAngle  = -np.pi/2
+            elif Yaw > 0 :
+                apparentWindAngle  = np.pi/2
+
+        self._apparentWindASP = WindState( apparentWindAngle, apparentWindSpeed )
+
+    
+    def apparentWindASP(self):
+        return self._apparentWindASP()
 
     def MWAngle(self):
         return self._MWAngleB
@@ -278,23 +292,22 @@ class ASPirePhysicsModel(mainBoatPhysicsModel):
     def simulate(self,timeDelta,trueWind):
         (x_dot, y_dot) = self.calculateDrift( trueWind )
         self.updateApparentWind( trueWind )
+        self.updateApparentWindASP( trueWind )
 
-        #print('truewind',trueWind.direction())
-        #print('app wind dir',self._apparentWind.direction())
-        
-        # forces on main wing, drag in direction of apparent wind, lift perpendicular to wind     
-        liftForceMW = self._MWConstPartWindForce*(self._apparentWind.speed()**2)*self._MWDesignedLiftCoefficient*abs(wrapTo2Pi(self._alpha))*5.91*10
-        dragForceMW = self._MWConstPartWindForce*(self._apparentWind.speed()**2)*self._MWDesignedLiftCoefficient*abs(wrapTo2Pi(self._alpha))**2*10*5.91/2
+   
+        liftForceMW = self._MWConstPartWindForce*(self._apparentWindASP.speed()**2)*self._MWDesignedLiftCoefficient*abs(wrapTo2Pi(self._alpha))*5.91*10
+        dragForceMW = self._MWConstPartWindForce*(self._apparentWindASP.speed()**2)*self._MWDesignedLiftCoefficient*abs(wrapTo2Pi(self._alpha))**2*10*5.91/2
 
-        # initial direction of mainwing, aka turned into the wind
-        MWAngleGint = wrapTo2Pi(self._apparentWind.direction()+np.pi)
 
-        # angle of attack wingsail is slightly off the initial angle, depends on tail setting
+        MWAngleGint = wrapTo2Pi(self._apparentWindASP.direction()+np.pi)  # initially set wingsail main wing facing into the wind, then set angle of attack depending on tail
+
         if self._tailAngle < 0 :
             self._MWAngleG = wrapTo2Pi(MWAngleGint  + self._alpha)  # lift force is -90dg from drag force
-            liftForceMW = -liftForceMW
+            
+            
         elif self._tailAngle > 0 :
             self._MWAngleG = wrapTo2Pi(MWAngleGint  - self._alpha) # lift force is 90dg from drag force
+            
 
         else :
             self._MWAngleG = MWAngleGint
@@ -306,30 +319,23 @@ class ASPirePhysicsModel(mainBoatPhysicsModel):
         # angle of wingsail with regards to boat
         self._MWAngleB = wrapTo2Pi(self._MWAngleG -self._heading)
 
-        #print('wind', self._apparentWind.direction())
-        #print('heading',self._heading)
-        #print('mw angle G',self._MWAngleG)
-        #print('mw angle B',self._MWAngleB)
 
+        # lift and drag of main wing projected onto x axis of boat (in direction of movement forward)
+        wingSailForce = -dragForceMW * cos(self._apparentWindASP.direction()-self.heading()) + liftForceMW * np.abs(sin(self._apparentWindASP.direction()-self.heading()))  
 
-
-        wingSailForce = dragForceMW * cos(self._apparentWind.direction()-self.heading()) + liftForceMW * np.abs(sin(self._apparentWind.direction()-self.heading()))
-
-        print('wingsailforce',wingSailForce)
-        print('lift part',liftForceMW * np.abs(sin(self._apparentWind.direction()-self.heading())))
-        print('drag part',dragForceMW * cos(self._apparentWind.direction()-self.heading()))
-        print('angle between wind and haeding',self._apparentWind.direction()-self.heading())
-        #print('wind',self._apparentWind.direction())
-       # print('heading',self.heading())
-
+        print('wignsailforce',wingSailForce)
+        print('liftforce',liftForceMW)
+        print('dragForceMW',dragForceMW)
+        print('app wind direc',self._apparentWindASP.direction())
+        print('app wind speed',self._apparentWindASP.speed())
 
        
         rudderForce                    = self.forceOnRudder()
        
       
-        rudderBrakeForce               = np.sign(self._speed) * self._rudderBreakCoefficient * rudderForce * sin( wrapTo2Pi(self._rudderAngle) )
+        rudderBrakeForce               = np.sign(self._speed) * self._rudderBreakCoefficient * rudderForce * np.abs(sin( wrapTo2Pi(self._rudderAngle) )) # always against speed
        
-        tangentialFictionForce         = np.sign(self._speed) * self._tangentialFriction * (self._speed)**2
+        tangentialFictionForce         = np.sign(self._speed) * self._tangentialFriction * (self._speed)**2   # always agaisnt speed
       
         speed_dot                      = ( wingSailForce - rudderBrakeForce - tangentialFictionForce) / self._boatMass
 
@@ -346,6 +352,10 @@ class ASPirePhysicsModel(mainBoatPhysicsModel):
         self._speed += speed_dot * timeDelta
         self._rotationSpeed += rotationSpeed_dot * timeDelta
         self._heading = wrapTo2Pi(self._heading)
+
+
+
+
 
 
 class SimplePhysicsModel(PhysicsModel):
