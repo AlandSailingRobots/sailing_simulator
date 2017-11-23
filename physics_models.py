@@ -53,36 +53,6 @@ class mainBoatPhysicsModel(PhysicsModel):
     def apparentWind(self):
         return self._apparentWind   
 
-    def updateApparentWind(self, trueWind ):
-        
-        Xaw                = trueWind.speed()*cos(trueWind.direction()) - self.speed()*cos(self.heading())
-        Yaw                = trueWind.speed()*sin(trueWind.direction()) - self.speed()*sin(self.heading())
-
-        apparentWindVector = [Xaw,Yaw]
-        apparentWindSpeed  = np.sqrt(Xaw**2 + Yaw**2) 
-        
-
-        if Xaw > 0 :
-            apparentWindAngle  = wrapTo2Pi(np.arctan(Yaw/Xaw))
-
-        elif Xaw < 0 :
-            apparentWindAngle  = wrapTo2Pi(np.arctan(Yaw/Xaw) + np.pi)
-
-        elif Xaw == 0 :
-            if Yaw < 0 :
-                apparentWindAngle  = -np.pi/2
-            elif Yaw > 0 :
-                apparentWindAngle  = np.pi/2
-
-
-       
-        print('apparent wind speed',apparentWindSpeed)
-        print('apparentWindangle',apparentWindAngle)
-        
-        #apparentWindAngle = trueWind.direction()
-        #apparentWindSpeed = trueWind.speed()
-        self._apparentWind = WindState( apparentWindAngle, apparentWindSpeed )
-
 
         
     def forceOnRudder(self):
@@ -150,6 +120,15 @@ class SailingPhysicsModel(mainBoatPhysicsModel):
 
     def speed(self):
         return self._speed
+
+
+    def updateApparentWind(self, trueWind ):
+        apparentWindVector = [trueWind.speed() * cos( trueWind.direction() - self._heading ) - self._speed, trueWind.speed() * sin( trueWind.direction() - self._heading )]
+        apparentWindAngle  = atan2(apparentWindVector[1], apparentWindVector[0])
+        apparentWindSpeed  = hypot(apparentWindVector[0], apparentWindVector[1]) 
+        self._apparentWind = WindState( apparentWindAngle, apparentWindSpeed )
+
+
 
     def simulate(self, timeDelta, trueWind):
         (x_dot, y_dot) = self.calculateDrift( trueWind )
@@ -274,6 +253,40 @@ class ASPirePhysicsModel(mainBoatPhysicsModel):
 
     def MWAngle(self):
         return self._MWAngleB
+
+
+
+    def updateApparentWind(self, trueWind ):
+        
+        Xaw                = trueWind.speed()*cos(trueWind.direction()) - self.speed()*cos(self.heading())
+        Yaw                = trueWind.speed()*sin(trueWind.direction()) - self.speed()*sin(self.heading())
+
+        apparentWindVector = [Xaw,Yaw]
+        apparentWindSpeed  = np.sqrt(Xaw**2 + Yaw**2) 
+        
+
+        if Xaw > 0 :
+            apparentWindAngle  = wrapTo2Pi(np.arctan(Yaw/Xaw))
+
+        elif Xaw < 0 :
+            apparentWindAngle  = wrapTo2Pi(np.arctan(Yaw/Xaw) + np.pi)
+
+        elif Xaw == 0 :
+            if Yaw < 0 :
+                apparentWindAngle  = -np.pi/2
+            elif Yaw > 0 :
+                apparentWindAngle  = np.pi/2
+
+
+       
+        print('apparent wind speed',apparentWindSpeed)
+        print('apparentWindangle',apparentWindAngle)
+        
+        #apparentWindAngle = trueWind.direction()
+        #apparentWindSpeed = trueWind.speed()
+        self._apparentWind = WindState( apparentWindAngle, apparentWindSpeed )
+
+
      
     def simulate(self,timeDelta,trueWind):
         (x_dot, y_dot) = self.calculateDrift( trueWind )
