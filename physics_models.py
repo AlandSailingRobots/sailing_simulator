@@ -3,9 +3,6 @@ from math import cos, sin, atan2, hypot
 from utils import wrapTo2Pi, loadConfigFile
 import json
 
-# modified ASPire physics model compared to develop branch
-
-
 
 class WindState(object):
     def __init__(self, windDirection, windSpeed):
@@ -142,7 +139,7 @@ class SailingPhysicsModel(mainBoatPhysicsModel):
         rudderForce = self.forceOnRudder()
 
         sailAccelerationForce = sailForce * sin(self._sailAngle)
-        rudderBrakeForce = self._rudderBreakCoefficient * rudderForce * sin(self._sailAngle)
+        rudderBrakeForce = self._rudderBreakCoefficient * rudderForce * sin(self._rudderAngle)
         tangentialFictionForce = np.sign(self._speed) * (self._tangentialFriction * (self._speed)**2)
 
         acceleration_dot = ( (sailAccelerationForce - rudderBrakeForce) - tangentialFictionForce) / self._boatMass
@@ -246,8 +243,6 @@ class ASPirePhysicsModel(mainBoatPhysicsModel):
         
         
 
-
-   
         
     def setActuators(self, tail, rudder):
         self._tailAngle = tail
@@ -265,8 +260,6 @@ class ASPirePhysicsModel(mainBoatPhysicsModel):
         apparentWindVector = [Xaw,Yaw]
         apparentWindSpeed  = np.sqrt(Xaw**2 + Yaw**2) 
 
-
-        
 
         if Xaw > 0 :                                                        #necessary since arctan maps to -pi/2 ; pi/2
             apparentWindAngle  = wrapTo2Pi(np.arctan(Yaw/Xaw))
