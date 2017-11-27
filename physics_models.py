@@ -1,7 +1,6 @@
 import numpy as np
 from math import cos, sin, atan2, hypot
 from utils import wrapTo2Pi, loadConfigFile
-from class_wingsail import WingSail
 import json
 
 
@@ -208,8 +207,7 @@ class ASPirePhysicsModel(mainBoatPhysicsModel):
 
         if "wingSailConfigPath" in config.keys():
             self._wingSail_config = config["wingSailConfigPath"]
-        # creation wingsail 
-        self._wingSail               = WingSail(self._x,self._y,self._heading,self._MWAngleStart,0,self._distanceToSailCoE, self._wingSail_config)
+        
 
 
         self._tailAngle              = 0    # angle of tail with regards to main wing center line, + to the right, rad
