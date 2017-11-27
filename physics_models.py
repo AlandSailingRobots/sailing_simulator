@@ -251,11 +251,11 @@ class ASPirePhysicsModel(mainBoatPhysicsModel):
 
         
     def setActuators(self, tail, rudder):
-        self._wingSail.setTailAngle(tail)
+        self._tailAngle = tail
         self._rudderAngle = rudder
 
     def getActuators(self):
-        return ( self._wingSail.getTailAngle(), self._rudderAngle )
+        return ( self._tailAngle, self._rudderAngle )
 
         # updates apparent wind ASP (aka apparent wind in world coord)
     def updateApparentWindGlobalCoord(self, trueWind ):
@@ -288,7 +288,7 @@ class ASPirePhysicsModel(mainBoatPhysicsModel):
 
 
     def MWAngle(self):
-        return self._wingSail.getMWAngle()
+        return self._MWAngleB
      
     def simulate(self,timeDelta,trueWind):
         (x_dot, y_dot) = self.calculateDrift( trueWind )
