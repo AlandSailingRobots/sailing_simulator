@@ -27,6 +27,7 @@ class WingSail():
         self._MWAngleDot                       = 0      # rad
         self._MWDistanceCOP                    = config["distanceCenterOfPressureToMast"] # m
         
+        
         # Tail parameters
         self._tailAngle                        = 0
         self._tailChord                        = config["tailChord"]    # m
@@ -39,8 +40,10 @@ class WingSail():
         self._tailDesignedLiftCoefficient      = 2*np.pi*self._tailAspectRatio/(self._tailAspectRatio+2)
         self._tailMass                         = config["tailMass"]      # kg
         
-        self._momentOfInertiaWingSailOnMast    = self._tailMass*self._tailDistanceToMast**2
+        self._momentOfInertiaWingSailOnMast    = (self._tailMass*self._tailDistanceToMast**2 + 11*self._MWDistanceCOP**2) # added mass main wing
+        
         print('MWAngleWingsailClass:',self._MWAngle)
+
     def getPosition(self):
         return(self._x,self._y)
     
@@ -85,7 +88,7 @@ class WingSail():
         xMW_MWRelatedPart,yMW_MWRelatedPart     = apparentWindCoordinatesToMWCoordinates(MWDragForce,MWLiftForce,alpha)
         MWRelatedMoment                         = yMW_MWRelatedPart*self._MWDistanceCOP
         MWRelatedPart                           = MWRelatedMoment/self._momentOfInertiaWingSailOnMast
-        return(tailRelatedPart+MWRelatedPart)
+        return(tailRelatedPart+MWRelatedPart) 
     
     
     def evolutionWingSail(self,apparentWind):
@@ -99,14 +102,21 @@ class WingSail():
         return(MWAngleDotDot,wingSailForce)
         
     def rk2Step(self, apparentWind,timeDelta):
-        #print('timeDelta', timeDelta)
+        print('timeDelta', timeDelta)
         k1,wingSailForce      = self.evolutionWingSail(apparentWind)
         self._MWAngle         = wrapTo2Pi(self._MWAngle + timeDelta*self._MWRotationSpeed)
         self._MWRotationSpeed = wrapTo2Pi(self._MWRotationSpeed + timeDelta*k1)
-        #print('K1 MWAngle:', self._MWAngle, 'K1 Speed:', self._MWRotationSpeed)
+        print('K1 MWAngle:', self._MWAngle, 'K1 Speed:', self._MWRotationSpeed)
         k2,wingSailForce      = self.evolutionWingSail(apparentWind)
         self._MWAngle         = wrapTo2Pi(self._MWAngle + timeDelta*self._MWRotationSpeed)
         self._MWRotationSpeed = wrapTo2Pi(self._MWRotationSpeed + timeDelta*k2)
-        #print('K2 MWAngle:', self._MWAngle, 'K2 Speed:', self._MWRotationSpeed)
+        print('K2 MWAngle:', self._MWAngle, 'K2 Speed:', self._MWRotationSpeed)
         return(wingSailForce)
 
+
+    def wingSailFor(self, apparentWind,timeDelta):
+        mwangledd,wingSailForce     = self.evolutionWingSail(apparentWind)
+        self._MWAngle               = wrapTo2Pi(self._MWAngle + timeDelta*self._MWRotationSpeed)
+        self._MWRotationSpeed       = wrapTo2Pi(self._MWRotationSpeed + timeDelta*mwangledd)
+
+        return (wingSailForce)

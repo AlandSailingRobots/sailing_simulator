@@ -78,16 +78,16 @@ def draw_wind_direction(h, axis_min, axis_max_l, s, psi):
     # s - scale of boat, equals width
     # psi - true wind direction
     m_x = axis_min[0]+axis_max_l/2
-    m_y = axis_min[1]+axis_max_l
+    m_y = axis_min[1]+axis_max_l/2
 
     x_w = [m_x,
-           m_x+1.5*s*cos(psi),
-           m_x+1.25*s*cos(psi)-s*cos(psi-pi/4),
-           m_x+1.25*s*cos(psi)-s*cos(psi+pi/4)]
+           m_x+3*s*cos(psi),
+           m_x+3*s*cos(psi)-s*cos(psi-pi/4),
+           m_x+3*s*cos(psi)-s*cos(psi+pi/4)]
     y_w = [m_y,
-           m_y+1*s*sin(psi),
-           m_y+1*s*sin(psi)-s*sin(psi-pi/4),
-           m_y+1*s*sin(psi)-s*sin(psi+pi/4)]
+           m_y+3*s*sin(psi),
+           m_y+3*s*sin(psi)-s*sin(psi-pi/4),
+           m_y+3*s*sin(psi)-s*sin(psi+pi/4)]
     l1 = lines.Line2D([x_w[0], x_w[1]], [y_w[0], y_w[1]], color='w')
     l2 = lines.Line2D([x_w[1], x_w[2]], [y_w[1], y_w[2]], color='w')
     l3 = lines.Line2D([x_w[1], x_w[3]], [y_w[1], y_w[3]], color='w')
@@ -228,3 +228,4 @@ if __name__ == '__main__':
     #draw_ais(ax2, 0.15, (1,1), 0)
     plt.axis([-20 ,20, -10, 10])
     plt.show()
+
