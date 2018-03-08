@@ -10,8 +10,7 @@ from vessel import SailBoat
 MESSAGE_TYPE_SAILBOAT_DATA = 0
 MESSAGE_TYPE_WINGBOAT_DATA = 1
 MESSAGE_TYPE_AIS_CONTACT   = 2
-MESSAGE_TYPE_TIS_CONTACT   = 3
-
+MESSAGE_TYPE_TIS_FIELD     = 3
 MESSAGE_TYPE_WINGBOAT_CMD  = 4
 MESSAGE_TYPE_SAILBOAT_CMD  = 5
 MESSAGE_TYPE_WAYPOINT_DATA = 6
@@ -116,7 +115,8 @@ class Network:
         self.sendData( data )
 
     def sendAISContact( self, boat ):
-        sendFormat = '=HBI3fh2f'
+        print ("sendAISContact")
+        sendFormat = '=HBI3fh2f'      #TODO: float is too low precision for lat, long
 
         dataLength = 27
         id = boat.id()
@@ -129,21 +129,41 @@ class Network:
                      int(id), latitude, longitude, speed, int(course), length, beam )
         self.sendData( data )
 
-    def sendVisualContact( self, boat ):
-        sendFormat = '=HBI2f'
 
-        dataLength = 19
-        id = boat.id()
-        (latitude, longitude) = boat.position()
-        data = pack( sendFormat, int(dataLength), MESSAGE_TYPE_TIS_CONTACT,
-                     int(id), latitude, longitude )
+#    def sendVisualContact( self, boat ):
+#        sendFormat = '=HBI2f'
+
+#        dataLength = 19
+#        id = boat.id()
+#        (latitude, longitude) = boat.position()
+#        data = pack( sendFormat, int(dataLength), MESSAGE_TYPE_TIS_CONTACT,
+#                     int(id), latitude, longitude )
+#        self.sendData( data )
+
+    def sendVisualField( self, visualBearings, cameraFOV ):
+        sendFormat = '=HB24H'
+        dataLength = calcsize(sendFormat)  
+        relativeObstacleDistances = []
+        for i in range(cameraFOV):
+            relativeObstacleDistances.append(int(100))
+        for bearing in visualBearings:
+            #todo change value and range depending on distance and size
+            relativeObstacleDistances[(int)(bearing + cameraFOV/2)] = int(0)
+        data = bytearray(dataLength)
+        offset = 0;
+        # transmit the remaining length to read after the two bytes for the dataLength
+        pack_into( '=HB', memoryview(data), offset, int(dataLength - 2), MESSAGE_TYPE_TIS_FIELD)
+        offset += 3
+        for i in range(24):
+            pack_into('H', memoryview(data), offset, int(relativeObstacleDistances[i]))
+            offset += 2
         self.sendData( data )
 
     def sendData( self, data ):
         readReady, writeReady, errors = select.select( [self._sock], [self._sock], [self._sock], 0.01 )
-
         if( len(writeReady) ):
             self._sock.sendall( data )
+
 
     def receiveData( self ):
         readReady, writeReady, errors = select.select([self._sock], [self._sock], [self._sock], 0.01)

@@ -73,7 +73,7 @@ init_prog = 0
 
 BOAT_UPDATE_MS = 100
 AIS_UPDATE_MS = 500
-CAMERA_ANGLE = 24
+CAMERA_FOV = 24
 boatInCenter = False
 
 
@@ -177,12 +177,16 @@ if __name__ == '__main__':
 
             """ Sending AIS data """
             if millis > lastAISSent + AIS_UPDATE_MS:
+                visualBearings = []
                 for i in range( 1, len(vessels) ):
-                    if vessels[i].id() < 100000000 and fcn.boatInVisualRange(vessels[0], vessels[i]):
-                        net.sendVisualContact( vessels[i] )
+                    if vessels[i].id() < 100000000:
+                        if fcn.boatInVisualRange(vessels[0], vessels[i], CAMERA_FOV):
+                            visualBearings. append(fcn.getBearing(vessels[0], vessels[i]))
+                        #net.sendVisualContact( vessels[i] )
                     else:
                         net.sendAISContact( vessels[i] )
                 lastAISSent = millis
+                net.sendVisualField(visualBearings, CAMERA_FOV)
 
             """ Getting boat data """
             (head, gps, wind) = fcn.get_to_socket_value( simulatedBoat )

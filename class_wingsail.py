@@ -102,15 +102,15 @@ class WingSail():
         return(MWAngleDotDot,wingSailForce)
         
     def rk2Step(self, apparentWind,timeDelta):
-        print('timeDelta', timeDelta)
+        #print('timeDelta', timeDelta)
         k1,wingSailForce      = self.evolutionWingSail(apparentWind)
         self._MWAngle         = wrapTo2Pi(self._MWAngle + timeDelta*self._MWRotationSpeed)
         self._MWRotationSpeed = wrapTo2Pi(self._MWRotationSpeed + timeDelta*k1)
-        print('K1 MWAngle:', self._MWAngle, 'K1 Speed:', self._MWRotationSpeed)
+        #print('K1 MWAngle:', self._MWAngle, 'K1 Speed:', self._MWRotationSpeed)
         k2,wingSailForce      = self.evolutionWingSail(apparentWind)
         self._MWAngle         = wrapTo2Pi(self._MWAngle + timeDelta*self._MWRotationSpeed)
         self._MWRotationSpeed = wrapTo2Pi(self._MWRotationSpeed + timeDelta*k2)
-        print('K2 MWAngle:', self._MWAngle, 'K2 Speed:', self._MWRotationSpeed)
+        #print('K2 MWAngle:', self._MWAngle, 'K2 Speed:', self._MWRotationSpeed)
         return(wingSailForce)
 
 

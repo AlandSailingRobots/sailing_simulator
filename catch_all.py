@@ -6,8 +6,6 @@ from vessel import Vessel,SailBoat, MarineTraffic
 import json
 from utils import *
 
-CAMERA_ANGLE = 20. # Camera field of view in degrees
-
 def get_graph_values( sailBoat,boat_type ):
 	(sail, rudder) = sailBoat.sailAndRudder() # if boat_type == 1 : sail == tailWing
 	phi_ap = sailBoat.apparentWind().direction()
@@ -72,7 +70,10 @@ def loadConfiguration(configPath, traffic):
                 id = marineVessel["mmsi"]
                 lat = marineVessel["lat_origin"]
                 lon = marineVessel["lon_origin"]
-                vessels.append(MarineTraffic(SimplePhysicsModel(0, 0), lat, lon, 0, 0, id, 0, 0))
+                heading = marineVessel.get("heading", 0)
+                heading = wrapTo2Pi(np.deg2rad(90 - heading )) # [-pi, pi] east north up
+                speed = marineVessel.get("speed", 0)
+                vessels.append(MarineTraffic(SimplePhysicsModel(heading, speed), lat, lon, heading, speed, id, 0, 0))
 
     return ( boat_type, sim_step,vessels, WindState( trueWindDir, trueWindSpeed ) )
 
@@ -164,11 +165,12 @@ class Functions:
         else:
             return 360 - absDiff
 
-    def boatInVisualRange(asv, vessel):
+    def boatInVisualRange(asv, vessel, cameraFOV):
         bearing = Functions.getBearing(asv, vessel)
 
         bearingDiff = abs( Functions.getBearingDiff(asv.heading(), bearing) )
 
-        if bearingDiff < (CAMERA_ANGLE/2):
+        if bearingDiff < (cameraFOV/2):
             return True
         return False
+

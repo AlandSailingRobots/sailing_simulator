@@ -324,11 +324,11 @@ class ASPirePhysicsModel(mainBoatPhysicsModel):
         # lift and drag of main wing projected onto x axis of boat (in direction of movement forward)
         wingSailForce = -dragForceMW * cos(self._apparentWindGlobalCoord.direction()-self.heading()) + liftForceMW * np.abs(sin(self._apparentWindGlobalCoord.direction()-self.heading()))  
 
-        print('wignsailforce',wingSailForce)
-        print('liftforce',liftForceMW)
-        print('dragForceMW',dragForceMW)
-        print('app wind direc',self._apparentWindGlobalCoord.direction())
-        print('app wind speed',self._apparentWindGlobalCoord.speed())
+        #print('wignsailforce',wingSailForce)
+        #print('liftforce',liftForceMW)
+        #print('dragForceMW',dragForceMW)
+        #print('app wind direc',self._apparentWindGlobalCoord.direction())
+        #print('app wind speed',self._apparentWindGlobalCoord.speed())
 
 
     
