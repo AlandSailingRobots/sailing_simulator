@@ -26,6 +26,7 @@ On Arch linux as sudo:
     $ pip install numpy
     $ pip install matplotlib
     $ pip install geopy
+    $ pip install objgraph
     $ pacman -S tk 
 
 In some cases the install for *matplotlib* is corrupted in that case you need to build it:
