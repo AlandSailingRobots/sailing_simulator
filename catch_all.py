@@ -121,21 +121,6 @@ class Functions:
         dtw = radiusEarth * tmp*1000
         return dtw
 
-    def getBearing( asv, vessel ):
-        (asvLat, asvLon) = asv.position()
-        (vesselLat, vesslLon) = asv.position()
-
-        boatLatitudeInRadian = np.deg2rad(asvLat)
-        waypointLatitudeInRadian = np.deg2rad(vesselLat)
-        deltaLongitudeRadian = np.deg2rad(vesslLon - asvLon)
-
-        y_coordinate = sin(deltaLongitudeRadian) * cos(waypointLatitudeInRadian)
-        x_coordinate = cos(boatLatitudeInRadian) * sin(waypointLatitudeInRadian) - sin(boatLatitudeInRadian) * cos(waypointLatitudeInRadian) * cos(deltaLongitudeRadian)
-
-        bearingToWaypointInRadian = atan2(y_coordinate, x_coordinate)
-        bearingToWaypoint = np.rad2deg(bearingToWaypointInRadian)
-        return wrapAngle(bearingToWaypoint)
-
     def getBTW(asvpos, wppos):
         (asvLon, asvLat) = asvpos
         (vesselLon, vesselLat) = wppos
@@ -166,11 +151,43 @@ class Functions:
             return 360 - absDiff
 
     def boatInVisualRange(asv, vessel, cameraFOV):
-        bearing = Functions.getBearing(asv, vessel)
+        bearing = Functions.getBTW(asv.position(), vessel.position())
+        print("boat in visual range")
+        print("bearing: " + str(bearing))
 
         bearingDiff = abs( Functions.getBearingDiff(asv.heading(), bearing) )
+        print("bearingDiff: " + str(bearingDiff))
 
         if bearingDiff < (cameraFOV/2):
             return True
         return False
+
+
+    def replaceRelDistanceIfSmaller(relativeObstacleDistances, relativeDist, index):
+        if index < 0:
+            return
+        if index >= len(relativeObstacleDistances):
+            return
+        if relativeDist < relativeObstacleDistances[index]:
+            relativeObstacleDistances[index] = relativeDist
+
+
+    def relativeDistancesFromBearingDistances(visualBearingsDistances, maxVisibleDistance, cameraFOV):
+        relativeObstacleDistances = []
+        for i in range(cameraFOV):
+            relativeObstacleDistances.append(int(100))
+        for [bearing, distance] in visualBearingsDistances:
+            relDistance = 100
+            degreeRange = 1
+            if distance < maxVisibleDistance:
+                relDistance = 100 * distance/ maxVisibleDistance;
+                degreeRange = 10 * (maxVisibleDistance - distance)/ maxVisibleDistance;
+            for i in range(int(degreeRange)):
+                Functions.replaceRelDistanceIfSmaller(relativeObstacleDistances, relDistance, int(bearing + cameraFOV/2 + i))
+                Functions.replaceRelDistanceIfSmaller(relativeObstacleDistances, relDistance, int(bearing + cameraFOV/2 - i))
+        return relativeObstacleDistances
+ 
+
+
+
 

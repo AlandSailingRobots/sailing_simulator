@@ -140,15 +140,9 @@ class Network:
 #                     int(id), latitude, longitude )
 #        self.sendData( data )
 
-    def sendVisualField( self, visualBearings, cameraFOV ):
-        sendFormat = '=HB24H'
+    def sendVisualField( self, relativeObstacleDistances):
+        sendFormat = '=HB24H'         #this depends on camera FOV = 24
         dataLength = calcsize(sendFormat)  
-        relativeObstacleDistances = []
-        for i in range(cameraFOV):
-            relativeObstacleDistances.append(int(100))
-        for bearing in visualBearings:
-            #todo change value and range depending on distance and size
-            relativeObstacleDistances[(int)(bearing + cameraFOV/2)] = int(0)
         data = bytearray(dataLength)
         offset = 0;
         # transmit the remaining length to read after the two bytes for the dataLength
