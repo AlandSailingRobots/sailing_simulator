@@ -73,6 +73,7 @@ class drawThread (threading.Thread):
         self.data_queue = data_queue_
         self.wp_queue = wp_queue_
         self.ves_queue = ves_queue_
+        self.storedMinDist = 1e5
 
     def run(self):
         zoom_ = zoom()
@@ -179,7 +180,10 @@ class drawThread (threading.Thread):
             cds.draw_boat(ax2, 0.00015, th_data.longitude, th_data.latitude,
                           th_data.theta, th_data.delta_r, th_data.delta_s)
             plt.axis([ax_min_x, ax_min_x+axis_len, ax_min_y, ax_min_y+axis_len])
+            if (minDist < self.storedMinDist):
+                self.storedMinDist = minDist
             textstr += "\n____________________\n\nTRAFFIC\nDistance:  %.2f" % (minDist)
+            textstr += "\nMin Dist in run:  %.2f" % (self.storedMinDist)
 
             #  Draws the vessel state (left side of the fig)
             axboat.clear()

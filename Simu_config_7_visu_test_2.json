@@ -6,7 +6,7 @@
     "lat_origin": 60.103605,
     "lon_origin": 19.921601,
 
-    "wind_direction": 195,
+    "wind_direction": 105, 
     "wind_speed": 6,
 
     "boat_update_ms":100,

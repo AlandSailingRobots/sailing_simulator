@@ -152,12 +152,8 @@ class Functions:
 
     def boatInVisualRange(asv, vessel, cameraFOV):
         bearing = Functions.getBTW(asv.position(), vessel.position())
-        print("boat in visual range")
-        print("bearing: " + str(bearing))
 
         bearingDiff = abs( Functions.getBearingDiff(asv.heading(), bearing) )
-        print("bearingDiff: " + str(bearingDiff))
-
         if bearingDiff < (cameraFOV/2):
             return True
         return False
