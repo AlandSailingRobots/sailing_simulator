@@ -116,7 +116,7 @@ class Network:
 
     def sendAISContact( self, boat ):
         print ("sendAISContact")
-        sendFormat = '=HBI3fh2f'      #TODO: float is too low precision for lat, long
+        sendFormat = '=HBI3fh2f'      
 
         dataLength = 27
         id = boat.id()
@@ -140,8 +140,8 @@ class Network:
 #                     int(id), latitude, longitude )
 #        self.sendData( data )
 
-    def sendVisualField( self, relativeObstacleDistances):
-        sendFormat = '=HB24H'         #this depends on camera FOV = 24
+    def sendVisualField( self, relativeObstacleDistances, heading):
+        sendFormat = '=HB24Hh'         #this depends on camera FOV = 24
         dataLength = calcsize(sendFormat)  
         data = bytearray(dataLength)
         offset = 0;
@@ -151,6 +151,8 @@ class Network:
         for i in range(24):
             pack_into('H', memoryview(data), offset, int(relativeObstacleDistances[i]))
             offset += 2
+        print("Sending heading " + str(heading))
+        pack_into('h', memoryview(data), offset, int(heading))
         self.sendData( data )
 
     def sendData( self, data ):

@@ -192,7 +192,7 @@ if __name__ == '__main__':
                         net.sendAISContact( vessels[i] )
                 lastAISSent = millis
                 visualBearingsRelativeDistances = fcn.relativeDistancesFromBearingDistances(visualBearingsDistances, 500, CAMERA_FOV)
-                net.sendVisualField(visualBearingsRelativeDistances)
+                net.sendVisualField(visualBearingsRelativeDistances, vessels[0].heading())
 
             """ Getting boat data """
             (head, gps, wind) = fcn.get_to_socket_value( simulatedBoat )
