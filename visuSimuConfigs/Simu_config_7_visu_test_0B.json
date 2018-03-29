@@ -3,10 +3,11 @@
 
     "simulation_step": 0.01,
 
-    "lat_origin": 60.103605,
-    "lon_origin": 19.921601,
+    "heading": 15,
+    "lat_origin": 60.106473,
+    "lon_origin": 19.92,
 
-    "wind_direction": 105, 
+    "wind_direction": 270,
     "wind_speed": 6,
 
     "boat_update_ms":100,
@@ -15,9 +16,9 @@
     "traffic": [
         {
             "mmsi": 1,
-            "heading": 195,
+            "heading": 270,
             "lat_origin": 60.106473,
-            "lon_origin": 19.923030,
+            "lon_origin": 19.923530,
             "speed":3
         }
 
