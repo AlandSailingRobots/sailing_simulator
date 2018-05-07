@@ -27,8 +27,8 @@ from physics_models import SimplePhysicsModel,SailingPhysicsModel,ASPirePhysicsM
 from vessel import Vessel,SailBoat, MarineTraffic
 from network import Network
 from data_handler import data_handler, waypoint_handler, sailBoatData, wingBoatData
-from catch_all import Functions as fcn
-from catch_all import *
+from obstacle_avoidance_utils import Functions as fcn
+from obstacle_avoidance_utils import *
 
 # from drawThread import drawThread
 from math import cos, sin, atan2, hypot
