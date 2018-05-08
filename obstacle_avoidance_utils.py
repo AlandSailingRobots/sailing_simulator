@@ -176,14 +176,10 @@ class Functions:
             relDistance = 100
             degreeRange = 1
             if distance < maxVisibleDistance:
-                relDistance = 100 * distance/ maxVisibleDistance;
-                degreeRange = 10 * (maxVisibleDistance - distance)/ maxVisibleDistance;
+                relDistance = 240 * distance/ maxVisibleDistance;
+                degreeRange = 4 * (maxVisibleDistance - distance)/ maxVisibleDistance;
             for i in range(int(degreeRange)):
                 Functions.replaceRelDistanceIfSmaller(relativeObstacleDistances, relDistance, int(bearing + cameraFOV/2 + i))
                 Functions.replaceRelDistanceIfSmaller(relativeObstacleDistances, relDistance, int(bearing + cameraFOV/2 - i))
         return relativeObstacleDistances
  
-
-
-
-

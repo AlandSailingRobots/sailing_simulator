@@ -7,7 +7,7 @@ import time
 # Our packages
 from utils import *
 import numpy as np
-from catch_all import Functions as fcn
+from obstacle_avoidance_utils import Functions as fcn
 import core_draw_sim as cds
 
 # Packages for plotting
