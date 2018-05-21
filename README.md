@@ -78,8 +78,8 @@ The configuration file set the ASV configuration, the starting position of the A
 
 * `"boat_config"`: Path to the boat configuration file.  
 The boat configuration file set the type and the physics parameters of the simulated boat.
-  * `"boat_type"`: 0 = simulating with Janet (Sail), 1 = ASPire (Wingsail)
-  * ...
+* `"boat_type"`: 0 = simulating with Janet (Sail), 1 = ASPire (Wingsail)
+* ...
 
 ### ASV State
 
