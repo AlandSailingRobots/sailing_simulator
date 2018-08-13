@@ -77,5 +77,7 @@ class Gps():
         return hex(CS).upper()[2:]
 
 
-
+    def writeGPS(self, lat, long, speed, track):
+        self.setRMC(lat, long, speed, track)
+        self.sendData()
 

@@ -1,4 +1,4 @@
-
+import math as m
 
 class Windsensor:
     def __init__(self, devId, serInterface):
@@ -9,7 +9,10 @@ class Windsensor:
 
 
     def writeWindSpeed(self, speed):
-        self.serInterface.writeWithId(self.devId, self.speedId, speed)
+        self.serInterface.writeWithId(self.devId, self.speedId, speed*100)
 
     def writeWindDirection(self, dir):
-        self.serInterface.writeWithId(self.devId, self.directionId, dir)
+        rad = dir * ((2*m.pi)/360)*10000
+        rad = int(rad)
+
+        self.serInterface.writeWithId(self.devId, self.directionId, rad)
