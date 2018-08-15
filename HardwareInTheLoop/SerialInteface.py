@@ -30,7 +30,7 @@ class SerialInterface:
             data = data << 8
             raw = data & mask
             raw = raw >> 24
-            # print(hex(raw))
+            #print(hex(raw))
             self.device.write(raw.to_bytes(1, "big"))
 
 

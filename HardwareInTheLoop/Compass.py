@@ -8,5 +8,5 @@ class Compass:
 
 
     def writeHeading(self, heading):
-        self.serInterface.writeWithId(self.devId, 1, 10*heading)
+        self.serInterface.writeWithId(self.devId, 1, int(10*heading))
 

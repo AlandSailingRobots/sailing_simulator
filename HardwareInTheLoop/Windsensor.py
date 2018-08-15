@@ -9,10 +9,9 @@ class Windsensor:
 
 
     def writeWindSpeed(self, speed):
-        self.serInterface.writeWithId(self.devId, self.speedId, speed*100)
+        self.serInterface.writeWithId(self.devId, self.speedId, int(speed*100))
 
     def writeWindDirection(self, dir):
-        rad = dir * ((2*m.pi)/360)*10000
+        rad = ((dir *2*m.pi)/360)*10000
         rad = int(rad)
-
         self.serInterface.writeWithId(self.devId, self.directionId, rad)

@@ -1,5 +1,5 @@
 from threading import Thread
-import time
+
 
 class Actuators(Thread):
     def __init__(self, serInterface):
@@ -46,7 +46,7 @@ class Actuators(Thread):
         return float(floatStr)
 
     def getRudderAngle(self):
-        return self.rudderAngle
+      return self.rudderAngle
 
     def getWingsailAngle(self):
         return self.wingsailAngle

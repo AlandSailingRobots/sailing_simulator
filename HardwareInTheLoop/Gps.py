@@ -35,10 +35,10 @@ class Gps():
 
     def crateRMC(self, lat, long, speed, track):
         timeS =time.strftime("%H%M%S",time.gmtime())
-        latS = self.degDec2degMinDec(lat)
-        longS = self.degDec2degMinDec(long)
-        speedS = str(speed)
-        trackS = str(track)
+        latS = self.degDec2degMinDec(lat)[:11]
+        longS = self.degDec2degMinDec(long)[:11]
+        speedS = str(speed)[:11]
+        trackS = str(track)[:11]
         dateS= time.strftime("%d%m%y",time.gmtime())
 
         data = "GPRMC,"+ timeS +",A,"+latS+ ",N,"+longS+",E,"+speedS+","+trackS+","+dateS+",,"
