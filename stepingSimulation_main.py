@@ -52,6 +52,7 @@ MESSAGE_TYPE_TIS_CONTACT = 3
 MESSAGE_TYPE_WINGBOAT_CMD = 4
 MESSAGE_TYPE_SAILBOAT_CMD = 5
 MESSAGE_TYPE_WAYPOINT_DATA = 6
+MESSAGE_TYPE_ACK = 8
 
 # Returns the milliseconds
 getMillis = lambda: int(round(time.time() * 1000))
@@ -141,18 +142,30 @@ if __name__ == '__main__':
     try:
         while (net.connected()):
 
+
             simulator.step(sim_step)
 
-            print("STEPED @" + str(deb-time.time()))
+
+            #print("STEPED @" + str(deb-time.time()))
             deb = time.time()
-            net.sendBoatData(simulatedBoat, message_type)
+            noAck = True
 
+            while(noAck):
+                net.sendBoatData(simulatedBoat, message_type)
 
+                data = net.receiveData()
 
+                if (len(data)):
+                    if data[0] == MESSAGE_TYPE_ACK:
+                        noAck = False
+                #time.sleep(0.1)
 
+            stepStart = time.time()
             data = net.receiveData()
             while (len(data) <= 0):
                 data = net.receiveData()
+            print("WAIT TIME " + str(time.time() - stepStart))
+            print(data[0])
 
             if data[0] == MESSAGE_TYPE_WINGBOAT_CMD:
                 (delta_r_cmd, delta_s_cmd) = net.readActuatorData(data)
