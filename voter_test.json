@@ -1,7 +1,7 @@
 {
     "boat_config": "ASPire_config.json",
 
-    "simulation_step": 0.02,
+    "simulation_step": 0.01,
 
     "heading": 90,
     "lat_origin": 60.10829408,
@@ -14,7 +14,24 @@
     "ais_update_ms":1000,
 
     "traffic": [
-
+        {
+            "mmsi": 100100100,
+            "heading": 125,
+            "lat_origin": 60.1067023,
+            "lon_origin": 19.921217,
+            "speed": 1.0,
+            "length": 100,
+            "beam": 40
+        },
+        {
+            "mmsi": 110101100,
+            "heading": 175,
+            "lat_origin": 60.110023,
+            "lon_origin": 19.921517,
+            "speed": 2.0,
+            "length": 100,
+            "beam": 40
+        }
     ]
 
 

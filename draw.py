@@ -85,6 +85,8 @@ class drawThread (threading.Thread):
         for i in range(1, len(ais_list)):
             prevPos.append(ais_list[i].position())
 
+        plt.ion()
+        
         fig = figure_pz(figsize=(18, 9))
         fig.patch.set_facecolor('teal')
         fig.subplots_adjust(top=0.8)
@@ -206,7 +208,8 @@ class drawThread (threading.Thread):
             textbox = fig.text(0.9, 0.55, textstr,bbox=dict(edgecolor='white', facecolor='teal'))
             textbox.set_color('white')
 
-            plt.pause(0.001)  # This is where the drawing happens
+            #plt.draw()
+            plt.pause(0.002)  # This is where the drawing happens
 
             lonprev = th_data.longitude
             latprev = th_data.latitude

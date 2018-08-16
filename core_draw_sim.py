@@ -34,7 +34,7 @@ def draw_track(h, a, b, d, width_=1):
     # d  - distance
     def_dist = 100
     cgrad = def_dist/d
-    l1 = lines.Line2D([a[1], b[1]], [a[0], b[0]], color=cm.jet(cgrad), linewidth=width_)
+    l1 = lines.Line2D([a[1], b[1]], [a[0], b[0]], color=cm.magma(cgrad), linewidth=width_)
     h.add_line(l1)
     return a
 

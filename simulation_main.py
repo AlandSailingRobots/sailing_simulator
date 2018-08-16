@@ -100,6 +100,7 @@ if __name__ == '__main__':
     else:
         traffic = 1
 
+    print(configPath);
     ( boat_type, sim_step,vessels, trueWind ) = loadConfiguration(configPath, traffic)
 
     simulatedBoat = vessels[0]
@@ -226,10 +227,10 @@ if __name__ == '__main__':
             (asvLat, asvLon) = vessels[0].position()
 
             """ Log marine traffic """
-            # for i in range( 0, len(vessels) ):
-            #     (lat, lon) = vessels[i].position()
-            #     distance = LatLonMath.distanceKM(lat, lon, asvLat, asvLon)
-            #     files[i].write("0," + str(lat) + "," + str(lon) + "," + str(distance) + "\n")
+            #for i in range( 0, len(vessels) ):
+                #(lat, lon) = vessels[i].position()
+                #distance = LatLonMath.distanceKM(lat, lon, asvLat, asvLon)
+                #files[i].write("0," + str(lat) + "," + str(lon) + "," + str(distance) + "\n")
 
             dt_sleep = sim_step -(time.time()-deb)
             if dt_sleep < 0:

@@ -79,6 +79,7 @@ class Network:
              staytime, prevId, prevLon, prevLat, prevDec, prevRad) = unpack(receiveFormat, data)
 
         return (longitude, latitude, declination, radius, prevLon, prevLat, prevDec, prevRad)
+        
 
     # Packets up and sends the boat data across TCP
     def sendBoatData( self, sailboat,MESSAGE_TYPE ):
@@ -105,7 +106,7 @@ class Network:
             #   Msg Type(B), Lat(f), Lon(f), Speed(f), Course(h), WindDir(h), WindSpeed(f), heading(h), rudder(h), sail(h)
             tail, rudder = sailboat.physicsModel().getActuators()
             dataLength = 23
-            tail = 0 # while the command is not implmented
+            tail = 0 # while the command is not implemented
             sendFormat = '=HB3f2h1fh'
             data = pack( sendFormat, int(dataLength), MESSAGE_TYPE,
                  latitude, longitude, speed, int(course),
@@ -116,11 +117,14 @@ class Network:
 
     def sendAISContact( self, boat ):
         print ("sendAISContact")
-        sendFormat = '=HBI3fh2f'      
+        sendFormat = '=HBI3fh2f'
+        #sendFormat = '=HBI3dh2f'
+        #sendFormat = '=HBI2dfh2f'
 
         dataLength = 27
         id = boat.id()
         (latitude, longitude) = boat.position()
+        print("Lat/lon before actual AIS data sending: ", latitude, " ", longitude)
         course = boat.course() # [-180, 180] east north up
         speed = boat.speed()
         length = boat.length()
