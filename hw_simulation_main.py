@@ -19,7 +19,7 @@ getMillis = lambda: int(round(time.time() * 1000))
 
 BOAT_UPDATE_MS = 100
 
-graficsOn = False
+graficsOn = True
 
 temp_data = wingBoatData()
 
@@ -99,8 +99,9 @@ if __name__ == '__main__':
 
     simulatedBoat = vessels[0]
     latLongBoat = simulatedBoat.position()
-    virtualBoat = ViritualBoat(latLongBoat[0], latLongBoat[1])
+    virtualBoat = ViritualBoat(latLongBoat[0], latLongBoat[1], "10.112.147.10")
     virtualBoat.start()
+    virtualBoat.startActuators()
 
     simulator = Simulator(trueWind, 1)
     simulator.addPhysicsModel(simulatedBoat.physicsModel())
@@ -120,12 +121,14 @@ if __name__ == '__main__':
         #print("WINGSAIL " + str(tailWing))
         simulatedBoat.physicsModel().setActuators(tailWing, rudder)
         simulator.step(sim_step)
+        virtualBoat.setNavigationParameters(simulatedBoat)
+        #virtualBoat.sendNavigationData()
 
         millis = getMillis()
 
         """ Sending boat data """
         if millis > lastSentBoatData + BOAT_UPDATE_MS:
-            virtualBoat.setNavigationParameters(simulatedBoat)
+
             lastSentBoatData = millis
         if (graficsOn):
             updateGrafics()
@@ -135,7 +138,7 @@ if __name__ == '__main__':
         if dt_sleep < 0:
             dt_sleep = sim_step
         time.sleep(dt_sleep)
-
+        #time.sleep(0.05)
 
 
 

@@ -14,10 +14,10 @@ from Actuators import Actuators
 
 
 class ViritualBoat (Thread):
-    def __init__(self, lat, long):
+    def __init__(self, lat, long, ip):
         Thread.__init__(self)
         self.serInterface = SerialInterface()
-        self.gps = Gps("192.168.4.176")
+        self.gps = Gps(ip)
         self.actuators = Actuators(self.serInterface)
         self.compass = Compass(1, self.serInterface)
         self.windSensor = Windsensor(2, self.serInterface)
@@ -37,21 +37,18 @@ class ViritualBoat (Thread):
     
 
     def run(self):
-        self.actuators.start()
+        #self.actuators.start()
         while (True):
-                self.compass.writeHeading(self.heading)
-                self.windSensor.writeWindDirection(self.windDirection)
-                self.windSensor.writeWindSpeed(self.windSpeed)
-                self.gps.writeGPS(self.latitude, self.longitude, self.speed, self.course)
-
-                self.rudderAngle = self.actuators.getRudderAngle()
-                self.wingsailAngle = self.actuators.getWingsailAngle()
-
-
-                time.sleep(0.25)
+            self.sendNavigationData()
 
 
 
+
+            time.sleep(0.6)
+
+
+    def startActuators(self):
+        self.actuators.start()
 
     def setNavigationParameters(self, sailboat):
         # latitude, longitude, course, speed      # GPS
@@ -67,9 +64,17 @@ class ViritualBoat (Thread):
         self.heading = self.limitAngleRange(90-sailboat.heading()) # [-180, 180] degree east north up
         #print ("WIND " + str(self.windDirection))
 
+    def sendNavigationData(self):
+        self.sending = True
+        self.compass.writeHeading(self.heading)
+        self.windSensor.writeWindDirection(self.windDirection)
+        self.windSensor.writeWindSpeed(self.windSpeed)
+        self.gps.writeGPS(self.latitude, self.longitude, self.speed, self.course)
 
     def getActuatorData(self):
-        rudderRad =  (2*m.pi*self.rudderAngle)/360
+        self.rudderAngle = self.actuators.getRudderAngle()
+        self.wingsailAngle = self.actuators.getWingsailAngle()
+        rudderRad =  -(2*m.pi*self.rudderAngle)/360
         wingRad = (2 * m.pi * self.wingsailAngle) / 360
         return (rudderRad, wingRad)
 

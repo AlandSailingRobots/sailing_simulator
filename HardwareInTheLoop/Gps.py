@@ -77,7 +77,6 @@ class Gps():
         CS = hex(rawCS).upper()[2:]
         if len(CS) == 1:
             CS = "0"+CS
-        print(CS)
         return CS
 
 
