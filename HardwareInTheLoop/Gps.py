@@ -71,10 +71,14 @@ class Gps():
         return deg+minInt+minDec
 
     def calcChecksum(self, data):
-        CS = 0
+        rawCS = 0
         for n in data:
-            CS = CS ^ ord(n)
-        return hex(CS).upper()[2:]
+            rawCS = rawCS ^ ord(n)
+        CS = hex(rawCS).upper()[2:]
+        if len(CS) == 1:
+            CS = "0"+CS
+        print(CS)
+        return CS
 
 
     def writeGPS(self, lat, long, speed, track):
