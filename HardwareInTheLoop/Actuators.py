@@ -8,7 +8,7 @@ class Actuators(Thread):
         self.buff = b''
         self.rudderAngle = 0
         self.wingsailAngle = 0
-        self.startSeq = [0xfb, 0xfa, 0xcb]
+        self.startSeq = [0xfb, 0xfa, 0xcb] #Matching sequens on Arduino
 
     def run(self):
         while (True):

@@ -14,9 +14,9 @@ from Actuators import Actuators
 
 
 class ViritualBoat (Thread):
-    def __init__(self, lat, long, ip):
+    def __init__(self, lat, long, ip, serPort):
         Thread.__init__(self)
-        self.serInterface = SerialInterface()
+        self.serInterface = SerialInterface(serPort)
         self.gps = Gps(ip)
         self.actuators = Actuators(self.serInterface)
         self.compass = Compass(1, self.serInterface)
@@ -37,14 +37,9 @@ class ViritualBoat (Thread):
     
 
     def run(self):
-        #self.actuators.start()
         while (True):
             self.sendNavigationData()
-
-
-
-
-            time.sleep(0.6)
+            time.sleep(0.6) #In order to grantie that the HW-nodes of the system gets all values
 
 
     def startActuators(self):
@@ -54,15 +49,12 @@ class ViritualBoat (Thread):
         # latitude, longitude, course, speed      # GPS
         self.latitude = sailboat.position()[0]
         self.longitude = sailboat.position()[1]
-        #print(sailboat.course())
+
         self.course = self.limitAngleRange(90-sailboat.course())# [-180, 180] degree east north up
-        #print(self.course)
         self.speed = sailboat.speed()
         self.windDirection = self.limitAngleRange(180-sailboat.apparentWind().direction()) # [-180, 180] degree, trigo, wind vector
         self.windSpeed = sailboat.apparentWind().speed()
-        #print("SIMU WIND " + str(sailboat.apparentWind().direction()))
         self.heading = self.limitAngleRange(90-sailboat.heading()) # [-180, 180] degree east north up
-        #print ("WIND " + str(self.windDirection))
 
     def sendNavigationData(self):
         self.sending = True

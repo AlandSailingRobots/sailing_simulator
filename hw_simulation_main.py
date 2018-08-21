@@ -19,7 +19,7 @@ getMillis = lambda: int(round(time.time() * 1000))
 
 BOAT_UPDATE_MS = 100
 
-graficsOn = True
+
 
 temp_data = wingBoatData()
 
@@ -88,18 +88,28 @@ if __name__ == '__main__':
     else:
         configPath = "Simu_config_0.json"
 
-    if len(sys.argv) == 3:
-        traffic = int(sys.argv[2])
+    if len(sys.argv) >= 3:
+       ip = sys.argv[2]
     else:
-        traffic = 0
+        ip = "10.112.147.10" #IP of ASPire1 in ASR-VPN-network
+    if len(sys.argv) >=4:
+        serPort = sys.argv[3]
+    else:
+        serPort = "/dev/ttyUSB0" #normal port of arduino nano runnning on arch-linux
+    if len(sys.argv) >=5:
+        if sys.argv[4] == "1":
+            graficsOn = True
+    else:
+        graficsOn = False
 
+    traffic = 0
     ( boat_type, sim_step,vessels, trueWind ) = loadConfiguration(configPath, traffic)
 
 
 
     simulatedBoat = vessels[0]
     latLongBoat = simulatedBoat.position()
-    virtualBoat = ViritualBoat(latLongBoat[0], latLongBoat[1], "10.112.147.10")
+    virtualBoat = ViritualBoat(latLongBoat[0], latLongBoat[1],ip , serPort)
     virtualBoat.start()
     virtualBoat.startActuators()
 
@@ -117,19 +127,11 @@ if __name__ == '__main__':
         deb = time.time()
 
         (rudder, tailWing) = virtualBoat.getActuatorData()
-        #print("RUDDER " + str(rudder))
-        #print("WINGSAIL " + str(tailWing))
         simulatedBoat.physicsModel().setActuators(tailWing, rudder)
         simulator.step(sim_step)
         virtualBoat.setNavigationParameters(simulatedBoat)
-        #virtualBoat.sendNavigationData()
 
-        millis = getMillis()
 
-        """ Sending boat data """
-        if millis > lastSentBoatData + BOAT_UPDATE_MS:
-
-            lastSentBoatData = millis
         if (graficsOn):
             updateGrafics()
 
