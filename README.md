@@ -3,13 +3,57 @@ SAILING_SIMULATOR
 
 This repository Aland sailing robot's simulator. The simulator will simulate a sailing ASV and provides a basic simulation of other marine traffic. The GPS tracks of the ASV and the simulated track are outputted in .track files, which the first one being the ASV.
 
+There is also the possibility of testing the system more like actualy sailing the software for real by
+using Hardware in the loop.  
+
 ## Usage
+
+#### Running on desktop 
 
     ./simulation_main.py [config] [AIS traffic]
 
 Arguements:
 * `[config]` - Optional:  This is the path to the simulation config file, if no path is included, the simulator will default to `Simu_config_0.json`
 * `[AIS traffic]` - Optional : 0 = simulating without traffic, 1 = with traffic (default)
+
+#### HW in the loop
+
+Run the HW in the loop arduino script on a Arduino with a CAN-bus card connected. Conect to raspberry pi with a CAN-bus card 
+that is running a normal sailingrobots binery. 
+
+#####Running the simulation
+    ./hw_simulation_main.py [config] [rpiIpAddr] [ardSerPort] [useGrafics]
+
+Arguments 
+* `[config]` - Optional:  This is the path to the simulation config file, if no path is included, the simulator will default to `Simu_config_0.json`
+* `[rpiIpAddr]` - Optional: IP address of the RPi. Default to 10.112.147.10 (IP of aspire1.vpn)
+* `[ardSerPort]` - Optional: Path to arduino serial device that is connected to the RPi. Default to /dev/ttyUSB0
+* `[useGrafics]` - Optional: If 1 -> start simulator graphical interface. 
+
+#####Run Arduino code
+Flash a Arduino with a CAN-bus card with the Arduino code in `HardwareInTheLopp/HWInTheLoopArduino`
+
+Requires the Canbus librery from: https://github.com/AlandSailingRobots/ArduinoSketches/
+
+Conect the CAN-bus and i2c buses of the Arduino and RPi
+
+##### Spoofing GPSD
+The RPi gps deamon need to be started listening to all ip addresses with port 49194
+
+First stop gpsd if it is already running. Some good commands are in general, but it can be tricky to turn off completely
+
+    sudo systemctl stop gpsd
+    sudo killall gpsd
+    sudo systemctl status gpsd
+
+After this start gpsd with
+    
+    gpsd [-N [-D8]] upd://0.0.0.0:49194
+
+-N will make gpsd run in terminal and -D8 will print all debug messages
+
+For more information on gpsd and other usefull gps related commands see: http://www.catb.org/gpsd/
+    
 
 ## Required Packages:
 

@@ -304,15 +304,15 @@ class ASPirePhysicsModel(mainBoatPhysicsModel):
 
         if self._tailAngle < 0 :
             self._MWAngleG = wrapTo2Pi(MWAngleGint  + self._alpha)  # lift force is -90dg from drag force
-            
+
             
         elif self._tailAngle > 0 :
             self._MWAngleG = wrapTo2Pi(MWAngleGint  - self._alpha) # lift force is 90dg from drag force
-            
+            liftForceMW = -liftForceMW
 
         else :
             self._MWAngleG = MWAngleGint
-
+            liftForceMW = 0
 
 
 
@@ -322,7 +322,7 @@ class ASPirePhysicsModel(mainBoatPhysicsModel):
 
 
         # lift and drag of main wing projected onto x axis of boat (in direction of movement forward)
-        wingSailForce = -dragForceMW * cos(self._apparentWindGlobalCoord.direction()-self.heading()) + liftForceMW * np.abs(sin(self._apparentWindGlobalCoord.direction()-self.heading()))  
+        wingSailForce = -dragForceMW * cos(self._apparentWindGlobalCoord.direction()-self.heading()) + liftForceMW * (sin(self._apparentWindGlobalCoord.direction()-self.heading()))
 
         #print('wignsailforce',wingSailForce)
         #print('liftforce',liftForceMW)
