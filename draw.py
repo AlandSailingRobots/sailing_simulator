@@ -17,8 +17,7 @@ from matplotlib import pylab as plt
 from matplotlib import lines
 import matplotlib.patches as patches
 
-# Memory profiler package
-#import objgraph
+
 
 
 def zoom_factory(ax, zoom, base_scale=0.99):
