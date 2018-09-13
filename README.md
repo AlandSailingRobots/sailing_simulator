@@ -13,15 +13,18 @@ Arguements:
 
 # Running the voter debugger viewer
 
-    After enabling the voter TCP node in the main_ASPire and compiling a new binary, use the following commands.
-    Create a new window (display_number >= 2), here we will have only display number 2
+After enabling the voter TCP node in the main_ASPire and compiling a new binary, use the following commands.
+Create a new window (display_number >= 2), here we will have only display number 2
     $ Xephyr -br -ac -noreset -screen 800x800 :2
-    Launch simulation main
+Launch simulation main
     $ ./simulation_main.py [config] [AIS traffic]
-    Launch debugger on previously created display
+Launch debugger on previously created display
     $ DISPLAY:=2 ./voter_dbg_main.py [serverPort]
 
-    Default server port is 58888, on localhost.
+Default server port is 58888, on localhost. You can add as many displays as necessary, depending on the number of voters
+sending debug info (set on the main binary in main_ASPire.cpp).
+Note that the wind voter will only display its vetos, because it currently only uses it. Other voters will only display
+votes on the other hand. To change this behavior, go to line 103 in voter_dbg_main.py and add different cases.
 
 
 ## Required Packages:
