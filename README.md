@@ -11,6 +11,19 @@ Arguements:
 * `[config]` - Optional:  This is the path to the simulation config file, if no path is included, the simulator will default to `Simu_config_0.json`
 * `[AIS traffic]` - Optional : 0 = simulating without traffic, 1 = with traffic (default)
 
+# Running the voter debugger viewer
+
+    After enabling the voter TCP node in the main_ASPire and compiling a new binary, use the following commands.
+    Create a new window (display_number >= 2), here we will have only display number 2
+    $ Xephyr -br -ac -noreset -screen 800x800 :2
+    Launch simulation main
+    $ ./simulation_main.py [config] [AIS traffic]
+    Launch debugger on previously created display
+    $ DISPLAY:=2 ./voter_dbg_main.py [serverPort]
+
+    Default server port is 58888, on localhost.
+
+
 ## Required Packages:
 
 * numpy
